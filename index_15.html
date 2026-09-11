@@ -1,0 +1,1392 @@
+<!DOCTYPE html>
+<!-- Families App marketing dashboard v2.3 (11 Sep 2026): model settings panel. v2.2 (10 Sep 2026): paid layer (quiz funnel, ad spend), kick-off plan campaigns and panel, ad concepts AD1 to AD5. v1 = funnel, advice, weeks, CSV, formats table, plan. v2 adds tabs: Concepts (grid + chat), Accounts, Formats, Campaigns, plus newsletter ideas and 12 week trends. -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Families App marketing</title>
+<link href="https://fonts.googleapis.com/css2?family=Karla:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:#faf6ef;color:#2f2a38;font-family:'Karla',-apple-system,sans-serif;padding:24px 20px 80px;}
+  .wrap{max-width:1100px;margin:0 auto;}
+  header{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-bottom:24px;}
+  h1{font-size:24px;font-weight:800;margin-right:auto;}
+  .pills{display:flex;gap:4px;background:#fff;border:1px solid #e7dfd2;border-radius:14px;padding:4px;}
+  .pills button{padding:8px 14px;border-radius:10px;font-weight:700;font-size:14px;color:#6f6680;border:none;background:none;font-family:inherit;cursor:pointer;}
+  .pills button.on{background:#2f2a38;color:#fff;}
+  .month{display:flex;align-items:center;gap:6px;background:#fff;border:1px solid #e7dfd2;border-radius:14px;padding:6px 8px;font-weight:700;font-size:14px;}
+  .month button{border:none;background:#f3eee6;border-radius:8px;width:28px;height:28px;cursor:pointer;font-weight:800;color:#6f6680;}
+  .month span{min-width:130px;text-align:center;}
+  .out{border:none;background:none;color:#a79dbb;font-family:inherit;font-size:13px;cursor:pointer;text-decoration:underline;}
+  h2{font-size:15px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:#8a7f97;margin:30px 0 12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  h2 small{font-weight:600;text-transform:none;letter-spacing:0;color:#a79dbb;}
+  h2 .right{margin-left:auto;}
+  .funnel{display:grid;grid-template-columns:1fr 34px 1fr 34px 1fr 34px 1fr 34px 1fr;gap:6px;}
+  .tile{background:#fff;border:1px solid #e7dfd2;border-radius:18px;padding:16px 16px 14px;}
+  .tile .lbl{font-size:12.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#8a7f97;}
+  .tile .src{font-size:11.5px;color:#a79dbb;margin-top:2px;}
+  .tile .big{font-size:34px;font-weight:800;margin:10px 0 2px;letter-spacing:-.5px;}
+  .tile .tgt{font-size:13px;color:#6f6680;cursor:pointer;}
+  .tile .tgt:hover{text-decoration:underline;}
+  .chip{display:inline-block;font-size:12px;font-weight:800;padding:3px 8px;border-radius:8px;margin-top:8px;}
+  .up{background:#e3efe6;color:#2f6b45;} .down{background:#f8e3e0;color:#9a3b2e;} .flat{background:#eeeaf2;color:#6f6680;}
+  .conv{display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#6f6680;}
+  .conv b{font-size:14px;color:#2f2a38;} .conv i{font-style:normal;font-size:18px;color:#c9bfd6;line-height:1;}
+  .advice{background:#fff;border:1px solid #e7dfd2;border-radius:18px;padding:18px 20px;border-left:5px solid #B597C1;}
+  .advice p{font-size:15px;line-height:1.6;white-space:pre-wrap;}
+  .advice .when{font-size:12.5px;color:#a79dbb;margin-top:10px;}
+  .btn{background:linear-gradient(135deg,#B597C1,#E8B0C8);color:#fff;font-weight:800;padding:11px 18px;border:none;border-radius:12px;font-size:14px;font-family:inherit;cursor:pointer;white-space:nowrap;}
+  .btn.ghost{background:#fff;color:#6f6680;border:1.5px solid #e0d8ea;}
+  .btn:disabled{opacity:.6;cursor:default;}
+  .inputs{background:#fff;border:1px solid #e7dfd2;border-radius:18px;padding:18px;display:grid;grid-template-columns:repeat(6,1fr);gap:12px;align-items:end;}
+  .f label{display:block;font-size:11.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#8a7f97;margin-bottom:6px;}
+  .f input{width:100%;border:1.5px solid #e0d8ea;border-radius:12px;padding:10px 12px;font-size:15px;font-weight:700;font-family:inherit;color:#2f2a38;}
+  .f input:focus{outline:none;border-color:#B597C1;}
+  .f input.auto{background:#f6f3f9;}
+  .actions{grid-column:1 / -1;display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+  .weeknav{display:flex;align-items:center;gap:6px;font-weight:700;font-size:14px;}
+  .weeknav button{border:none;background:#f3eee6;border-radius:8px;width:28px;height:28px;cursor:pointer;font-weight:800;color:#6f6680;}
+  .msg{font-size:13px;color:#6f6680;}
+  .drop{margin-top:12px;border:2px dashed #B597C1;border-radius:14px;padding:16px;text-align:center;color:#6f6680;font-size:14px;cursor:pointer;}
+  .drop.hover{background:#f6f0f8;} .drop b{color:#2f2a38;}
+  table{width:100%;border-collapse:collapse;background:#fff;border:1px solid #e7dfd2;border-radius:18px;overflow:hidden;}
+  th{font-size:11.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#8a7f97;text-align:left;padding:12px 14px;border-bottom:1px solid #eee7dc;background:#fdfbf7;}
+  td{padding:12px 14px;border-bottom:1px solid #f1ece4;font-size:14px;vertical-align:middle;}
+  tr:last-child td{border-bottom:none;} td b{font-weight:800;}
+  .lane{font-size:11px;font-weight:800;padding:3px 8px;border-radius:7px;letter-spacing:.4px;}
+  .dream{background:#e8e0f0;color:#5a3f78;} .show{background:#dfeaf3;color:#2f5878;} .trust{background:#e3efe6;color:#2f6b45;}
+  .muted{color:#8a7f97;}
+  .plan{display:grid;grid-template-columns:70px repeat(7,1fr);gap:6px;}
+  .plan .h{font-size:11.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#8a7f97;text-align:center;padding:6px 0;}
+  .plan .wk{font-size:12px;font-weight:800;color:#6f6680;display:flex;align-items:center;}
+  .cell{background:#fff;border:1px solid #e7dfd2;border-radius:12px;min-height:74px;padding:8px;font-size:12px;line-height:1.35;cursor:pointer;}
+  .cell.empty{background:transparent;border-style:dashed;}
+  .cell .tag{display:block;font-weight:800;color:#2f2a38;} .cell .who{color:#8a7f97;}
+  .cell.done{border-color:#9BC29B;} .cell.done .tag::after{content:" \2713";color:#2f6b45;}
+  .cell.today{box-shadow:0 0 0 2px #E8B0C8 inset;}
+  .editor{margin-top:10px;background:#fff;border:1px solid #e7dfd2;border-radius:14px;padding:14px;display:none;gap:10px;align-items:end;flex-wrap:wrap;}
+  .editor select,.editor input[type=text]{border:1.5px solid #e0d8ea;border-radius:10px;padding:9px 10px;font-family:inherit;font-size:14px;}
+  .editor label.chk{display:flex;align-items:center;gap:6px;font-size:14px;font-weight:700;}
+  .legend{font-size:12.5px;color:#8a7f97;margin-top:10px;}
+  .login{max-width:380px;margin:80px auto;background:#fff;border:1px solid #e7dfd2;border-radius:20px;padding:26px;text-align:center;}
+  .login input{width:100%;border:1.5px solid #e0d8ea;border-radius:12px;padding:12px 14px;font-size:16px;font-family:inherit;margin:14px 0 10px;}
+  .login .btn{width:100%;}
+  .hidden{display:none;}
+  /* ---------- v2 ---------- */
+  .paidrow{grid-column:1 / -1;border-top:1px dashed #e7dfd2;padding-top:10px;margin-top:2px;}
+  .paidrow .lbl{font-size:11.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#8a7f97;}
+  .funnel.qf .tile{border-left:4px solid #7FA9CC;}
+  .settings{background:#fff;border:1px solid #e7dfd2;border-radius:18px;padding:16px 18px;margin-bottom:18px;display:grid;grid-template-columns:1fr 1fr;gap:14px;border-left:5px solid #7FA9CC;}
+  .settings select{width:100%;border:1.5px solid #e0d8ea;border-radius:12px;padding:10px 12px;font-size:15px;font-weight:700;font-family:inherit;color:#2f2a38;background:#fff;}
+  .settings .msg{display:block;margin-top:6px;} .settings .row{grid-column:1 / -1;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .tabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid #e7dfd2;margin-bottom:6px;}
+  .tabs button{background:none;border:none;font-family:inherit;font-size:14.5px;font-weight:800;color:#8a7f97;padding:10px 14px;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px;}
+  .tabs button.on{color:#2f2a38;border-bottom-color:#B597C1;}
+  section.tab{display:none;} section.tab.on{display:block;}
+  .two{display:grid;grid-template-columns:2fr 1fr;gap:20px;align-items:start;}
+  .spark{display:block;width:100%;height:28px;margin-top:8px;}
+  .spark polyline{fill:none;stroke:#B597C1;stroke-width:2;stroke-linejoin:round;stroke-linecap:round;}
+  .spark circle{fill:#E8B0C8;}
+  .news{background:#fff;border:1px solid #e7dfd2;border-radius:18px;padding:16px 18px;border-left:5px solid #6FA284;}
+  .news .idea{padding:10px 0;border-bottom:1px solid #f1ece4;} .news .idea:last-child{border-bottom:none;}
+  .news .idea b{display:block;font-size:14.5px;margin-bottom:3px;} .news .idea p{font-size:13.5px;line-height:1.5;color:#4d465a;white-space:pre-wrap;}
+  .news .idea i{display:block;font-style:normal;font-size:12.5px;color:#2f6b45;margin-top:4px;}
+  .news textarea{width:100%;border:1.5px solid #e0d8ea;border-radius:10px;padding:8px 10px;font-family:inherit;font-size:13.5px;min-height:54px;margin:8px 0;}
+  /* concepts */
+  .concepts{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:20px;align-items:start;}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:#fff;border:1px solid #e7dfd2;border-radius:18px;padding:6px;}
+  .gi{position:relative;aspect-ratio:4/5;border-radius:10px;overflow:hidden;background:#f3eee6;cursor:pointer;}
+  .gi img{width:100%;height:100%;object-fit:cover;object-position:center top;display:block;}
+  .gi .st{position:absolute;left:6px;top:6px;font-size:10.5px;font-weight:800;padding:3px 7px;border-radius:7px;background:rgba(255,255,255,.92);color:#6f6680;letter-spacing:.3px;}
+  .gi.concept .st{color:#6f6680;} .gi.feedback .st{color:#9a6a2e;background:rgba(255,241,220,.95);} .gi.placed .st{color:#2f6b45;background:rgba(227,239,230,.95);}
+  .gi .fc{position:absolute;right:6px;top:6px;font-size:10.5px;font-weight:800;padding:3px 7px;border-radius:7px;background:rgba(47,42,56,.85);color:#fff;}
+  .gi .reel{position:absolute;right:6px;bottom:6px;width:22px;height:22px;border-radius:6px;background:rgba(47,42,56,.75);color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;font-weight:800;}
+  .gi .dt{position:absolute;left:6px;bottom:6px;font-size:10.5px;font-weight:700;padding:2px 6px;border-radius:6px;background:rgba(255,255,255,.9);color:#2f2a38;}
+  .gi.sel{outline:3px solid #B597C1;outline-offset:-3px;}
+  .gi.dragover{outline:3px dashed #E8B0C8;outline-offset:-3px;}
+  .gi.up{display:flex;align-items:center;justify-content:center;text-align:center;font-size:13px;color:#8a7f97;border:2px dashed #d9cfe6;background:transparent;padding:10px;}
+  .adet{margin-top:12px;background:#fff;border:1px solid #e7dfd2;border-radius:14px;padding:14px;display:none;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+  .adet.on{display:grid;}
+  .adet select,.adet input,.adet textarea{width:100%;border:1.5px solid #e0d8ea;border-radius:10px;padding:8px 10px;font-family:inherit;font-size:14px;color:#2f2a38;}
+  .adet textarea{min-height:64px;grid-column:1 / -1;}
+  .adet .row{grid-column:1 / -1;display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .chat{background:#fff;border:1px solid #e7dfd2;border-radius:18px;display:flex;flex-direction:column;height:calc(100vh - 230px);min-height:480px;}
+  .chat .log{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;}
+  .bub{max-width:88%;padding:10px 14px;border-radius:14px;font-size:14.5px;line-height:1.55;white-space:pre-wrap;}
+  .bub.user{align-self:flex-end;background:#f0e8f4;border-bottom-right-radius:4px;}
+  .bub.assistant{align-self:flex-start;background:#fdfbf7;border:1px solid #eee7dc;border-bottom-left-radius:4px;}
+  .bub .imgs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;} .bub .imgs img{width:72px;height:90px;object-fit:cover;border-radius:8px;}
+  .bub .when{display:block;font-size:11px;color:#a79dbb;margin-top:4px;}
+  .chat .att{display:flex;gap:6px;flex-wrap:wrap;padding:0 14px;} .chat .att div{position:relative;} .chat .att img{width:56px;height:70px;object-fit:cover;border-radius:8px;border:1px solid #e7dfd2;}
+  .chat .att button{position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;border:none;background:#2f2a38;color:#fff;font-size:11px;cursor:pointer;}
+  .chat .in{display:flex;gap:8px;padding:12px 14px;border-top:1px solid #eee7dc;align-items:flex-end;}
+  .chat textarea{flex:1;border:1.5px solid #e0d8ea;border-radius:12px;padding:10px 12px;font-family:inherit;font-size:14.5px;min-height:44px;max-height:140px;resize:vertical;}
+  .chat .clip{background:#f3eee6;border:none;border-radius:12px;width:44px;height:44px;font-size:18px;cursor:pointer;color:#6f6680;}
+  /* accounts */
+  .filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;align-items:center;}
+  .filters button{background:#fff;border:1.5px solid #e0d8ea;border-radius:10px;padding:6px 12px;font-family:inherit;font-size:13px;font-weight:700;color:#6f6680;cursor:pointer;}
+  .filters button.on{background:#2f2a38;color:#fff;border-color:#2f2a38;}
+  .acform{background:#fff;border:1px solid #e7dfd2;border-radius:18px;padding:16px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;}
+  .acform input,.acform select{width:100%;border:1.5px solid #e0d8ea;border-radius:10px;padding:9px 10px;font-family:inherit;font-size:14px;color:#2f2a38;}
+  .acform .row{grid-column:1 / -1;display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  tr.clickable{cursor:pointer;} tr.clickable:hover td{background:#fdfbf7;}
+  .status{font-size:11px;font-weight:800;padding:3px 8px;border-radius:7px;letter-spacing:.3px;white-space:nowrap;}
+  .s-to{background:#eeeaf2;color:#6f6680;} .s-contacted{background:#dfeaf3;color:#2f5878;} .s-agreed{background:#fff1dc;color:#9a6a2e;} .s-posted{background:#e3efe6;color:#2f6b45;}
+  .delta{font-size:12px;font-weight:800;margin-left:4px;}
+  /* formats + campaigns */
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .card{background:#fff;border:1px solid #e7dfd2;border-radius:18px;overflow:hidden;display:grid;grid-template-columns:150px 1fr;}
+  .card .ex{background:#f3eee6;aspect-ratio:4/5;position:relative;cursor:pointer;display:flex;align-items:center;justify-content:center;text-align:center;font-size:12px;color:#8a7f97;padding:8px;}
+  .card .ex img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;}
+  .card .ex span{position:relative;z-index:1;background:rgba(255,255,255,.9);border-radius:8px;padding:4px 8px;}
+  .card .bd{padding:14px 16px;}
+  .card .bd h3{font-size:16px;font-weight:800;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .card .bd .meta{font-size:12.5px;color:#8a7f97;margin:4px 0 8px;} .card .bd p{font-size:14px;line-height:1.5;}
+  .card .bd textarea{width:100%;border:1.5px solid #e0d8ea;border-radius:10px;padding:8px 10px;font-family:inherit;font-size:13.5px;min-height:90px;margin-top:6px;}
+  .card .bd .edit{margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .camp{background:#fff;border:1px solid #e7dfd2;border-radius:18px;padding:18px;}
+  .camp h3{font-size:17px;font-weight:800;display:flex;gap:10px;align-items:center;flex-wrap:wrap;} .camp h3 select{margin-left:auto;border:1.5px solid #e0d8ea;border-radius:10px;padding:6px 10px;font-family:inherit;font-size:13px;font-weight:700;}
+  .camp p{font-size:14px;line-height:1.5;margin:8px 0;} .camp ol{margin:6px 0 6px 20px;font-size:14px;line-height:1.55;}
+  .camp .kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:13.5px;margin-top:8px;} .camp .kv b{color:#8a7f97;font-size:11.5px;text-transform:uppercase;letter-spacing:.5px;padding-top:2px;}
+  .camp input{width:100%;border:1.5px solid #e0d8ea;border-radius:10px;padding:8px 10px;font-family:inherit;font-size:13.5px;margin-top:10px;}
+  .plan-panel{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+  .plan-panel div{background:#fff;border:1px solid #e7dfd2;border-radius:16px;padding:14px 16px;} .plan-panel b{display:block;font-size:11.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#8a7f97;margin-bottom:6px;} .plan-panel p{font-size:13.5px;line-height:1.5;}
+  .cgroup{font-size:13px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#8a7f97;margin:22px 0 10px;} .cgroup small{font-weight:600;text-transform:none;letter-spacing:0;color:#a79dbb;margin-left:8px;}
+  .camp.paid{border-top:4px solid #E8B0C8;} .camp.retention{border-top:4px solid #7FA9CC;}
+  .camp.running{border-left:5px solid #6FA284;} .camp.planned{border-left:5px solid #7FA9CC;} .camp.done{opacity:.7;}
+  .linkish{color:#7a5d8c;text-decoration:underline;cursor:pointer;font-size:13px;}
+  @media (max-width:820px){
+    .funnel{grid-template-columns:1fr 1fr;} .conv{display:none;}
+    .inputs{grid-template-columns:1fr 1fr;}
+    .plan{grid-template-columns:44px repeat(7,1fr);} .cell{min-height:60px;font-size:10.5px;padding:5px;}
+    .two,.concepts,.cards,.plan-panel,.settings{grid-template-columns:1fr;} .chat{height:70vh;} .acform{grid-template-columns:1fr 1fr;} .adet{grid-template-columns:1fr 1fr;}
+  }
+</style>
+</head>
+<body>
+
+<div id="login" class="login hidden">
+  <h1 style="margin:0">Families App marketing</h1>
+  <p class="msg" style="margin-top:8px">Log in with your email code.</p>
+  <div id="l-step1">
+    <input type="email" id="l-email" placeholder="email address">
+    <button class="btn" id="l-send">Send code</button>
+  </div>
+  <div id="l-step2" class="hidden">
+    <input type="text" id="l-code" inputmode="numeric" maxlength="10" autocomplete="one-time-code" placeholder="code from the email">
+    <button class="btn" id="l-verify">Log in</button>
+  </div>
+  <p class="msg" id="l-msg" style="margin-top:10px"></p>
+</div>
+
+<div id="app" class="wrap hidden">
+  <header>
+    <h1>Families App marketing</h1>
+    <div class="pills" id="cities"></div>
+    <div class="month"><button id="m-prev">&lsaquo;</button><span id="m-label"></span><button id="m-next">&rsaquo;</button></div>
+    <button class="out" id="settings-btn">settings</button>
+    <button class="out" id="logout">log out</button>
+  </header>
+
+  <div class="settings hidden" id="settings">
+    <div class="f"><label>Model for advice and newsletter ideas</label><select id="s-model-text"></select><span class="msg">Runs a few times a week. A fast, cheap model is fine here.</span></div>
+    <div class="f"><label>Model for the chat about your visuals</label><select id="s-model-chat"></select><span class="msg">Where judgment matters: which format, what to change, what converts. Pick the strongest model you are happy to pay for per message.</span></div>
+    <div class="row"><button class="btn" id="s-save">Save</button><button class="btn ghost" id="s-close">Close</button><span class="msg" id="s-msg"></span></div>
+  </div>
+
+  <nav class="tabs" id="tabs">
+    <button data-t="dashboard" class="on">Dashboard</button>
+    <button data-t="concepts">Concepts</button>
+    <button data-t="accounts">Accounts</button>
+    <button data-t="formats">Formats</button>
+    <button data-t="campaigns">Campaigns</button>
+  </nav>
+
+<section class="tab on" id="tab-dashboard">
+  <h2>Funnel this month <small>actual vs target, click a target to change it. Line = last 12 weeks</small></h2>
+  <div class="funnel" id="funnel"></div>
+
+  <h2>Quiz funnel this month <small>the paid layer: ads to web quiz to Insider. Bars from the kick-off plan</small></h2>
+  <div class="funnel qf" id="qfunnel"></div>
+
+  <div class="two">
+    <div>
+      <h2>Claude says <small id="adv-when"></small><span class="right"><button class="btn" id="adv-btn">Refresh advice</button></span></h2>
+      <div class="advice"><p id="adv-text" class="muted">No advice yet. Fill in a few weeks of numbers, then press Refresh advice.</p><div class="when" id="adv-model"></div></div>
+    </div>
+    <div>
+      <h2>Newsletter ideas <small id="nl-when"></small></h2>
+      <div class="news">
+        <div id="nl-list"><p class="msg">No ideas yet. Add a note if you want, then press the button.</p></div>
+        <textarea id="nl-notes" placeholder="anything Claude should know this week (new partner, app update, a holiday)"></textarea>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn ghost" id="nl-btn">New ideas</button><span class="msg" id="nl-msg"></span></div>
+      </div>
+    </div>
+  </div>
+
+  <h2>Week numbers <small>type in on Monday, 2 minutes</small></h2>
+  <div class="inputs">
+    <div class="f"><label>Followers</label><input type="number" id="w-followers"></div>
+    <div class="f"><label>Profile reach 7d</label><input type="number" id="w-reach"></div>
+    <div class="f"><label>Installs iOS</label><input type="number" id="w-ios"></div>
+    <div class="f"><label>Installs Android</label><input type="number" id="w-android"></div>
+    <div class="f"><label>Link clicks</label><input type="number" id="w-clicks"></div>
+    <div class="f"><label>Free accounts</label><input type="number" id="w-accounts" class="auto"></div>
+    <div class="f"><label>Paid members</label><input type="number" id="w-paid" class="auto"></div>
+    <div class="f"><label>Notes</label><input type="text" id="w-notes"></div>
+    <div class="paidrow"><span class="lbl">Paid layer, from week 3 of the kick-off plan</span></div>
+    <div class="f"><label>Ad spend (euro)</label><input type="number" id="w-adspend" step="0.01"></div>
+    <div class="f"><label>Ad link clicks</label><input type="number" id="w-adclicks"></div>
+    <div class="f"><label>Quiz starts</label><input type="number" id="w-qstarts"></div>
+    <div class="f"><label>Quiz completions</label><input type="number" id="w-qdone"></div>
+    <div class="f"><label>Insider signups</label><input type="number" id="w-insider"></div>
+    <div class="f"><label>Cost per Insider</label><input type="text" id="w-cpi" class="auto" readonly></div>
+    <div class="actions">
+      <div class="weeknav"><button id="w-prev">&lsaquo;</button><span id="w-label"></span><button id="w-next">&rsaquo;</button></div>
+      <button class="btn ghost" id="w-auto">Fetch accounts and paid</button>
+      <button class="btn" id="w-save">Save week</button>
+      <span class="msg" id="w-msg"></span>
+    </div>
+  </div>
+  <div class="drop" id="drop"><b>Drop the Meta Insights export here (CSV)</b><br>Posts are matched to a format by the code at the end of the caption (<span id="drop-codes"></span>). Reach, saves, shares and link taps fill the table below.<input type="file" id="csv" accept=".csv,text/csv" hidden></div>
+  <p class="msg" id="csv-msg" style="margin-top:8px"></p>
+
+  <h2>Formats <small>one KPI each, this month vs last</small></h2>
+  <table id="formats"></table>
+
+  <h2>Weekly plan <small>same slots every week, click a cell to fill it</small></h2>
+  <div class="plan" id="plan"></div>
+  <div class="editor" id="editor">
+    <div><label class="f" style="display:block;font-size:11.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#8a7f97;margin-bottom:6px" id="ed-title">Slot</label>
+      <select id="ed-format"></select></div>
+    <div style="flex:1;min-width:200px"><input type="text" id="ed-note" placeholder="what exactly (names, places)" style="width:100%"></div>
+    <label class="chk"><input type="checkbox" id="ed-posted"> posted</label>
+    <button class="btn" id="ed-save">Save</button>
+    <button class="btn ghost" id="ed-clear">Clear slot</button>
+    <button class="btn ghost" id="ed-close">Close</button>
+  </div>
+  <p class="legend">Green border = posted. Pink outline = today.</p>
+</section>
+
+<section class="tab" id="tab-concepts">
+  <div class="concepts">
+    <div>
+      <h2>Concept grid <small>planned feed order, drag to reorder, click to edit</small><span class="right"><span class="msg" id="as-msg" style="text-transform:none;letter-spacing:0;font-weight:600"></span> <button class="btn ghost" id="as-ideas" style="padding:6px 10px;font-size:12px" title="17 ready made concepts: 12 organic posts and the 5 paid angle ads, with caption drafts">Load launch ideas</button></span></h2>
+      <div class="grid3" id="grid"></div>
+      <input type="file" id="as-file" accept="image/*,video/*" multiple hidden>
+      <div class="adet" id="adet">
+        <div class="f"><label>Status</label><select id="ad-status"><option value="concept">concept</option><option value="feedback">under feedback</option><option value="placed">placed</option></select></div>
+        <div class="f"><label>Format</label><select id="ad-format"></select></div>
+        <div class="f"><label>Planned date</label><input type="date" id="ad-date"></div>
+        <div class="f" style="grid-column:1 / -1"><label>Caption draft</label><textarea id="ad-caption" placeholder="caption, ends with the format code"></textarea></div>
+        <div class="f" style="grid-column:1 / -1"><label>Feedback</label><textarea id="ad-feedback" placeholder="what to change before it is placed"></textarea></div>
+        <div class="row">
+          <button class="btn" id="ad-save">Save</button>
+          <button class="btn ghost" id="ad-ask">Ask Claude about this</button>
+          <a class="linkish" id="ad-open" target="_blank" rel="noopener">open original</a>
+          <span style="flex:1"></span>
+          <button class="btn ghost" id="ad-delete">Delete</button>
+          <button class="btn ghost" id="ad-close">Close</button>
+        </div>
+      </div>
+      <p class="legend">Images and reels up to 50 MB. Reels: the first frame is the thumbnail, Claude sees 3 frames, not the video.</p>
+    </div>
+    <div>
+      <h2>Ask Claude <small>images, reels, captions, timing</small><span class="right"><button class="btn ghost" id="ch-clear" style="padding:6px 10px;font-size:12px">Clear history</button></span></h2>
+      <div class="chat">
+        <div class="log" id="ch-log"></div>
+        <div class="att" id="ch-att"></div>
+        <div class="in">
+          <button class="clip" id="ch-clip" title="attach image or reel">+</button>
+          <input type="file" id="ch-file" accept="image/*,video/*" multiple hidden>
+          <textarea id="ch-text" placeholder="drop an image or write a question. Enter sends, Shift+Enter is a new line"></textarea>
+          <button class="btn" id="ch-send">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="tab" id="tab-accounts">
+  <h2>Accounts <small>influencers, famous parents, partner Instagrams</small><span class="right"><button class="btn ghost" id="ac-import">Import CSV</button> <button class="btn ghost" id="ac-refresh">Refresh followers</button> <button class="btn" id="ac-new">Add account</button></span></h2>
+  <input type="file" id="ac-csv" accept=".csv,text/csv,.txt" hidden>
+  <div class="drop hidden" id="ac-drop" style="margin:0 0 14px"><b>Drop a CSV of accounts here</b><br>Columns by header, any order: name, handle (or instagram, a full profile URL is fine), web, email, phone, type, status, notes, followers. Existing handles are updated, new ones added.<br><span class="msg" id="ac-imsg"></span></div>
+  <div class="acform hidden" id="acform">
+    <div class="f"><label>Name</label><input type="text" id="ac-name"></div>
+    <div class="f"><label>Instagram handle</label><input type="text" id="ac-handle" placeholder="without @"></div>
+    <div class="f"><label>Type</label><select id="ac-type"><option>influencer</option><option>famous parent</option><option>partner</option><option>press</option><option>other</option></select></div>
+    <div class="f"><label>Status</label><select id="ac-status"><option>to contact</option><option>contacted</option><option>agreed</option><option>posted</option></select></div>
+    <div class="f"><label>Web</label><input type="url" id="ac-web"></div>
+    <div class="f"><label>Email</label><input type="email" id="ac-email"></div>
+    <div class="f"><label>Phone</label><input type="text" id="ac-phone"></div>
+    <div class="f"><label>Notes</label><input type="text" id="ac-notes"></div>
+    <div class="row"><button class="btn" id="ac-save">Save</button><button class="btn ghost" id="ac-cancel">Cancel</button><span style="flex:1"></span><button class="btn ghost hidden" id="ac-delete">Delete</button><span class="msg" id="ac-msg"></span></div>
+  </div>
+  <div class="filters" id="ac-filters"></div>
+  <table id="accounts"></table>
+</section>
+
+<section class="tab" id="tab-formats">
+  <h2>The 8 formats <small>click the picture to upload a real example, Edit to change the text</small></h2>
+  <div class="cards" id="fcards"></div>
+  <input type="file" id="fx-file" accept="image/*" hidden>
+</section>
+
+<section class="tab" id="tab-campaigns">
+  <h2>The kick-off plan <small>September 2026, the story every campaign serves</small></h2>
+  <div class="plan-panel">
+    <div><b>What we sell</b><p>A curated, bilingual, ad-free super app for family life. Nobody paid to be recommended. No agency commissions. Members pay for independence, and independence is a feeling, not a feature. Insider: first week 0.49, then 1 euro a week, no free trial, cancel in one tap. Founding Family badge for the first 90 days.</p></div>
+    <div><b>The funnel</b><p>Ad asks a question about the family, never about the app. Web quiz, 5 to 7 questions. Result card, half visible, shareable as a story. Insider welcome with the price on screen. Then the hooks: Dailies, Favorites, Playdates, Babysitters.</p></div>
+    <div><b>Channels</b><p>Attention on Meta (one ad set per angle, four creatives, review weekly, kill losers, scale winners 20 to 30 percent). Intent on Apple Ads and Google (kinderfeestje Amsterdam, kindvriendelijk restaurant Amsterdam, basisschool Amsterdam kiezen, babysitter Amsterdam, wat te doen met kinderen Amsterdam). Trust on Instagram organic: the 8 formats.</p></div>
+    <div><b>The bar to beat</b><p>60% quiz completion. 5% quiz completers to Insider (10 is the dream). 45% first renewal. Search subscribers 3x cheaper than Meta. Read the numbers against this every Monday in the quiz funnel on the Dashboard.</p></div>
+    <div><b>Eight weeks</b><p>W1 pricing FAQ, paywall, 0.49 intro, rename Food AI to Dinner Sorted. W2 web quiz at /quiz, result cards. W3 film Fridge Rescue, launch Meta and Apple Ads, babysitter supply. W4 to 5 hosted playdates filmed, Founding Family badge live, first member gift newsletter. W6 to 8 scale the winning angle, second quiz, partner badge wave.</p></div>
+    <div><b>Creative rules</b><p>Phone shot beats polished. The hook is a question. One moment per ad. Price on screen, honestly. Result cards are ads: 1080x1920 in our palette, members post it, we repost it. Test, kill, scale.</p></div>
+  </div>
+
+  <h2>Campaigns <small>status and notes are per city. Organic from the Ibiza playbook, paid and retention from the kick-off plan</small></h2>
+  <div id="ccards"></div>
+</section>
+</div>
+
+<script>
+/* ======================= config ======================= */
+const SUPABASE_URL  = 'https://qczutthumgpgxwepatte.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFjenV0dGh1bWdwZ3h3ZXBhdHRlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkwNzg5NzAsImV4cCI6MjA4NDY1NDk3MH0.vleNYVReRJnMruKBTXEb9gwdKVdhbiuLJTZoDiuUM0g';
+const FN_URL = SUPABASE_URL + '/functions/v1/marketing-advice';
+const CITIES = { ibiza: 'Ibiza', amsterdam: 'Amsterdam', valencia: 'Valencia' };
+const FORMATS = [
+  { n: 1, name: 'Weekly events story',     sub: 'fed by the events table',        lane: 'show',  surface: 'Story',         cadence: 'Mon, weekly',   kpi: 'Link taps',                 metric: 'link_taps' },
+  { n: 2, name: 'Kids services update',    sub: 'new in the app this week',       lane: 'show',  surface: 'Story',         cadence: 'Thu, weekly',   kpi: 'Link taps',                 metric: 'link_taps' },
+  { n: 3, name: 'Mom-Manager series',      sub: 'collab post, she reshares',      lane: 'trust', surface: 'Grid carousel', cadence: 'every 2nd Sun', kpi: 'Shares',                    metric: 'shares' },
+  { n: 4, name: 'Places reel',             sub: 'Top 100 table',                  lane: 'dream', surface: 'Reel',          cadence: 'Fri, weekly',   kpi: 'Saves',                     metric: 'saves' },
+  { n: 5, name: 'Theme post',              sub: 'eat + playground combos',        lane: 'show',  surface: 'Multi-image',   cadence: 'Wed, weekly',   kpi: 'Saves',                     metric: 'saves' },
+  { n: 6, name: 'Feature clip',            sub: 'the one that sells the app',     lane: 'show',  surface: 'Reel',          cadence: '2 per month',   kpi: 'Profile visits',            metric: 'profile_visits' },
+  { n: 7, name: 'Real parent testimonial', sub: '20s, phone, unscripted',         lane: 'trust', surface: 'Reel',          cadence: 'monthly',       kpi: 'Comments',                  metric: 'comments' },
+  { n: 8, name: 'Partner reposts',         sub: 'badge stream, businesses post',  lane: 'trust', surface: 'Story reshare', cadence: 'as they come',  kpi: 'Partners posting',          metric: 'count' },
+];
+
+/* ======================= state ======================= */
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+let session = null;
+let city = localStorage.getItem('fm-city') || 'amsterdam';
+let month = firstOfMonth(new Date());
+let week = mondayOf(new Date());
+let cache = { weeks: [], prevWeeks: [], posts: [], prevPosts: [], targets: null, plan: [], advice: null };
+let editing = null;
+
+const $ = id => document.getElementById(id);
+const fmtN = n => n == null ? '–' : (n >= 10000 ? (n / 1000).toFixed(1) + 'k' : String(n));
+const iso = d => d.toISOString().slice(0, 10);
+function firstOfMonth(d) { return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1)); }
+function addMonths(d, k) { return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + k, 1)); }
+function mondayOf(d) { const x = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())); const dow = (x.getUTCDay() + 6) % 7; x.setUTCDate(x.getUTCDate() - dow); return x; }
+function addDays(d, k) { const x = new Date(d); x.setUTCDate(x.getUTCDate() + k); return x; }
+const prefix = () => city[0].toUpperCase();
+const code = n => prefix() + 'F' + n;
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+/* ======================= auth ======================= */
+async function boot() {
+  const { data } = await sb.auth.getSession();
+  session = data.session;
+  if (!session) { $('login').classList.remove('hidden'); return; }
+  $('app').classList.remove('hidden');
+  renderCities();
+  await loadAll();
+}
+$('l-send').onclick = async () => {
+  const email = $('l-email').value.trim().toLowerCase();
+  if (!email) return;
+  $('l-msg').textContent = 'Sending...';
+  const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
+  if (error) { $('l-msg').textContent = error.message; return; }
+  $('l-step1').classList.add('hidden'); $('l-step2').classList.remove('hidden');
+  $('l-msg').textContent = 'Code sent to ' + email;
+};
+$('l-verify').onclick = async () => {
+  const email = $('l-email').value.trim().toLowerCase();
+  const token = $('l-code').value.trim();
+  let r = await sb.auth.verifyOtp({ email, token, type: 'email' });
+  if (r.error) r = await sb.auth.verifyOtp({ email, token, type: 'magiclink' });
+  if (r.error) { $('l-msg').textContent = 'That code did not work (' + r.error.message + ')'; return; }
+  location.reload();
+};
+$('logout').onclick = async () => { await sb.auth.signOut(); location.reload(); };
+
+/* ======================= loading ======================= */
+async function loadAll() {
+  const mStart = iso(month), mEnd = iso(addMonths(month, 1));
+  const pStart = iso(addMonths(month, -1));
+  const wkFrom = iso(addDays(week, -7)), wkTo = iso(addDays(week, 14));
+  const trFrom = iso(addDays(mondayOf(addMonths(month, 1)), -12 * 7));
+  const [w, pw, p, pp, t, pl, a, tr, nl] = await Promise.all([
+    sb.from('marketing_weeks').select('*').eq('city', city).gte('week', mStart).lt('week', mEnd).order('week'),
+    sb.from('marketing_weeks').select('*').eq('city', city).gte('week', pStart).lt('week', mStart).order('week'),
+    sb.from('marketing_posts').select('*').eq('city', city).gte('posted_at', mStart).lt('posted_at', mEnd),
+    sb.from('marketing_posts').select('*').eq('city', city).gte('posted_at', pStart).lt('posted_at', mStart),
+    sb.from('marketing_targets').select('*').eq('city', city).eq('month', mStart).maybeSingle(),
+    sb.from('marketing_plan').select('*').eq('city', city).gte('week', wkFrom).lt('week', wkTo),
+    sb.from('marketing_advice').select('advice,created_at,model').eq('city', city).order('created_at', { ascending: false }).limit(1).maybeSingle(),
+    sb.from('marketing_weeks').select('week,reach_7d,link_clicks,installs_ios,installs_android,free_accounts,paid_members').eq('city', city).gte('week', trFrom).lt('week', mEnd).order('week'),
+    sb.from('marketing_newsletter_ideas').select('ideas,created_at,model').eq('city', city).order('created_at', { ascending: false }).limit(1).maybeSingle(),
+  ]);
+  cache = { weeks: w.data || [], prevWeeks: pw.data || [], posts: p.data || [], prevPosts: pp.data || [], targets: t.data, plan: pl.data || [], advice: a.data, trend: tr.data || [], news: nl.data };
+  const firstErr = [w, pw, p, pp, t, pl, a].find(r => r.error);
+  if (firstErr) $('w-msg').textContent = 'Load error: ' + firstErr.error.message + ' (did you run the SQL?)';
+  if (nl.error) $('nl-msg').textContent = 'Run marketing-schema-v2.sql for this block.';
+  renderAll();
+  loadTab(tab, true);
+}
+function renderAll() {
+  $('m-label').textContent = MONTHS[month.getUTCMonth()] + ' ' + month.getUTCFullYear();
+  $('drop-codes').textContent = code(1) + ' to ' + code(8);
+  renderFunnel(); renderQuizFunnel(); renderAdvice(); renderWeekForm(); renderFormats(); renderPlan(); renderNews();
+}
+
+/* ======================= header ======================= */
+function renderCities() {
+  $('cities').innerHTML = Object.entries(CITIES).map(([k, v]) => `<button data-c="${k}" class="${k === city ? 'on' : ''}">${v}</button>`).join('');
+  $('cities').querySelectorAll('button').forEach(b => b.onclick = () => { city = b.dataset.c; localStorage.setItem('fm-city', city); renderCities(); loadAll(); });
+}
+$('m-prev').onclick = () => { month = addMonths(month, -1); loadAll(); };
+$('m-next').onclick = () => { month = addMonths(month, 1); loadAll(); };
+
+/* ======================= funnel ======================= */
+function sum(rows, k) { return rows.reduce((s, r) => s + (r[k] || 0), 0); }
+function funnelNumbers(rows) {
+  const last = rows.length ? rows[rows.length - 1] : null;
+  return {
+    reach: sum(rows, 'reach_7d'),
+    link_clicks: sum(rows, 'link_clicks'),
+    installs: sum(rows, 'installs_ios') + sum(rows, 'installs_android'),
+    free_accounts: sum(rows, 'free_accounts'),
+    paid_members: last ? last.paid_members : null,
+  };
+}
+function renderFunnel() {
+  const cur = funnelNumbers(cache.weeks), prev = funnelNumbers(cache.prevWeeks), t = cache.targets || {};
+  const steps = [
+    ['reach', 'Reach', 'sum of weekly reach'],
+    ['link_clicks', 'Link clicks', 'smart link'],
+    ['installs', 'Installs', 'both stores'],
+    ['free_accounts', 'Free accounts', 'auto, Supabase'],
+    ['paid_members', 'Paid members', 'auto, RevenueCat'],
+  ];
+  const pct = (a, b) => (b && a != null) ? Math.round(a / b * 1000) / 10 + '%' : '–';
+  const convLabel = ['click', 'install', 'account', 'paid'];
+  let html = '';
+  steps.forEach(([k, label, src], i) => {
+    const v = cur[k], target = t[k], pv = prev[k];
+    let chip = '';
+    if (target) { const r = Math.round(v / target * 100); chip = `<span class="chip ${r >= 100 ? 'up' : 'flat'}">${r}% of target</span>`; }
+    else if (pv != null && v != null && cache.prevWeeks.length) { const d = v - pv; chip = `<span class="chip ${d >= 0 ? 'up' : 'down'}">${d >= 0 ? '+' : ''}${d} vs last month</span>`; }
+    html += `<div class="tile"><div class="lbl">${label}</div><div class="src">${src}</div><div class="big">${fmtN(v)}</div><div class="tgt" data-k="${k}">target ${target ? fmtN(target) : 'set'}</div>${chip}${sparkline(k)}</div>`;
+    if (i < 4) {
+      const next = cur[steps[i + 1][0]];
+      html += `<div class="conv"><i>&rsaquo;</i><b>${pct(next, v)}</b>${convLabel[i]}</div>`;
+    }
+  });
+  $('funnel').innerHTML = html;
+  $('funnel').querySelectorAll('.tgt').forEach(el => el.onclick = async () => {
+    const k = el.dataset.k;
+    const val = prompt('Target for ' + k.replace('_', ' ') + ' this month:', (cache.targets && cache.targets[k]) || '');
+    if (val === null) return;
+    const row = Object.assign({ city, month: iso(month) }, cache.targets || {}, { [k]: parseInt(val, 10) || null });
+    delete row.created_at;
+    const { error } = await sb.from('marketing_targets').upsert(row, { onConflict: 'city,month' });
+    if (error) alert(error.message); else loadAll();
+  });
+}
+
+function renderQuizFunnel() {
+  const rows = cache.weeks, prev = cache.prevWeeks, t = cache.targets || {};
+  const cur = { ad_spend: sum(rows, 'ad_spend'), ad_clicks: sum(rows, 'ad_clicks'), quiz_starts: sum(rows, 'quiz_starts'), quiz_completions: sum(rows, 'quiz_completions'), insider_signups: sum(rows, 'insider_signups') };
+  const any = Object.values(cur).some(v => v);
+  if (!any && !prev.some(r => r.ad_spend || r.insider_signups)) { $('qfunnel').innerHTML = '<p class="msg" style="grid-column:1 / -1">No paid numbers yet. From week 3 of the kick-off plan, type ad spend, clicks, quiz starts, completions and Insider signups in the week row below.</p>'; return; }
+  const pct = (a, b) => (b && a != null) ? Math.round(a / b * 1000) / 10 : null;
+  const completion = pct(cur.quiz_completions, cur.quiz_starts), toInsider = pct(cur.insider_signups, cur.quiz_completions);
+  const cpi = (cur.ad_spend > 0 && cur.insider_signups > 0) ? (cur.ad_spend / cur.insider_signups).toFixed(2) : null;
+  const bar = (v, b) => v == null ? '' : `<span class="chip ${v >= b ? 'up' : 'down'}">${v}% vs bar ${b}%</span>`;
+  const steps = [
+    ['ad_spend', 'Ad spend', 'euro, sum of weeks', cur.ad_spend ? cur.ad_spend.toFixed(0) : null, t.ad_spend ? `<span class="chip ${cur.ad_spend <= t.ad_spend ? 'up' : 'down'}">${Math.round(cur.ad_spend / t.ad_spend * 100)}% of budget</span>` : ''],
+    ['ad_clicks', 'Ad clicks', 'Meta plus search', cur.ad_clicks, cur.ad_spend && cur.ad_clicks ? `<span class="chip flat">${(cur.ad_spend / cur.ad_clicks).toFixed(2)} per click</span>` : ''],
+    ['quiz_starts', 'Quiz starts', 'web quiz', cur.quiz_starts, ''],
+    ['quiz_completions', 'Quiz completions', 'bar 60% of starts', cur.quiz_completions, bar(completion, 60)],
+    ['insider_signups', 'Insider signups', 'bar 5% of completions', cur.insider_signups, bar(toInsider, 5) + (cpi ? `<span class="chip ${cpi <= 20 ? 'up' : 'flat'}">${cpi} euro per Insider</span>` : '') + (t.insider_signups ? `<span class="chip ${cur.insider_signups >= t.insider_signups ? 'up' : 'flat'}">${Math.round(cur.insider_signups / t.insider_signups * 100)}% of target</span>` : '')],
+  ];
+  const conv = [null, pct(cur.quiz_starts, cur.ad_clicks), completion, toInsider];
+  const convLabel = ['clicks', 'start', 'complete', 'insider'];
+  let html = '';
+  steps.forEach(([k, label, src, v, chips], i) => {
+    const tgt = (k === 'ad_spend' || k === 'insider_signups') ? `<div class="tgt" data-k="${k}">${k === 'ad_spend' ? 'budget' : 'target'} ${t[k] ? fmtN(t[k]) : 'set'}</div>` : '<div class="tgt" style="visibility:hidden">.</div>';
+    html += `<div class="tile"><div class="lbl">${label}</div><div class="src">${src}</div><div class="big">${v == null ? '–' : fmtN(v)}</div>${tgt}${chips}</div>`;
+    if (i < 4) html += `<div class="conv"><i>&rsaquo;</i><b>${conv[i] == null ? '' : conv[i] + '%'}</b>${conv[i] == null ? '' : convLabel[i]}</div>`;
+  });
+  $('qfunnel').innerHTML = html;
+  $('qfunnel').querySelectorAll('.tgt[data-k]').forEach(el => el.onclick = async () => {
+    const k = el.dataset.k;
+    const val = prompt((k === 'ad_spend' ? 'Ad budget (euro)' : 'Insider signups target') + ' this month:', (cache.targets && cache.targets[k]) || '');
+    if (val === null) return;
+    const row = Object.assign({ city, month: iso(month) }, cache.targets || {}, { [k]: k === 'ad_spend' ? (parseFloat(val) || null) : (parseInt(val, 10) || null) });
+    delete row.created_at;
+    const { error } = await sb.from('marketing_targets').upsert(row, { onConflict: 'city,month' });
+    if (error) alert(error.message); else loadAll();
+  });
+}
+function sparkline(k) {
+  const rows = cache.trend || [];
+  const val = r => k === 'reach' ? r.reach_7d : k === 'installs' ? ((r.installs_ios || 0) + (r.installs_android || 0)) : r[k];
+  const pts = rows.map(val).filter(v => v != null);
+  if (pts.length < 2) return '';
+  const max = Math.max(...pts), min = Math.min(...pts), W = 100, H = 28, pad = 3;
+  const x = i => pad + i * (W - 2 * pad) / (pts.length - 1);
+  const y = v => max === min ? H / 2 : H - pad - (v - min) * (H - 2 * pad) / (max - min);
+  const line = pts.map((v, i) => x(i).toFixed(1) + ',' + y(v).toFixed(1)).join(' ');
+  return `<svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><polyline points="${line}"/><circle cx="${x(pts.length - 1).toFixed(1)}" cy="${y(pts[pts.length - 1]).toFixed(1)}" r="2.5"/></svg>`;
+}
+
+/* ======================= advice ======================= */
+function renderAdvice() {
+  const a = cache.advice;
+  if (!a) { $('adv-text').className = 'muted'; $('adv-text').textContent = 'No advice yet. Fill in a few weeks of numbers, then press Refresh advice.'; $('adv-when').textContent = ''; $('adv-model').textContent = ''; return; }
+  $('adv-text').className = ''; $('adv-text').textContent = a.advice;
+  $('adv-when').textContent = 'updated ' + new Date(a.created_at).toLocaleString();
+  $('adv-model').textContent = a.model || '';
+}
+$('adv-btn').onclick = async () => {
+  $('adv-btn').disabled = true; $('adv-btn').textContent = 'Thinking...';
+  try {
+    const r = await callFn({ action: 'advise', city });
+    if (r.error) throw new Error(r.error);
+    await loadAll();
+  } catch (e) { alert('Advice failed: ' + e.message); }
+  $('adv-btn').disabled = false; $('adv-btn').textContent = 'Refresh advice';
+};
+async function callFn(body) {
+  const { data } = await sb.auth.getSession();
+  const r = await fetch(FN_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: SUPABASE_ANON, Authorization: 'Bearer ' + data.session.access_token }, body: JSON.stringify(body) });
+  return r.json();
+}
+
+/* ======================= week form ======================= */
+const WF = { followers: 'w-followers', reach_7d: 'w-reach', installs_ios: 'w-ios', installs_android: 'w-android', link_clicks: 'w-clicks', free_accounts: 'w-accounts', paid_members: 'w-paid', notes: 'w-notes', ad_spend: 'w-adspend', ad_clicks: 'w-adclicks', quiz_starts: 'w-qstarts', quiz_completions: 'w-qdone', insider_signups: 'w-insider' };
+async function renderWeekForm() {
+  const end = addDays(week, 6);
+  $('w-label').textContent = 'week of ' + week.getUTCDate() + ' ' + MONTHS[week.getUTCMonth()].slice(0, 3) + ' to ' + end.getUTCDate() + ' ' + MONTHS[end.getUTCMonth()].slice(0, 3);
+  let row = cache.weeks.concat(cache.prevWeeks).find(r => r.week === iso(week));
+  if (!row) { const r = await sb.from('marketing_weeks').select('*').eq('city', city).eq('week', iso(week)).maybeSingle(); row = r.data; }
+  Object.entries(WF).forEach(([k, id]) => $(id).value = row && row[k] != null ? row[k] : '');
+  $('w-msg').textContent = row ? 'saved ' + new Date(row.updated_at).toLocaleDateString() : 'nothing saved for this week yet';
+  cpi();
+}
+function cpi() { const sp = parseFloat($('w-adspend').value), n = parseInt($('w-insider').value, 10); $('w-cpi').value = (sp > 0 && n > 0) ? (sp / n).toFixed(2) + ' euro' : ''; }
+$('w-adspend').oninput = cpi; $('w-insider').oninput = cpi;
+$('w-prev').onclick = () => { week = addDays(week, -7); renderWeekForm(); };
+$('w-next').onclick = () => { week = addDays(week, 7); renderWeekForm(); };
+$('w-save').onclick = async () => {
+  const row = { city, week: iso(week), updated_at: new Date().toISOString() };
+  Object.entries(WF).forEach(([k, id]) => { const v = $(id).value; row[k] = k === 'notes' ? (v || null) : v === '' ? null : k === 'ad_spend' ? parseFloat(v) : parseInt(v, 10); });
+  const { error } = await sb.from('marketing_weeks').upsert(row, { onConflict: 'city,week' });
+  $('w-msg').textContent = error ? 'Save failed: ' + error.message : 'Saved.';
+  if (!error) loadAll();
+};
+$('w-auto').onclick = async () => {
+  $('w-msg').textContent = 'Fetching...';
+  try {
+    const r = await callFn({ action: 'auto', city, week: iso(week) });
+    if (r.error) throw new Error(r.error);
+    if (r.free_accounts != null) $('w-accounts').value = r.free_accounts;
+    if (r.paid_members != null) $('w-paid').value = r.paid_members;
+    $('w-msg').textContent = 'Filled: accounts ' + (r.free_accounts ?? '?') + (r.paid_members != null ? ', paid ' + r.paid_members : ', paid not connected (RevenueCat keys not set)') + '. Press Save week.';
+  } catch (e) { $('w-msg').textContent = 'Fetch failed: ' + e.message; }
+};
+
+/* ======================= Meta CSV ======================= */
+const drop = $('drop');
+drop.onclick = () => $('csv').click();
+drop.ondragover = e => { e.preventDefault(); drop.classList.add('hover'); };
+drop.ondragleave = () => drop.classList.remove('hover');
+drop.ondrop = e => { e.preventDefault(); drop.classList.remove('hover'); if (e.dataTransfer.files[0]) importCsv(e.dataTransfer.files[0]); };
+$('csv').onchange = () => { if ($('csv').files[0]) importCsv($('csv').files[0]); };
+
+function parseCsv(text) {
+  const rows = []; let row = [], field = '', q = false;
+  text = text.replace(/^﻿/, '');
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) { if (c === '"') { if (text[i + 1] === '"') { field += '"'; i++; } else q = false; } else field += c; }
+    else if (c === '"') q = true;
+    else if (c === ',' || c === ';' || c === '\t') { row.push(field); field = ''; }
+    else if (c === '\n' || c === '\r') { if (c === '\r' && text[i + 1] === '\n') i++; row.push(field); rows.push(row); row = []; field = ''; }
+    else field += c;
+  }
+  if (field !== '' || row.length) { row.push(field); rows.push(row); }
+  return rows.filter(r => r.some(x => x !== ''));
+}
+function findCol(headers, patterns) {
+  for (const p of patterns) { const i = headers.findIndex(h => p.test(h)); if (i >= 0) return i; }
+  return -1;
+}
+function num(v) { if (v == null) return null; const n = parseInt(String(v).replace(/[^\d-]/g, ''), 10); return isNaN(n) ? null : n; }
+function parseDate(v) { if (!v) return null; const d = new Date(v); if (!isNaN(d)) return iso(new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()))); const m = String(v).match(/(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})/); if (m) return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`; return null; }
+async function importCsv(file) {
+  const text = await file.text();
+  const rows = parseCsv(text);
+  if (rows.length < 2) { $('csv-msg').textContent = 'Could not read that file.'; return; }
+  const headers = rows[0].map(h => h.trim().toLowerCase());
+  const col = {
+    date: findCol(headers, [/publish time/, /^date$/, /created/, /^time/]),
+    caption: findCol(headers, [/description/, /caption/, /^title$/, /message/, /post text/]),
+    type: findCol(headers, [/post type/, /media type/, /^type$/, /format/]),
+    reach: findCol(headers, [/^reach/, /accounts reached/]),
+    likes: findCol(headers, [/^likes?$/, /reactions/]),
+    comments: findCol(headers, [/comment/]),
+    saves: findCol(headers, [/save/]),
+    shares: findCol(headers, [/share/]),
+    follows: findCol(headers, [/follow/]),
+    profile_visits: findCol(headers, [/profile visit/]),
+    link_taps: findCol(headers, [/link click/, /link tap/, /website tap/, /website click/]),
+  };
+  if (col.date < 0 || col.caption < 0) { $('csv-msg').textContent = 'No date or caption column found. Headers seen: ' + headers.slice(0, 12).join(', '); return; }
+  const re = new RegExp('\\b' + prefix() + 'F([1-8])\\b', 'i');
+  const out = []; let unmatched = 0;
+  for (const r of rows.slice(1)) {
+    const cap = r[col.caption] || '';
+    const d = parseDate(r[col.date]);
+    if (!d) continue;
+    const m = cap.match(re);
+    if (!m) unmatched++;
+    const typ = (col.type >= 0 ? r[col.type] : '').toLowerCase();
+    const surface = /reel|video/.test(typ) ? 'reel' : /story/.test(typ) ? 'story' : /carousel|album|multi/.test(typ) ? 'carousel' : typ ? 'image' : null;
+    out.push({
+      city, posted_at: d, format_code: m ? prefix() + 'F' + m[1] : null, surface, caption: cap.slice(0, 500),
+      reach: col.reach >= 0 ? num(r[col.reach]) : null, likes: col.likes >= 0 ? num(r[col.likes]) : null,
+      comments: col.comments >= 0 ? num(r[col.comments]) : null, saves: col.saves >= 0 ? num(r[col.saves]) : null,
+      shares: col.shares >= 0 ? num(r[col.shares]) : null, follows: col.follows >= 0 ? num(r[col.follows]) : null,
+      profile_visits: col.profile_visits >= 0 ? num(r[col.profile_visits]) : null, link_taps: col.link_taps >= 0 ? num(r[col.link_taps]) : null,
+      source: 'meta', dedupe_key: city + '|' + d + '|' + cap.slice(0, 80),
+    });
+  }
+  if (!out.length) { $('csv-msg').textContent = 'No post rows found.'; return; }
+  const { data: saved, error } = await sb.from('marketing_posts').upsert(out, { onConflict: 'dedupe_key' }).select('id,posted_at,format_code');
+  $('csv-msg').textContent = error ? 'Import failed: ' + error.message : `Imported ${out.length} posts, ${out.length - unmatched} matched to a format, ${unmatched} without a code.`;
+  if (!error) { await linkPlacedAssets(saved || []); loadAll(); }
+}
+// a placed concept with a format code and a planned date gets linked to the imported post of the same format within 3 days
+async function linkPlacedAssets(posts) {
+  if (!posts.length) return;
+  const { data: assets } = await sb.from('marketing_assets').select('id,format_code,planned_date').eq('city', city).eq('status', 'placed').is('post_id', null).not('planned_date', 'is', null);
+  let linked = 0;
+  for (const a of assets || []) {
+    const cands = posts.filter(p => p.format_code && p.format_code === a.format_code).map(p => ({ p, d: Math.abs(new Date(p.posted_at) - new Date(a.planned_date)) / 86400000 })).filter(x => x.d <= 3).sort((x, y) => x.d - y.d);
+    if (cands.length) { await sb.from('marketing_assets').update({ post_id: cands[0].p.id }).eq('id', a.id); linked++; }
+  }
+  if (linked) $('csv-msg').textContent += ` ${linked} placed concept${linked > 1 ? 's' : ''} linked to a post.`;
+}
+
+/* ======================= formats table ======================= */
+function agg(posts, f) {
+  const mine = posts.filter(p => p.format_code === code(f.n));
+  if (f.metric === 'count') return { v: mine.length, n: mine.length };
+  return { v: mine.reduce((s, p) => s + (p[f.metric] || 0), 0), n: mine.length };
+}
+function renderFormats() {
+  let html = '<tr><th>#</th><th>Format</th><th>Lane</th><th>Surface</th><th>Cadence</th><th>Primary KPI</th><th>This month</th><th>Last</th><th>Posts</th></tr>';
+  for (const f of FORMATS) {
+    const a = agg(cache.posts, f), b = agg(cache.prevPosts, f);
+    const trend = (a.n && b.n) ? (a.v > b.v ? '<span class="chip up">up</span>' : a.v < b.v ? '<span class="chip down">down</span>' : '<span class="chip flat">flat</span>') : '';
+    html += `<tr><td class="muted">${code(f.n)}</td><td><b>${f.name}</b><br><span class="muted">${f.sub}</span></td><td><span class="lane ${f.lane}">${f.lane[0].toUpperCase() + f.lane.slice(1)}</span></td><td>${f.surface}</td><td>${f.cadence}</td><td>${f.kpi}</td><td>${a.n ? '<b>' + fmtN(a.v) + '</b> ' + trend : '<span class="muted">no posts</span>'}</td><td class="muted">${b.n ? fmtN(b.v) : '–'}</td><td class="muted">${a.n}</td></tr>`;
+  }
+  $('formats').innerHTML = html;
+}
+
+/* ======================= plan ======================= */
+function renderPlan() {
+  const w0 = mondayOf(new Date()), today = iso(new Date());
+  const weeks = [w0, addDays(w0, 7)];
+  let html = '<div></div>' + ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d => `<div class="h">${d}</div>`).join('');
+  for (const wk of weeks) {
+    html += `<div class="wk">${wk.getUTCDate()} ${MONTHS[wk.getUTCMonth()].slice(0, 3)}</div>`;
+    for (let d = 0; d < 7; d++) {
+      const slot = cache.plan.find(p => p.week === iso(wk) && p.day === d);
+      const isToday = iso(addDays(wk, d)) === today;
+      const f = slot && slot.format_code ? FORMATS.find(x => code(x.n) === slot.format_code) : null;
+      html += `<div class="cell ${slot ? '' : 'empty'} ${slot && slot.posted ? 'done' : ''} ${isToday ? 'today' : ''}" data-w="${iso(wk)}" data-d="${d}">${slot ? `<span class="tag">${slot.format_code || ''} ${f ? f.name : ''}</span><span class="who">${slot.note || ''}</span>` : ''}</div>`;
+    }
+  }
+  $('plan').innerHTML = html;
+  $('plan').querySelectorAll('.cell').forEach(c => c.onclick = () => openEditor(c.dataset.w, parseInt(c.dataset.d, 10)));
+  $('ed-format').innerHTML = '<option value="">no format</option>' + FORMATS.map(f => `<option value="${code(f.n)}">${code(f.n)} ${f.name}</option>`).join('');
+}
+function openEditor(w, d) {
+  editing = { w, d };
+  const slot = cache.plan.find(p => p.week === w && p.day === d);
+  $('ed-title').textContent = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][d] + ' ' + addDays(new Date(w + 'T00:00:00Z'), d).getUTCDate();
+  $('ed-format').value = slot ? (slot.format_code || '') : '';
+  $('ed-note').value = slot ? (slot.note || '') : '';
+  $('ed-posted').checked = !!(slot && slot.posted);
+  $('editor').style.display = 'flex';
+  $('ed-note').focus();
+}
+$('ed-close').onclick = () => { $('editor').style.display = 'none'; editing = null; };
+$('ed-save').onclick = async () => {
+  if (!editing) return;
+  const row = { city, week: editing.w, day: editing.d, format_code: $('ed-format').value || null, note: $('ed-note').value || null, posted: $('ed-posted').checked };
+  const { error } = await sb.from('marketing_plan').upsert(row, { onConflict: 'city,week,day' });
+  if (error) alert(error.message); else { $('editor').style.display = 'none'; loadAll(); }
+};
+$('ed-clear').onclick = async () => {
+  if (!editing) return;
+  await sb.from('marketing_plan').delete().eq('city', city).eq('week', editing.w).eq('day', editing.d);
+  $('editor').style.display = 'none'; loadAll();
+};
+
+/* =====================================================================
+   v2: tabs, newsletter ideas, concept grid, chat, accounts, formats, campaigns
+   ===================================================================== */
+let tab = localStorage.getItem('fm-tab') || 'dashboard';
+const loaded = {};   // per tab per city, so switching tabs does not refetch
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmtDate = d => d ? new Date(d).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : '';
+const fmtWhen = d => d ? new Date(d).toLocaleString(undefined, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+
+function showTab(t) {
+  tab = t; localStorage.setItem('fm-tab', t);
+  $('tabs').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.t === t));
+  document.querySelectorAll('section.tab').forEach(s => s.classList.toggle('on', s.id === 'tab-' + t));
+  if (session) loadTab(t);
+}
+$('tabs').querySelectorAll('button').forEach(b => b.onclick = () => showTab(b.dataset.t));
+showTab(tab);
+function loadTab(t, force) {
+  const key = t + '|' + city;
+  if (!force && loaded[key]) return;
+  loaded[key] = true;
+  if (t === 'concepts') { loadAssets(); loadChat(); }
+  if (t === 'accounts') loadAccounts();
+  if (t === 'formats') loadFormatsPage();
+  if (t === 'campaigns') loadCampaigns();
+}
+
+/* ---------- settings: model choice ---------- */
+$('settings-btn').onclick = async () => {
+  const el = $('settings'); el.classList.toggle('hidden'); if (el.classList.contains('hidden')) return;
+  $('s-msg').textContent = 'Loading the model list from Anthropic...';
+  try {
+    const r = await callFn({ action: 'models' });
+    if (r.error) throw new Error(r.error);
+    const list = (r.models || []).sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
+    const opts = cur => `<option value="">default (${esc(r.fallback)})</option>` + list.map(m => `<option value="${esc(m.id)}" ${m.id === cur ? 'selected' : ''}>${esc(m.name)} (${esc(m.id)})</option>`).join('');
+    const { data } = await sb.from('marketing_settings').select('key,value');
+    const st = {}; (data || []).forEach(x => st[x.key] = x.value || '');
+    $('s-model-text').innerHTML = opts(st.model_text); $('s-model-chat').innerHTML = opts(st.model_chat);
+    $('s-msg').textContent = `${list.length} models available on your key. Now: advice ${r.model_text}, chat ${r.model_chat}.`;
+  } catch (e) { $('s-msg').textContent = 'Could not load models: ' + e.message + ' (is ANTHROPIC_API_KEY set?)'; }
+};
+$('s-close').onclick = () => $('settings').classList.add('hidden');
+$('s-save').onclick = async () => {
+  const rows = [{ key: 'model_text', value: $('s-model-text').value, updated_at: new Date().toISOString() }, { key: 'model_chat', value: $('s-model-chat').value, updated_at: new Date().toISOString() }];
+  const { error } = await sb.from('marketing_settings').upsert(rows, { onConflict: 'key' });
+  $('s-msg').textContent = error ? 'Save failed: ' + error.message : 'Saved. Next advice, newsletter and chat use these.';
+};
+
+/* ---------- storage upload ---------- */
+async function uploadFile(folder, file, name) {
+  const ext = (file.name || 'file').split('.').pop().toLowerCase().replace(/[^a-z0-9]/g, '') || 'bin';
+  const path = `${city}/${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 7)}${name ? '-' + name : ''}.${ext}`;
+  const { error } = await sb.storage.from('marketing').upload(path, file, { upsert: true, contentType: file.type || undefined });
+  if (error) throw new Error(error.message);
+  return sb.storage.from('marketing').getPublicUrl(path).data.publicUrl;
+}
+function canvasBlob(canvas) { return new Promise(res => canvas.toBlob(b => res(b), 'image/jpeg', 0.86)); }
+// 3 frames from a video (File or URL): start, middle, near the end. Returns array of jpeg Files.
+function videoFrames(src, count = 3) {
+  return new Promise((resolve) => {
+    const v = document.createElement('video'); v.muted = true; v.playsInline = true; v.preload = 'auto'; v.crossOrigin = 'anonymous';
+    const frames = []; let times = []; let i = 0;
+    const done = () => { if (v.src.startsWith('blob:')) URL.revokeObjectURL(v.src); resolve(frames); };
+    v.onerror = done;
+    v.onloadedmetadata = () => {
+      const d = v.duration || 1; times = count === 1 ? [Math.min(0.5, d / 2)] : [Math.min(0.5, d / 2), d / 2, Math.max(d - 0.6, d / 2)];
+      v.currentTime = times[0];
+    };
+    v.onseeked = async () => {
+      try {
+        const c = document.createElement('canvas'); const s = Math.min(1, 1080 / (v.videoWidth || 1080));
+        c.width = Math.round((v.videoWidth || 720) * s); c.height = Math.round((v.videoHeight || 1280) * s);
+        c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
+        const b = await canvasBlob(c); if (b) frames.push(new File([b], `frame${i + 1}.jpg`, { type: 'image/jpeg' }));
+      } catch (e) { /* tainted canvas or decode issue: skip */ }
+      i++; if (i < times.length) v.currentTime = times[i]; else done();
+    };
+    v.src = typeof src === 'string' ? src : URL.createObjectURL(src);
+    v.load();
+  });
+}
+
+/* ---------- newsletter ideas ---------- */
+function renderNews() {
+  const n = cache.news;
+  if (!n || !Array.isArray(n.ideas) || !n.ideas.length) { $('nl-list').innerHTML = '<p class="msg">No ideas yet. Add a note if you want, then press the button.</p>'; $('nl-when').textContent = ''; return; }
+  $('nl-when').textContent = fmtWhen(n.created_at);
+  $('nl-list').innerHTML = n.ideas.map(i => `<div class="idea"><b>${esc(i.subject)}</b><p>${esc(i.angle)}</p>${i.feature ? `<i>${esc(i.feature)}</i>` : ''}</div>`).join('');
+}
+$('nl-btn').onclick = async () => {
+  $('nl-btn').disabled = true; $('nl-msg').textContent = 'Reading events, partners, app news...';
+  try {
+    const r = await callFn({ action: 'newsletter', city, notes: $('nl-notes').value.trim() });
+    if (r.error) throw new Error(r.error);
+    $('nl-msg').textContent = r.events != null ? `${r.events} upcoming events read.` : '';
+    await loadAll();
+  } catch (e) { $('nl-msg').textContent = 'Failed: ' + e.message; }
+  $('nl-btn').disabled = false;
+};
+
+/* ---------- concept grid ---------- */
+let assets = [], selAsset = null, dragId = null;
+async function loadAssets() {
+  const { data, error } = await sb.from('marketing_assets').select('*').eq('city', city).order('sort').order('created_at');
+  if (error) { $('as-msg').textContent = 'Run marketing-schema-v2.sql first (' + error.message + ')'; return; }
+  assets = data || []; renderGrid();
+}
+function renderGrid() {
+  const stLabel = { concept: 'concept', feedback: 'feedback', placed: 'placed' };
+  let html = assets.map(a => `<div class="gi ${a.status} ${selAsset === a.id ? 'sel' : ''}" draggable="true" data-id="${a.id}">
+      <img src="${esc(a.thumb_url || a.url)}" alt="" loading="lazy">
+      <span class="st">${stLabel[a.status] || a.status}</span>
+      ${a.format_code ? `<span class="fc">${esc(a.format_code)}</span>` : ''}
+      ${a.kind === 'reel' ? '<span class="reel">&#9654;</span>' : ''}
+      ${a.planned_date ? `<span class="dt">${fmtDate(a.planned_date)}</span>` : ''}
+    </div>`).join('');
+  html += `<div class="gi up" id="as-up">+ add images or reels<br><span class="muted" style="font-size:11px">or drop them here</span></div>`;
+  $('grid').innerHTML = html;
+  $('grid').querySelectorAll('.gi[data-id]').forEach(el => {
+    el.onclick = () => openAsset(el.dataset.id);
+    el.ondragstart = e => { dragId = el.dataset.id; e.dataTransfer.effectAllowed = 'move'; };
+    el.ondragover = e => { if (dragId) { e.preventDefault(); el.classList.add('dragover'); } };
+    el.ondragleave = () => el.classList.remove('dragover');
+    el.ondrop = e => { e.preventDefault(); el.classList.remove('dragover'); if (dragId && dragId !== el.dataset.id) reorder(dragId, el.dataset.id); dragId = null; };
+  });
+  const up = $('as-up');
+  up.onclick = () => $('as-file').click();
+  up.ondragover = e => { if (!dragId) { e.preventDefault(); up.classList.add('dragover'); } };
+  up.ondragleave = () => up.classList.remove('dragover');
+  up.ondrop = e => { e.preventDefault(); up.classList.remove('dragover'); if (e.dataTransfer.files.length) addAssets([...e.dataTransfer.files]); };
+}
+$('as-file').onchange = () => { if ($('as-file').files.length) addAssets([...$('as-file').files]); $('as-file').value = ''; };
+async function addAssets(files) {
+  let n = 0;
+  for (const f of files) {
+    const isVideo = f.type.startsWith('video/');
+    if (!isVideo && !f.type.startsWith('image/')) continue;
+    if (f.size > 50 * 1024 * 1024) { $('as-msg').textContent = f.name + ' is over 50 MB, skipped.'; continue; }
+    $('as-msg').textContent = `Uploading ${f.name}...`;
+    try {
+      const url = await uploadFile('assets', f);
+      let thumb = null;
+      if (isVideo) { const fr = await videoFrames(f, 1); if (fr[0]) thumb = await uploadFile('thumbs', fr[0]); }
+      const sort = assets.length ? Math.max(...assets.map(a => a.sort || 0)) + 1 : 0;
+      const { data, error } = await sb.from('marketing_assets').insert({ city, kind: isVideo ? 'reel' : 'image', url, thumb_url: thumb, status: 'concept', sort }).select().single();
+      if (error) throw new Error(error.message);
+      assets.push(data); n++;
+    } catch (e) { $('as-msg').textContent = 'Upload failed: ' + e.message; renderGrid(); return; }
+  }
+  $('as-msg').textContent = n ? `${n} added.` : ''; renderGrid();
+}
+async function reorder(fromId, toId) {
+  const from = assets.findIndex(a => a.id === fromId), to = assets.findIndex(a => a.id === toId);
+  const [m] = assets.splice(from, 1); assets.splice(to, 0, m);
+  assets.forEach((a, i) => a.sort = i); renderGrid();
+  const { error } = await sb.from('marketing_assets').upsert(assets.map(a => ({ id: a.id, city: a.city, kind: a.kind, url: a.url, sort: a.sort })), { onConflict: 'id' });
+  if (error) $('as-msg').textContent = 'Reorder not saved: ' + error.message;
+}
+function openAsset(id) {
+  selAsset = id; const a = assets.find(x => x.id === id); if (!a) return;
+  $('ad-format').innerHTML = '<option value="">no format yet</option>' + FORMATS.map(f => `<option value="${code(f.n)}">${code(f.n)} ${f.name}</option>`).join('') + '<optgroup label="Paid angles (ads, not organic)">' + ANGLES.map(a => `<option value="${a.code}">${a.code} ${a.name}</option>`).join('') + '</optgroup>';
+  $('ad-status').value = a.status || 'concept'; $('ad-format').value = a.format_code || ''; $('ad-date').value = a.planned_date || '';
+  $('ad-caption').value = a.caption || ''; $('ad-feedback').value = a.feedback || ''; $('ad-open').href = a.url;
+  $('adet').classList.add('on'); renderGrid();
+  $('adet').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+$('ad-close').onclick = () => { $('adet').classList.remove('on'); selAsset = null; renderGrid(); };
+$('ad-save').onclick = async () => {
+  const a = assets.find(x => x.id === selAsset); if (!a) return;
+  const patch = { status: $('ad-status').value, format_code: $('ad-format').value || null, planned_date: $('ad-date').value || null, caption: $('ad-caption').value || null, feedback: $('ad-feedback').value || null, updated_at: new Date().toISOString() };
+  const { error } = await sb.from('marketing_assets').update(patch).eq('id', a.id);
+  if (error) { $('as-msg').textContent = 'Save failed: ' + error.message; return; }
+  Object.assign(a, patch); $('as-msg').textContent = 'Saved.'; renderGrid();
+};
+$('ad-delete').onclick = async () => {
+  const a = assets.find(x => x.id === selAsset); if (!a) return;
+  if (!confirm('Delete this concept? The file stays in storage.')) return;
+  const { error } = await sb.from('marketing_assets').delete().eq('id', a.id);
+  if (error) { $('as-msg').textContent = 'Delete failed: ' + error.message; return; }
+  assets = assets.filter(x => x.id !== a.id); selAsset = null; $('adet').classList.remove('on'); renderGrid();
+};
+$('ad-ask').onclick = async () => {
+  const a = assets.find(x => x.id === selAsset); if (!a) return;
+  pending = [];
+  const isVideo = a.kind === 'reel' && !/\.(png|jpe?g|webp|gif)(\?|$)/i.test(a.url);   // reel concepts can be a still cover (launch ideas)
+  if (isVideo) {
+    $('as-msg').textContent = 'Taking 3 frames from the reel...';
+    const fr = await videoFrames(a.url, 3);
+    for (const f of fr) { try { pending.push({ url: await uploadFile('chat', f), asset_id: a.id }); } catch (e) { /* skip */ } }
+    if (!pending.length && a.thumb_url) pending.push({ url: a.thumb_url, asset_id: a.id });
+    $('as-msg').textContent = '';
+  } else pending.push({ url: a.url, asset_id: a.id });
+  renderAtt();
+  const parts = [];
+  if (a.format_code) parts.push('meant as ' + a.format_code);
+  if (a.caption) parts.push('caption draft: ' + a.caption);
+  $('ch-text').value = `What do you think of this ${isVideo ? 'reel (3 frames)' : a.kind === 'reel' ? 'reel cover' : 'image'}${parts.length ? ', ' + parts.join(', ') : ''}? Which format, what to change, caption in our voice, when to post.`;
+  $('ch-text').focus();
+  if (window.innerWidth <= 820) $('ch-log').scrollIntoView({ behavior: 'smooth' });
+};
+
+const ANGLES = [ { code: 'AD1', name: 'Which Amsterdam family are you' }, { code: 'AD2', name: 'Family Food Map' }, { code: 'AD3', name: 'Parent Battery Check' }, { code: 'AD4', name: 'Fridge Rescue' }, { code: 'AD5', name: 'Birthday Panic' } ];
+/* launch ideas: 12 organic concepts (built by ideas-src/build.py) plus the 5 paid angle story ads from the campaign visuals (ideas/ad*.jpg) */
+const LAUNCH_IDEAS = [
+ {
+  "file": "af6-launch.png",
+  "format_code": "AF6",
+  "kind": "reel",
+  "planned_date": "2026-09-07",
+  "title": "Launch clip: one happy app",
+  "caption": "Everything for family life in Amsterdam, in one happy app. What to do this weekend, where to eat with the kids, which club, who babysits. 1,112 food spots, 1,265 playgrounds, 310 schools, 1,844 clubs, all curated by parents, in English and Dutch, no ads. Free in the App Store and Google Play. Comment PLAN and we send you the link. AF6",
+  "first_comment": "Alles voor het gezinsleven in Amsterdam, in een app. Wat doen we dit weekend, waar eten we met de kids, welke club, wie past op. Gratis in de App Store en Google Play. Reageer PLAN en we sturen je de link.",
+  "feedback": "Screen recording, 15 to 20 seconds, a hand holding the phone. Shot 1 home screen and the Dailies card, shot 2 Family Food Spots map zoom into Zuid, shot 3 Top 100 and a save tap. On screen text in three lines as on the cover. Original audio or a cleared track. Cover = this image. Posted the launch day, boosted Sunday if it wins."
+ },
+ {
+  "file": "af1-events-week.png",
+  "format_code": "AF1",
+  "kind": "image",
+  "planned_date": "2026-09-07",
+  "title": "This week in Amsterdam (events story)",
+  "caption": "This week in Amsterdam, picked from the Event Agenda. Tap for times, prices and the map. AF1",
+  "first_comment": "Deze week in Amsterdam, uit de Event Agenda. Tik voor tijden, prijzen en de kaart.",
+  "feedback": "Story, 3 to 5 frames. Frame 1 = this overview, then one frame per event with a link sticker to the event in the app. Fill the four rows from ams_events for the coming week (the app's Event Agenda page shows the same list). Same layout every Monday, only the rows change."
+ },
+ {
+  "file": "af5-rainy-wednesday.png",
+  "format_code": "AF5",
+  "kind": "image",
+  "planned_date": "2026-09-09",
+  "title": "Rainy Wednesday, sorted (theme post)",
+  "caption": "Rainy Wednesday, sorted. Three places where the coffee is good and the kids are busy: Kinderkookkafé in West (they cook, you sit), Noorderlicht in Noord (space to run, sand to dig), and a third one you tell us in the comments. All 1,112 food spots have a play area filter in the app. AF5",
+  "first_comment": "Regenachtige woensdag, geregeld. Drie plekken met goede koffie en drukke kinderen. Alle 1.112 eetplekken hebben een speelhoekfilter in de app.",
+  "feedback": "Multi-image post, 3 to 4 images: this cover, then one photo per place with the name on the image (your photos or the venue's with permission). Tag the venues and invite one as collaborator. KPI is saves, so the last slide says: save this for the next rainy day."
+ },
+ {
+  "file": "af2-new-babysitters.png",
+  "format_code": "AF2",
+  "kind": "image",
+  "planned_date": "2026-09-10",
+  "title": "New in the app: babysitters (services story)",
+  "caption": "New in the app this week: the Babysitter Finder. Trusted sitters, contacted direct, no agency, no commission. Plus 12 after school clubs added in Oost. AF2",
+  "first_comment": "Nieuw in de app deze week: de Babysitter Finder. Betrouwbare oppassers, direct contact, geen bureau, geen commissie.",
+  "feedback": "Story, 2 to 3 frames: this frame, then a screenshot of one sitter profile (name hidden) with a link sticker, then the after school list for Oost. Tag the new clubs so they reshare (that becomes AF8). Every Thursday, same frame, new items."
+ },
+ {
+  "file": "af4-playground-hideout.png",
+  "format_code": "AF4",
+  "kind": "reel",
+  "planned_date": "2026-09-11",
+  "title": "Places reel: 1,265 playgrounds, this one has a hideout",
+  "caption": "1,265 playgrounds in the app. This one has a hideout, a zipline and a coffee cart within shouting distance. Name, ages and the parking tip are in the app under playgrounds, filter by stadsdeel. Which one should we film next? AF4",
+  "first_comment": "1.265 speeltuinen in de app. Deze heeft een hut, een kabelbaan en koffie op roepafstand. Welke moeten we hierna filmen?",
+  "feedback": "Reel, 15 to 25 seconds, phone footage. Shot 1 arriving (bike, gate), shot 2 kids on the thing (zipline or hideout), shot 3 the detail parents miss (the coffee cart, the toilet, the shade). Text on screen: place name, age range, one tip. Pick a Top 100 playground, geotag it, invite the venue or park account as collaborator if it has one."
+ },
+ {
+  "file": "af3-mom-manager-01.png",
+  "format_code": "AF3",
+  "kind": "image",
+  "planned_date": "2026-09-13",
+  "title": "Mom-Manager 01 (collab carousel cover)",
+  "caption": "Meet [name], who runs Zuid like a company. Two kids, one calendar, zero agencies. Her week, her tricks, and the three places she would never give up. Swipe. Posted together with @[her handle]. AF3",
+  "first_comment": "Dit is [naam], die Zuid runt als een bedrijf. Twee kinderen, een agenda, nul bureaus. Haar week, haar trucs en de drie plekken die ze nooit opgeeft.",
+  "feedback": "Carousel, 7 slides: this cover with her portrait, slide 2 her week in one image, slides 3 to 5 her three places (one per slide, from the app), slide 6 her best trick as a quote, slide 7 the ask: who should we feature next. Invite her as collaborator, post Sunday 19:00, she reshares to stories. First candidate from the Accounts tab, status agreed."
+ },
+ {
+  "file": "af5-under-3s-free.png",
+  "format_code": "AF5",
+  "kind": "image",
+  "planned_date": "2026-09-16",
+  "title": "Under 3s, free afternoons (theme post)",
+  "caption": "Under 3s, free afternoons. Four places that cost nothing and end in a nap: the Saturday park (any of the 1,265), the library story hour, the petting farm in your stadsdeel, and the market where the cheese man hands out samples. All in the app, filter free and ages 0 to 3. Save it for the next long afternoon. AF5",
+  "first_comment": "Onder de 3, gratis middagen. Vier plekken die niets kosten en eindigen in een dutje. Allemaal in de app, filter gratis en 0 tot 3 jaar.",
+  "feedback": "Multi-image, 4 to 5 images: cover plus one per place with the name on the image. Real photos from your own afternoons work best here, the polaroid look is the brand. Tag the farm and the library, both reshare."
+ },
+ {
+  "file": "af4-saturday-park.png",
+  "format_code": "AF4",
+  "kind": "reel",
+  "planned_date": "2026-09-18",
+  "title": "Places reel: Saturday = park day",
+  "caption": "Saturday = park day. Amsterdamse Bos edition: the goat farm, the pancake house, the climbing forest, the pedal boats. One entry in the app, four things to do, parking and pram tips included. Comment PLAN and we send you the link. AF4",
+  "first_comment": "Zaterdag = parkdag. Amsterdamse Bos editie: de geitenboerderij, het pannenkoekenhuis, het klimbos, de waterfietsen. Reageer PLAN en we sturen je de link.",
+  "feedback": "Reel, 20 to 25 seconds, four quick scenes (5 s each) with the name of each spot on screen, then the app entry as the last frame. Geotag Amsterdamse Bos. Comment to DM trick: reply to every PLAN comment with the smart link."
+ },
+ {
+  "file": "af6-dinner-sorted.png",
+  "format_code": "AF6",
+  "kind": "reel",
+  "planned_date": "2026-09-22",
+  "title": "Feature clip: Dinner Sorted, this fridge has nothing in it",
+  "caption": "This fridge has nothing in it. Half a cucumber, three eggs, a yoghurt and hope. Snap it, three recipes appear, kids approved, dinner in 20 minutes. Dinner Sorted lives in the app, Little Chef for when they choose, Fridge Rescue for when you cannot. Insider, 1 euro a week, nobody paid to be recommended. Comment FRIDGE and we send you the link. AF6",
+  "first_comment": "Deze koelkast is leeg. Een halve komkommer, drie eieren, een yoghurt en hoop. Maak een foto, drie recepten, eten in 20 minuten. Eten Geregeld zit in de app. Reageer FRIDGE en we sturen je de link.",
+  "feedback": "The organic twin of the paid Fridge Rescue angle, one gesture: open the fridge at 17:45, snap, three recipes, cut to a kid eating. 10 to 15 seconds, phone shot, real fridge, real kid. On screen line as on the cover. Never say AI, say Dinner Sorted. Same reel doubles as the AD4 creative with the price line added. Second AF6 of the month."
+ },
+ {
+  "file": "af7-testimonial-01.png",
+  "format_code": "AF7",
+  "kind": "reel",
+  "planned_date": "2026-09-25",
+  "title": "Real parent testimonial 01",
+  "caption": "One question, one parent, twenty seconds: what did the app do for you this month? [Her answer in her words.] Not scripted, we just pressed record. What would you say? AF7",
+  "first_comment": "Een vraag, een ouder, twintig seconden: wat heeft de app deze maand voor je gedaan. Niet geregisseerd, we drukten op opnemen.",
+  "feedback": "Reel, 20 seconds, phone, natural light, subtitles burned in. Ask one question and let her talk. No app screens in the video, her face and her words carry it. Cover = this frame with her real quote. Ask a question in the caption so people answer in the comments (KPI comments)."
+ },
+ {
+  "file": "af8-partner-badge.png",
+  "format_code": "AF8",
+  "kind": "image",
+  "planned_date": "2026-09-26",
+  "title": "Partner badge wave (badge design pending)",
+  "caption": "Proud to be in the Amsterdam Families app. [Partner posts this; we reshare to stories the same day and thank them by DM.] AF8",
+  "first_comment": "Trots om in de Amsterdam Families app te staan.",
+  "feedback": "Not a post you make, a frame partners post. The badge design is pending (must be something a venue is proud to post, not a 'find us' label). This placeholder shows the layout: their photo, the badge, their category. Send with the partner wave mail from the Campaigns tab. You reshare every one."
+ },
+ {
+  "file": "af5-birthday-no-panic.png",
+  "format_code": "AF5",
+  "kind": "image",
+  "planned_date": "2026-09-30",
+  "title": "Birthday party without the panic (theme post)",
+  "caption": "Birthday party without the panic. 225 entries in the Birthday Directory: 59 entertainers, 166 party venues, filter by age, stadsdeel and budget. Three combos that always work: the pancake boat, the climbing hall plus pizza, the magician at home. Save it for the next 'mama, my party'. AF5",
+  "first_comment": "Kinderfeestje zonder paniek. 225 adressen in de Birthday Directory: 59 entertainers, 166 feestlocaties, filter op leeftijd, stadsdeel en budget.",
+  "feedback": "Multi-image, 4 images: cover, three combos with a photo each (venue photos with permission or your own). Tag the venues, invite one as collaborator. Good candidate for the giveaway later: one venue gifts a party slot."
+ },
+ {
+  "file": "ad1-family-quiz.jpg",
+  "format_code": "AD1",
+  "kind": "image",
+  "planned_date": "2026-09-21",
+  "title": "Ad: Which Amsterdam family are you?",
+  "caption": "Every Amsterdam family has a type. Ours is Rainy Day Rebels. What is yours? Take the 60 second test, get 20 weekend plans that fit your actual family. Free quiz, the full result lives in the app, Insider 0.99 a week.",
+  "first_comment": "Elk Amsterdams gezin heeft een type. Wij zijn Rainy Day Rebels. Welk gezin zijn jullie? Doe de test van 60 seconden.",
+  "feedback": "Story ad 1080x1920 from the campaign visuals. Points to amsterdamfamilies.com/quiz, never to the store. Four creatives per angle: this one, a phone shot of a family biking in the rain, the result card, a founder face version. Review every 7 days."
+ },
+ {
+  "file": "ad2-food-map.jpg",
+  "format_code": "AD2",
+  "kind": "image",
+  "planned_date": "2026-10-19",
+  "title": "Ad: Our Family Food Map",
+  "caption": "Where do we all actually enjoy lunch? Not just the kids. Not just you. All of us. Six questions, fifteen places where nobody ends up under the table. Written by parents, not by the restaurant.",
+  "first_comment": "Waar lunchen we nou echt allemaal lekker? Zes vragen, vijftien plekken waar niemand onder de tafel belandt.",
+  "feedback": "Story ad from the campaign visuals. Second quiz, week 6 to 8. Reward: 15 matching spots on the map with parent notes, refreshed each season for members."
+ },
+ {
+  "file": "ad3-battery-check.jpg",
+  "format_code": "AD3",
+  "kind": "image",
+  "planned_date": "2026-10-26",
+  "title": "Ad: Parent Battery Check",
+  "caption": "Your weekend brain is at 12 percent. Plug in. How many tabs are open in your head right now? Seven questions, one battery percentage, one recharge plan.",
+  "first_comment": "Je weekendbrein zit op 12 procent. Hoeveel tabbladen staan er open in je hoofd? Zeven vragen, een percentage, een oplaadplan.",
+  "feedback": "Story ad from the campaign visuals. The funny one. Result card built to be posted: my battery is at 23 percent, what is yours. Can replace AD2 as the second quiz if the family type wins fast."
+ },
+ {
+  "file": "ad4-fridge-rescue.jpg",
+  "format_code": "AD4",
+  "kind": "image",
+  "planned_date": "2026-09-23",
+  "title": "Ad: Fridge Rescue",
+  "caption": "Show me your fridge and I will tell you what your kids eat tonight. Half a cucumber, three eggs, a yoghurt. Snap it. Dinner in 20 minutes. Fridge Rescue is part of Dinner Sorted in the app, 0.99 a week.",
+  "first_comment": "Laat je koelkast zien en ik zeg wat je kinderen vanavond eten. Een foto, eten in 20 minuten.",
+  "feedback": "Story ad from the campaign visuals. Not a quiz, a 10 to 15 second reel: the sad fridge at 17:45, snap, three recipes, kid eating. Film four fridges (Sunday evening, back from holiday, grandparents were here, delivery did not come). The organic twin is the AF6 Dinner Sorted concept."
+ },
+ {
+  "file": "ad5-birthday-panic.jpg",
+  "format_code": "AD5",
+  "kind": "image",
+  "planned_date": "2026-09-28",
+  "title": "Ad: Birthday Panic",
+  "caption": "Oh no. Their birthday is in three weeks. Twelve kids, one afternoon, zero tears (yours). 225 ways to save a birthday, none of them paid to be on the list. From panic to plan before the school run ends.",
+  "first_comment": "O nee. Over drie weken is het feestje. Twaalf kinderen, een middag, nul tranen (die van jou). 225 manieren om een feestje te redden.",
+  "feedback": "Story ad from the campaign visuals plus search: kinderfeestje Amsterdam, birthday party venue Amsterdam kids, goochelaar kinderfeestje Amsterdam on Apple Ads and Google. Seasonal pushes January, May, September. KPI: cost per Insider from search vs Meta (bar 3x cheaper)."
+ }
+];
+$('as-ideas').onclick = async () => {
+  if (city !== 'amsterdam') { alert('The launch ideas are written for Amsterdam (AF codes). Switch to Amsterdam to load them.'); return; }
+  const base = new URL('ideas/', location.href).href;
+  const have = new Set(assets.map(a => a.url));
+  const rows = LAUNCH_IDEAS.filter(i => !have.has(base + i.file));
+  if (!rows.length) { $('as-msg').textContent = 'All launch ideas are already in the grid.'; return; }
+  if (!confirm(`Add ${rows.length} launch concepts to the grid? Each has a caption draft, a first comment in Dutch and filming notes in the feedback field. You edit or delete them like any concept.`)) return;
+  let sort = assets.length ? Math.max(...assets.map(a => a.sort || 0)) + 1 : 0;
+  const ins = rows.map(i => ({ city, kind: i.kind, url: base + i.file, thumb_url: null, status: 'concept', format_code: i.format_code, planned_date: i.planned_date,
+    caption: i.caption + '\n\nFirst comment (NL): ' + i.first_comment, feedback: i.title + '. ' + i.feedback, sort: sort++ }));
+  const { error } = await sb.from('marketing_assets').insert(ins);
+  if (error) { $('as-msg').textContent = 'Could not add: ' + error.message; return; }
+  $('as-msg').textContent = `${ins.length} launch concepts added.`; loadAssets();
+};
+
+/* ---------- chat ---------- */
+let chat = [], pending = [];   // pending = [{url, asset_id}]
+async function loadChat() {
+  const { data, error } = await sb.from('marketing_chat').select('*').eq('city', city).order('created_at', { ascending: false }).limit(60);
+  if (error) { $('ch-log').innerHTML = '<p class="msg">Run marketing-schema-v2.sql first.</p>'; return; }
+  chat = (data || []).reverse(); renderChat();
+}
+function renderChat() {
+  if (!chat.length) { $('ch-log').innerHTML = '<p class="msg">Nothing yet. Attach an image or a reel and ask what to do with it, or ask a question about the numbers.</p>'; return; }
+  $('ch-log').innerHTML = chat.map(m => `<div class="bub ${m.role}">${m.images && m.images.length ? `<div class="imgs">${m.images.map(u => `<a href="${esc(u)}" target="_blank" rel="noopener"><img src="${esc(u)}" alt=""></a>`).join('')}</div>` : ''}${esc(m.content)}<span class="when">${fmtWhen(m.created_at)}${m.model ? ' · ' + esc(m.model) : ''}</span></div>`).join('');
+  $('ch-log').scrollTop = $('ch-log').scrollHeight;
+}
+function renderAtt() {
+  $('ch-att').innerHTML = pending.map((p, i) => `<div><img src="${esc(p.url)}" alt=""><button data-i="${i}" title="remove">x</button></div>`).join('');
+  $('ch-att').querySelectorAll('button').forEach(b => b.onclick = () => { pending.splice(parseInt(b.dataset.i, 10), 1); renderAtt(); });
+}
+$('ch-clip').onclick = () => $('ch-file').click();
+$('ch-file').onchange = async () => { await attachFiles([...$('ch-file').files]); $('ch-file').value = ''; };
+async function attachFiles(files) {
+  for (const f of files) {
+    try {
+      if (f.type.startsWith('video/')) {
+        $('ch-send').textContent = 'Frames...';
+        const fr = await videoFrames(f, 3);
+        for (const x of fr) pending.push({ url: await uploadFile('chat', x) });
+      } else if (f.type.startsWith('image/')) pending.push({ url: await uploadFile('chat', f) });
+    } catch (e) { alert('Attach failed: ' + e.message); }
+  }
+  $('ch-send').textContent = 'Send'; renderAtt();
+}
+const chatEl = document.querySelector('.chat');
+chatEl.ondragover = e => { e.preventDefault(); };
+chatEl.ondrop = e => { e.preventDefault(); if (e.dataTransfer.files.length) attachFiles([...e.dataTransfer.files]); };
+$('ch-text').onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('ch-send').click(); } };
+$('ch-send').onclick = async () => {
+  const text = $('ch-text').value.trim();
+  if (!text && !pending.length) return;
+  const images = pending.map(p => p.url), asset_id = (pending.find(p => p.asset_id) || {}).asset_id || null;
+  chat.push({ role: 'user', content: text, images, created_at: new Date().toISOString() }); renderChat();
+  $('ch-text').value = ''; pending = []; renderAtt();
+  $('ch-send').disabled = true; $('ch-send').textContent = 'Thinking...';
+  try {
+    const r = await callFn({ action: 'chat', city, message: text, images, asset_id });
+    if (r.error) throw new Error(r.error);
+    chat.push({ role: 'assistant', content: r.reply, model: r.model, created_at: new Date().toISOString() });
+  } catch (e) { chat.push({ role: 'assistant', content: 'That did not work: ' + e.message, created_at: new Date().toISOString() }); }
+  renderChat(); $('ch-send').disabled = false; $('ch-send').textContent = 'Send';
+};
+$('ch-clear').onclick = async () => {
+  if (!confirm('Clear the chat history for ' + CITIES[city] + '? Claude forgets the conversation so far.')) return;
+  await sb.from('marketing_chat').delete().eq('city', city); chat = []; renderChat();
+};
+
+/* ---------- accounts ---------- */
+let accounts = [], acFilter = 'all', acEditing = null;
+const ST = ['to contact', 'contacted', 'agreed', 'posted'];
+const stClass = s => 's-' + (s === 'to contact' ? 'to' : s);
+async function loadAccounts() {
+  const { data, error } = await sb.from('marketing_accounts').select('*').eq('city', city).order('name');
+  if (error) { $('accounts').innerHTML = `<tr><td class="msg">Run marketing-schema-v2.sql first (${esc(error.message)})</td></tr>`; return; }
+  accounts = (data || []).sort((a, b) => (ST.indexOf(a.status) - ST.indexOf(b.status)) || ((b.followers || 0) - (a.followers || 0)) || String(a.name || a.handle || '').localeCompare(String(b.name || b.handle || '')));
+  renderAccounts();
+}
+function renderAccounts() {
+  const counts = { all: accounts.length }; ST.forEach(s => counts[s] = accounts.filter(a => a.status === s).length);
+  $('ac-filters').innerHTML = ['all', ...ST].map(s => `<button data-s="${s}" class="${acFilter === s ? 'on' : ''}">${s} <span class="muted">${counts[s]}</span></button>`).join('') + `<span class="msg" style="margin-left:auto">${accounts.filter(a => a.last_checked).length ? 'followers checked ' + fmtDate(accounts.map(a => a.last_checked).filter(Boolean).sort().pop()) : 'followers not checked yet'}</span>`;
+  $('ac-filters').querySelectorAll('button').forEach(b => b.onclick = () => { acFilter = b.dataset.s; renderAccounts(); });
+  const rows = accounts.filter(a => acFilter === 'all' || a.status === acFilter);
+  let html = '<tr><th>Account</th><th>Type</th><th>Status</th><th>Followers</th><th>Contact</th><th>Notes</th></tr>';
+  if (!rows.length) html += '<tr><td colspan="6" class="muted">No accounts here yet. Press Add account.</td></tr>';
+  for (const a of rows) {
+    const d = (a.followers != null && a.followers_prev != null) ? a.followers - a.followers_prev : null;
+    const contact = [a.web ? `<a href="${esc(a.web)}" target="_blank" rel="noopener" class="linkish">web</a>` : '', a.email ? `<a href="mailto:${esc(a.email)}" class="linkish">${esc(a.email)}</a>` : '', a.phone ? esc(a.phone) : ''].filter(Boolean).join(' &middot; ');
+    html += `<tr class="clickable" data-id="${a.id}"><td><b>${esc(a.name || a.handle)}</b>${a.handle ? `<br><a href="https://instagram.com/${esc(a.handle.replace(/^@/, ''))}" target="_blank" rel="noopener" class="linkish">@${esc(a.handle.replace(/^@/, ''))}</a>` : ''}</td><td>${esc(a.type)}</td><td><span class="status ${stClass(a.status)}">${esc(a.status)}</span></td><td>${a.followers != null ? '<b>' + fmtN(a.followers) + '</b>' : '<span class="muted">–</span>'}${d != null && d !== 0 ? `<span class="delta ${d > 0 ? 'up' : 'down'}" style="background:none;padding:0">${d > 0 ? '+' : ''}${d}</span>` : ''}</td><td>${contact || '<span class="muted">–</span>'}</td><td class="muted">${esc(a.notes || '')}</td></tr>`;
+  }
+  $('accounts').innerHTML = html;
+  $('accounts').querySelectorAll('tr.clickable').forEach(tr => tr.onclick = e => { if (e.target.closest('a')) return; openAccount(tr.dataset.id); });
+}
+const AF = { name: 'ac-name', handle: 'ac-handle', type: 'ac-type', status: 'ac-status', web: 'ac-web', email: 'ac-email', phone: 'ac-phone', notes: 'ac-notes' };
+function openAccount(id) {
+  acEditing = id; const a = id ? accounts.find(x => x.id === id) : null;
+  Object.entries(AF).forEach(([k, el]) => $(el).value = a ? (a[k] || (k === 'type' ? 'influencer' : k === 'status' ? 'to contact' : '')) : (k === 'type' ? 'influencer' : k === 'status' ? 'to contact' : ''));
+  $('ac-delete').classList.toggle('hidden', !a); $('ac-msg').textContent = a && a.last_checked ? 'followers checked ' + fmtWhen(a.last_checked) : '';
+  $('acform').classList.remove('hidden'); $('ac-name').focus();
+}
+$('ac-new').onclick = () => openAccount(null);
+$('ac-cancel').onclick = () => { $('acform').classList.add('hidden'); acEditing = null; };
+$('ac-save').onclick = async () => {
+  const row = { city, updated_at: new Date().toISOString() };
+  Object.entries(AF).forEach(([k, el]) => row[k] = $(el).value.trim() || null);
+  if (row.handle) row.handle = row.handle.replace(/^@/, '').replace(/^https?:\/\/(www\.)?instagram\.com\//i, '').replace(/[\/?].*$/, '');
+  if (!row.name && !row.handle) { $('ac-msg').textContent = 'A name or a handle, at least.'; return; }
+  const q = acEditing ? sb.from('marketing_accounts').update(row).eq('id', acEditing) : sb.from('marketing_accounts').insert(row);
+  const { error } = await q;
+  if (error) { $('ac-msg').textContent = 'Save failed: ' + error.message; return; }
+  $('acform').classList.add('hidden'); acEditing = null; loadAccounts();
+};
+$('ac-delete').onclick = async () => {
+  if (!acEditing || !confirm('Delete this account?')) return;
+  await sb.from('marketing_accounts').delete().eq('id', acEditing);
+  $('acform').classList.add('hidden'); acEditing = null; loadAccounts();
+};
+$('ac-refresh').onclick = async () => {
+  const n = accounts.filter(a => a.handle).length;
+  if (!n) { alert('No handles to check yet.'); return; }
+  $('ac-refresh').disabled = true; $('ac-refresh').textContent = `Checking ${n}...`;
+  try {
+    const r = await callFn({ action: 'followers', city });
+    if (r.error) throw new Error(r.error);
+    await loadAccounts();
+    alert(`${r.updated} updated` + (r.failed && r.failed.length ? `, not found: ${r.failed.join(', ')}` : '') + '.');
+  } catch (e) { alert('Follower check failed: ' + e.message); }
+  $('ac-refresh').disabled = false; $('ac-refresh').textContent = 'Refresh followers';
+};
+
+/* accounts: bulk CSV import */
+$('ac-import').onclick = () => { $('ac-drop').classList.toggle('hidden'); };
+const acDrop = $('ac-drop');
+acDrop.onclick = e => { if (e.target === acDrop || e.target.tagName === 'B') $('ac-csv').click(); };
+acDrop.ondragover = e => { e.preventDefault(); acDrop.classList.add('hover'); };
+acDrop.ondragleave = () => acDrop.classList.remove('hover');
+acDrop.ondrop = e => { e.preventDefault(); acDrop.classList.remove('hover'); if (e.dataTransfer.files[0]) importAccounts(e.dataTransfer.files[0]); };
+$('ac-csv').onchange = () => { if ($('ac-csv').files[0]) importAccounts($('ac-csv').files[0]); $('ac-csv').value = ''; };
+const cleanHandle = h => String(h || '').trim().replace(/^@/, '').replace(/^https?:\/\/(www\.)?instagram\.com\//i, '').replace(/[\/?].*$/, '').toLowerCase() || null;
+async function importAccounts(file) {
+  const rows = parseCsv(await file.text());
+  if (rows.length < 2) { $('ac-imsg').textContent = 'Could not read that file.'; return; }
+  const headers = rows[0].map(h => h.trim().toLowerCase());
+  const col = {
+    name: findCol(headers, [/^name$/, /^naam$/, /^nombre$/, /business/, /account/, /^title$/]),
+    handle: findCol(headers, [/^handle$/, /instagram/, /^ig$/, /^username$/, /^user$/]),
+    web: findCol(headers, [/^web/, /^url$/, /site/]),
+    email: findCol(headers, [/mail/]),
+    phone: findCol(headers, [/phone/, /tel/, /whatsapp/, /movil/, /mobile/]),
+    type: findCol(headers, [/^type$/, /^category$/, /^categor/, /^soort$/]),
+    status: findCol(headers, [/^status$/, /^estado$/]),
+    notes: findCol(headers, [/note/, /comment/, /opmerking/, /descr/]),
+    followers: findCol(headers, [/follower/, /volgers/, /seguidores/]),
+  };
+  if (col.name < 0 && col.handle < 0) { $('ac-imsg').textContent = 'No name or handle column found. Headers seen: ' + headers.slice(0, 12).join(', '); return; }
+  const TYPES = ['influencer', 'famous parent', 'partner', 'press', 'other'];
+  const get = (r, k) => col[k] >= 0 ? String(r[col[k]] || '').trim() : '';
+  const byHandle = {}; accounts.forEach(a => { if (a.handle) byHandle[a.handle.toLowerCase()] = a; });
+  const inserts = [], updates = []; let skipped = 0; const seen = new Set();
+  for (const r of rows.slice(1)) {
+    const name = get(r, 'name') || null, handle = cleanHandle(get(r, 'handle'));
+    if (!name && !handle) { skipped++; continue; }
+    if (handle && seen.has(handle)) { skipped++; continue; } if (handle) seen.add(handle);
+    const t = get(r, 'type').toLowerCase(), st = get(r, 'status').toLowerCase();
+    const row = { city, name, handle, web: get(r, 'web') || null, email: get(r, 'email').toLowerCase() || null, phone: get(r, 'phone') || null, notes: get(r, 'notes') || null,
+      type: TYPES.find(x => t.includes(x.split(' ')[0])) || (/(mom|mum|dad|parent|ouder|madre|padre)/.test(t) ? 'famous parent' : /(venue|business|shop|club|school|restaurant|partner|bedrijf|empresa)/.test(t) ? 'partner' : /(press|media|magazine|blog)/.test(t) ? 'press' : 'influencer'),
+      status: ST.find(x => st.startsWith(x.split(' ')[0])) || 'to contact', updated_at: new Date().toISOString() };
+    const f = get(r, 'followers').replace(/[^\d]/g, ''); if (f) row.followers = parseInt(f, 10);
+    const ex = handle ? byHandle[handle] : null;
+    if (ex) {
+      const patch = { id: ex.id }; let changed = false;
+      for (const k of ['name', 'web', 'email', 'phone', 'notes', 'followers']) if (row[k] != null && row[k] !== ex[k]) { patch[k] = row[k]; changed = true; }
+      if (col.type >= 0 && t && row.type !== ex.type) { patch.type = row.type; changed = true; }
+      if (col.status >= 0 && st && row.status !== ex.status) { patch.status = row.status; changed = true; }
+      if (changed) updates.push(patch);
+    } else inserts.push(row);
+  }
+  $('ac-imsg').textContent = `Importing ${inserts.length} new, ${updates.length} updates...`;
+  let err = null;
+  if (inserts.length) { const r = await sb.from('marketing_accounts').insert(inserts); err = r.error; }
+  for (const u of updates) { if (err) break; const { id, ...patch } = u; patch.updated_at = new Date().toISOString(); const r = await sb.from('marketing_accounts').update(patch).eq('id', id); err = r.error; }
+  $('ac-imsg').textContent = err ? 'Import failed: ' + err.message : `Done: ${inserts.length} added, ${updates.length} updated${skipped ? ', ' + skipped + ' rows skipped (empty or duplicate handle)' : ''}.`;
+  loadAccounts();
+}
+
+/* ---------- formats page ---------- */
+let fmeta = [], fxCode = null;
+async function loadFormatsPage() {
+  const { data, error } = await sb.from('marketing_formats').select('*').order('sort');
+  fmeta = (!error && data && data.length) ? data : FORMATS.map(f => ({ code: 'F' + f.n, sort: f.n, name: f.name, sub: f.sub, lane: f.lane, surface: f.surface, cadence: f.cadence, kpi: f.kpi, metric: f.metric, explanation: '' }));
+  renderFormatsPage(error ? 'Run marketing-schema-v2.sql to edit texts and store examples.' : '');
+}
+function renderFormatsPage(note) {
+  $('fcards').innerHTML = fmeta.map(f => `<div class="card" data-code="${f.code}">
+      <div class="ex" data-code="${f.code}" title="upload an example">${f.example_url ? `<img src="${esc(f.example_url)}" alt="">` : ''}<span>${f.example_url ? 'change example' : 'add a real example'}</span></div>
+      <div class="bd">
+        <h3><span class="muted">${prefix()}${f.code}</span> ${esc(f.name)} <span class="lane ${f.lane}">${esc(f.lane)}</span></h3>
+        <div class="meta">${esc(f.surface)} &middot; ${esc(f.cadence)} &middot; KPI <b>${esc(f.kpi)}</b>${f.sub ? ' &middot; ' + esc(f.sub) : ''}</div>
+        <p class="ftext">${esc(f.explanation || 'No explanation yet. Press Edit.')}</p>
+        ${f.example_note ? `<p class="muted" style="font-size:13px;margin-top:6px">${esc(f.example_note)}</p>` : ''}
+        <div class="edit"><span class="linkish fedit">Edit</span></div>
+      </div></div>`).join('') + (note ? `<p class="msg">${esc(note)}</p>` : '');
+  $('fcards').querySelectorAll('.ex').forEach(el => el.onclick = () => { fxCode = el.dataset.code; $('fx-file').click(); });
+  $('fcards').querySelectorAll('.fedit').forEach(el => el.onclick = () => editFormat(el.closest('.card')));
+}
+function editFormat(card) {
+  const f = fmeta.find(x => x.code === card.dataset.code);
+  card.querySelector('.bd').innerHTML = `<h3><span class="muted">${prefix()}${f.code}</span> ${esc(f.name)}</h3>
+    <label class="f" style="display:block;font-size:11.5px;font-weight:800;text-transform:uppercase;color:#8a7f97;margin-top:8px">Explanation</label><textarea class="fe-exp">${esc(f.explanation || '')}</textarea>
+    <label class="f" style="display:block;font-size:11.5px;font-weight:800;text-transform:uppercase;color:#8a7f97;margin-top:8px">Note under the example</label><textarea class="fe-note" style="min-height:44px">${esc(f.example_note || '')}</textarea>
+    <div class="edit"><button class="btn fe-save">Save</button><button class="btn ghost fe-cancel">Cancel</button></div>`;
+  card.querySelector('.fe-cancel').onclick = () => renderFormatsPage('');
+  card.querySelector('.fe-save').onclick = async () => {
+    const patch = { explanation: card.querySelector('.fe-exp').value.trim() || null, example_note: card.querySelector('.fe-note').value.trim() || null, updated_at: new Date().toISOString() };
+    const { error } = await sb.from('marketing_formats').update(patch).eq('code', f.code);
+    if (error) { alert('Save failed: ' + error.message); return; }
+    Object.assign(f, patch); renderFormatsPage('');
+  };
+}
+$('fx-file').onchange = async () => {
+  const file = $('fx-file').files[0]; $('fx-file').value = '';
+  if (!file || !fxCode) return;
+  try {
+    const url = await uploadFile('formats', file, fxCode);
+    const { error } = await sb.from('marketing_formats').update({ example_url: url, updated_at: new Date().toISOString() }).eq('code', fxCode);
+    if (error) throw new Error(error.message);
+    const f = fmeta.find(x => x.code === fxCode); if (f) f.example_url = url; renderFormatsPage('');
+  } catch (e) { alert('Upload failed: ' + e.message); }
+};
+
+/* ---------- campaigns ---------- */
+let camps = [], campStatus = {};
+async function loadCampaigns() {
+  const [c, s] = await Promise.all([
+    sb.from('marketing_campaigns').select('*').order('sort'),
+    sb.from('marketing_campaign_status').select('*').eq('city', city),
+  ]);
+  if (c.error) { $('ccards').innerHTML = `<p class="msg">Run marketing-schema-v2.sql first (${esc(c.error.message)})</p>`; return; }
+  camps = c.data || []; campStatus = {}; (s.data || []).forEach(r => campStatus[r.campaign_id] = r);
+  renderCampaigns();
+}
+function renderCampaigns() {
+  const order = { running: 0, planned: 1, idea: 2, done: 3 };
+  const GROUPS = [['paid', 'Paid angles', 'every ad to the web quiz, never to the store'], ['organic', 'Organic growth', 'Instagram, around the 8 formats'], ['retention', 'Supply and retention', 'what makes members stay']];
+  const card = c => { const st = campStatus[c.id] || {}; const s = st.status || 'idea'; return `<div class="camp ${s} ${c.kind || 'organic'}" data-id="${c.id}">
+      <h3>${esc(c.name)}<select class="cs">${['idea', 'planned', 'running', 'done'].map(o => `<option ${o === s ? 'selected' : ''}>${o}</option>`).join('')}</select></h3>
+      <p>${esc(c.what)}</p>
+      <ol>${String(c.steps || '').split('\n').filter(Boolean).map(x => `<li>${esc(x)}</li>`).join('')}</ol>
+      <div class="kv"><b>Involve</b><span>${esc(c.involve)}</span><b>KPI</b><span>${esc(c.kpi)}</span><b>When</b><span>${esc(c.timing)}</span></div>
+      <input type="text" class="cn" placeholder="notes for ${esc(CITIES[city])}: who, when, result" value="${esc(st.notes || '')}">
+    </div>`; };
+  $('ccards').innerHTML = GROUPS.map(([g, title, sub]) => {
+    const list = camps.filter(c => (c.kind || 'organic') === g).sort((a, b) => (order[(campStatus[a.id] || {}).status || 'idea'] - order[(campStatus[b.id] || {}).status || 'idea']) || (a.sort - b.sort));
+    return list.length ? `<div class="cgroup">${title}<small>${sub}</small></div><div class="cards">${list.map(card).join('')}</div>` : '';
+  }).join('');
+  $('ccards').querySelectorAll('.camp').forEach(el => {
+    const save = async () => {
+      const row = { city, campaign_id: el.dataset.id, status: el.querySelector('.cs').value, notes: el.querySelector('.cn').value.trim() || null, updated_at: new Date().toISOString() };
+      const { error } = await sb.from('marketing_campaign_status').upsert(row, { onConflict: 'city,campaign_id' });
+      if (error) alert('Save failed: ' + error.message); else { campStatus[row.campaign_id] = row; renderCampaigns(); }
+    };
+    el.querySelector('.cs').onchange = save;
+    el.querySelector('.cn').onblur = () => { const st = campStatus[el.dataset.id] || {}; if ((el.querySelector('.cn').value.trim() || null) !== (st.notes || null)) save(); };
+    el.querySelector('.cn').onkeydown = e => { if (e.key === 'Enter') e.target.blur(); };
+  });
+}
+
+boot();
+</script>
+</body>
+</html>
