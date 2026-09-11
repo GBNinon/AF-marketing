@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Families App marketing dashboard v2.3 (11 Sep 2026): model settings panel. v2.2 (10 Sep 2026): paid layer (quiz funnel, ad spend), kick-off plan campaigns and panel, ad concepts AD1 to AD5. v1 = funnel, advice, weeks, CSV, formats table, plan. v2 adds tabs: Concepts (grid + chat), Accounts, Formats, Campaigns, plus newsletter ideas and 12 week trends. -->
+<!-- Families App marketing dashboard v2.4 (11 Sep 2026): coloured panels, plan moved to Concepts, chat on the dashboard, drafts shelf, account lists and export. v2.3: model settings panel. v2.2 (10 Sep 2026): paid layer (quiz funnel, ad spend), kick-off plan campaigns and panel, ad concepts AD1 to AD5. v1 = funnel, advice, weeks, CSV, formats table, plan. v2 adds tabs: Concepts (grid + chat), Accounts, Formats, Campaigns, plus newsletter ideas and 12 week trends. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -10,7 +10,7 @@
 <style>
   *{box-sizing:border-box;margin:0;padding:0;}
   body{background:#faf6ef;color:#2f2a38;font-family:'Karla',-apple-system,sans-serif;padding:24px 20px 80px;}
-  .wrap{max-width:1100px;margin:0 auto;}
+  .wrap{max-width:1240px;margin:0 auto;}
   header{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-bottom:24px;}
   h1{font-size:24px;font-weight:800;margin-right:auto;}
   .pills{display:flex;gap:4px;background:#fff;border:1px solid #e7dfd2;border-radius:14px;padding:4px;}
@@ -78,9 +78,33 @@
   .paidrow{grid-column:1 / -1;border-top:1px dashed #e7dfd2;padding-top:10px;margin-top:2px;}
   .paidrow .lbl{font-size:11.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#8a7f97;}
   .funnel.qf .tile{border-left:4px solid #7FA9CC;}
-  .settings{background:#fff;border:1px solid #e7dfd2;border-radius:18px;padding:16px 18px;margin-bottom:18px;display:grid;grid-template-columns:1fr 1fr;gap:14px;border-left:5px solid #7FA9CC;}
-  .settings select{width:100%;border:1.5px solid #e0d8ea;border-radius:12px;padding:10px 12px;font-size:15px;font-weight:700;font-family:inherit;color:#2f2a38;background:#fff;}
-  .settings .msg{display:block;margin-top:6px;} .settings .row{grid-column:1 / -1;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .settings{background:#fff;border:1px solid #e7dfd2;border-radius:14px;padding:10px 14px;margin:-8px 0 14px auto;max-width:560px;display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;}
+  .settings .f label{font-size:10.5px;margin-bottom:3px;}
+  .settings select{width:100%;border:1.5px solid #e0d8ea;border-radius:10px;padding:6px 8px;font-size:13px;font-weight:700;font-family:inherit;color:#2f2a38;background:#fff;}
+  .settings .row{grid-column:1 / -1;display:flex;gap:8px;align-items:center;flex-wrap:wrap;} .settings .row .msg{font-size:12px;}
+  /* coloured panels: one border and tint per area so the page reads as distinct blocks */
+  .panel{border:1.5px solid #e7dfd2;border-radius:22px;padding:6px 20px 20px;margin:18px 0;background:rgba(255,255,255,.35);}
+  .panel > h2:first-child{margin-top:14px;}
+  .panel h2.sub{margin-top:22px;}
+  .p-funnel{border-color:#c9b6d6;background:rgba(181,151,193,.10);} .p-funnel h2{color:#6d5185;}
+  .p-weeks{border-color:#a8cbb4;background:rgba(111,162,132,.10);} .p-weeks h2{color:#3f7a56;}
+  .p-advice{border-color:#e6b9cc;background:rgba(232,176,200,.14);} .p-advice h2{color:#9a4f70;} .p-advice .advice{border-left-color:#E8B0C8;}
+  .p-news{border-color:#f0cf9e;background:rgba(240,190,120,.14);} .p-news h2{color:#9a6a2e;} .p-news .news{border-left-color:#e6b06a;}
+  .p-formats{border-color:#b7cee0;background:rgba(127,169,204,.10);} .p-formats h2{color:#2f5878;}
+  .p-plan{border-color:#b7cee0;background:rgba(127,169,204,.10);} .p-plan h2{color:#2f5878;}
+  .two > .panel{margin:0;}
+  .two{margin:18px 0;}
+  .gi .x,.gi .park{position:absolute;top:6px;width:22px;height:22px;border-radius:50%;border:none;background:rgba(47,42,56,.78);color:#fff;font-size:13px;font-weight:800;cursor:pointer;display:none;align-items:center;justify-content:center;line-height:1;}
+  .gi .x{right:6px;} .gi .park{right:32px;font-size:12px;}
+  .gi:hover .x,.gi:hover .park{display:flex;}
+  .gi .fc{transition:opacity .1s;} .gi:hover .fc{opacity:0;}
+  .shelf{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;min-height:40px;}
+  .shelf .gi.parked .st{color:#8a7f97;background:rgba(238,234,242,.95);}
+  .shelf .empty{grid-column:1 / -1;font-size:13px;color:#8a7f97;padding:6px 0;}
+  .chat .typing{align-self:flex-start;background:#fdfbf7;border:1px solid #eee7dc;border-radius:14px;border-bottom-left-radius:4px;padding:10px 14px;font-size:13px;color:#8a7f97;}
+  .chat .typing i{display:inline-block;width:6px;height:6px;border-radius:50%;background:#B597C1;margin-right:3px;animation:blink 1.2s infinite;} .chat .typing i:nth-child(2){animation-delay:.2s;} .chat .typing i:nth-child(3){animation-delay:.4s;}
+  @keyframes blink{0%,80%,100%{opacity:.25}40%{opacity:1}}
+  .chat.compact{height:440px;min-height:320px;}
   .tabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid #e7dfd2;margin-bottom:6px;}
   .tabs button{background:none;border:none;font-family:inherit;font-size:14.5px;font-weight:800;color:#8a7f97;padding:10px 14px;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px;}
   .tabs button.on{color:#2f2a38;border-bottom-color:#B597C1;}
@@ -95,7 +119,7 @@
   .news .idea i{display:block;font-style:normal;font-size:12.5px;color:#2f6b45;margin-top:4px;}
   .news textarea{width:100%;border:1.5px solid #e0d8ea;border-radius:10px;padding:8px 10px;font-family:inherit;font-size:13.5px;min-height:54px;margin:8px 0;}
   /* concepts */
-  .concepts{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:20px;align-items:start;}
+  .concepts{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:20px;align-items:start;}
   .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:#fff;border:1px solid #e7dfd2;border-radius:18px;padding:6px;}
   .gi{position:relative;aspect-ratio:4/5;border-radius:10px;overflow:hidden;background:#f3eee6;cursor:pointer;}
   .gi img{width:100%;height:100%;object-fit:cover;object-position:center top;display:block;}
@@ -128,6 +152,7 @@
   .filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;align-items:center;}
   .filters button{background:#fff;border:1.5px solid #e0d8ea;border-radius:10px;padding:6px 12px;font-family:inherit;font-size:13px;font-weight:700;color:#6f6680;cursor:pointer;}
   .filters button.on{background:#2f2a38;color:#fff;border-color:#2f2a38;}
+  .selbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0 10px;} .selbar input{border:1.5px solid #e0d8ea;border-radius:10px;padding:7px 10px;font-family:inherit;font-size:13px;width:180px;} .selbar .btn{padding:7px 12px;font-size:13px;} .selbar .msg{margin-right:auto;}
   .acform{background:#fff;border:1px solid #e7dfd2;border-radius:18px;padding:16px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;}
   .acform input,.acform select{width:100%;border:1.5px solid #e0d8ea;border-radius:10px;padding:9px 10px;font-family:inherit;font-size:14px;color:#2f2a38;}
   .acform .row{grid-column:1 / -1;display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
@@ -161,7 +186,7 @@
     .funnel{grid-template-columns:1fr 1fr;} .conv{display:none;}
     .inputs{grid-template-columns:1fr 1fr;}
     .plan{grid-template-columns:44px repeat(7,1fr);} .cell{min-height:60px;font-size:10.5px;padding:5px;}
-    .two,.concepts,.cards,.plan-panel,.settings{grid-template-columns:1fr;} .chat{height:70vh;} .acform{grid-template-columns:1fr 1fr;} .adet{grid-template-columns:1fr 1fr;}
+    .two,.concepts,.cards,.plan-panel,.settings{grid-template-columns:1fr;} .shelf{grid-template-columns:repeat(3,1fr);} .panel{padding:4px 12px 14px;} .chat{height:70vh;} .acform{grid-template-columns:1fr 1fr;} .adet{grid-template-columns:1fr 1fr;}
   }
 </style>
 </head>
@@ -191,9 +216,9 @@
   </header>
 
   <div class="settings hidden" id="settings">
-    <div class="f"><label>Model for advice and newsletter ideas</label><select id="s-model-text"></select><span class="msg">Runs a few times a week. A fast, cheap model is fine here.</span></div>
-    <div class="f"><label>Model for the chat about your visuals</label><select id="s-model-chat"></select><span class="msg">Where judgment matters: which format, what to change, what converts. Pick the strongest model you are happy to pay for per message.</span></div>
-    <div class="row"><button class="btn" id="s-save">Save</button><button class="btn ghost" id="s-close">Close</button><span class="msg" id="s-msg"></span></div>
+    <div class="f"><label>Model, advice and newsletter</label><select id="s-model-text"></select></div>
+    <div class="f"><label>Model, chat about visuals</label><select id="s-model-chat"></select></div>
+    <div class="row"><button class="btn" id="s-save" style="padding:7px 12px;font-size:13px">Save</button><button class="btn ghost" id="s-close" style="padding:7px 12px;font-size:13px">Close</button><span class="msg" id="s-msg"></span></div>
   </div>
 
   <nav class="tabs" id="tabs">
@@ -205,18 +230,50 @@
   </nav>
 
 <section class="tab on" id="tab-dashboard">
-  <h2>Funnel this month <small>actual vs target, click a target to change it. Line = last 12 weeks</small></h2>
-  <div class="funnel" id="funnel"></div>
+  <div class="panel p-funnel">
+    <h2>Funnel this month <small>actual vs target, click a target to change it. Line = last 12 weeks</small></h2>
+    <div class="funnel" id="funnel"></div>
+    <h2 class="sub">Quiz funnel <small>the paid layer: ads to web quiz to Insider. Bars from the kick-off plan</small></h2>
+    <div class="funnel qf" id="qfunnel"></div>
+  </div>
 
-  <h2>Quiz funnel this month <small>the paid layer: ads to web quiz to Insider. Bars from the kick-off plan</small></h2>
-  <div class="funnel qf" id="qfunnel"></div>
+  <div class="panel p-weeks">
+    <h2>Week numbers <small>type in on Monday, 2 minutes</small></h2>
+    <div class="inputs">
+      <div class="f"><label>Followers</label><input type="number" id="w-followers"></div>
+      <div class="f"><label>Profile reach 7d</label><input type="number" id="w-reach"></div>
+      <div class="f"><label>Installs iOS</label><input type="number" id="w-ios"></div>
+      <div class="f"><label>Installs Android</label><input type="number" id="w-android"></div>
+      <div class="f"><label>Link clicks</label><input type="number" id="w-clicks"></div>
+      <div class="f"><label>Free accounts</label><input type="number" id="w-accounts" class="auto"></div>
+      <div class="f"><label>Paid members</label><input type="number" id="w-paid" class="auto"></div>
+      <div class="f"><label>Notes</label><input type="text" id="w-notes"></div>
+      <div class="paidrow"><span class="lbl">Paid layer, from week 3 of the kick-off plan</span></div>
+      <div class="f"><label>Ad spend (euro)</label><input type="number" id="w-adspend" step="0.01"></div>
+      <div class="f"><label>Ad link clicks</label><input type="number" id="w-adclicks"></div>
+      <div class="f"><label>Quiz starts</label><input type="number" id="w-qstarts"></div>
+      <div class="f"><label>Quiz completions</label><input type="number" id="w-qdone"></div>
+      <div class="f"><label>Insider signups</label><input type="number" id="w-insider"></div>
+      <div class="f"><label>Cost per Insider</label><input type="text" id="w-cpi" class="auto" readonly></div>
+      <div class="actions">
+        <div class="weeknav"><button id="w-prev">&lsaquo;</button><span id="w-label"></span><button id="w-next">&rsaquo;</button></div>
+        <button class="btn ghost" id="w-auto">Fetch accounts and paid</button>
+        <button class="btn" id="w-save">Save week</button>
+        <span class="msg" id="w-msg"></span>
+      </div>
+    </div>
+    <div class="drop" id="drop"><b>Drop the Meta Insights export here (CSV)</b><br>Posts are matched to a format by the code at the end of the caption (<span id="drop-codes"></span>). Reach, saves, shares and link taps fill the formats table.<input type="file" id="csv" accept=".csv,text/csv" hidden></div>
+    <p class="msg" id="csv-msg" style="margin-top:8px"></p>
+  </div>
 
   <div class="two">
-    <div>
+    <div class="panel p-advice">
       <h2>Claude says <small id="adv-when"></small><span class="right"><button class="btn" id="adv-btn">Refresh advice</button></span></h2>
       <div class="advice"><p id="adv-text" class="muted">No advice yet. Fill in a few weeks of numbers, then press Refresh advice.</p><div class="when" id="adv-model"></div></div>
+      <h2 class="sub">Ask Claude <small>questions, ad screenshots, images. Same conversation as on Concepts</small></h2>
+      <div id="chat-slot-dashboard"></div>
     </div>
-    <div>
+    <div class="panel p-news">
       <h2>Newsletter ideas <small id="nl-when"></small></h2>
       <div class="news">
         <div id="nl-list"><p class="msg">No ideas yet. Add a note if you want, then press the button.</p></div>
@@ -226,58 +283,36 @@
     </div>
   </div>
 
-  <h2>Week numbers <small>type in on Monday, 2 minutes</small></h2>
-  <div class="inputs">
-    <div class="f"><label>Followers</label><input type="number" id="w-followers"></div>
-    <div class="f"><label>Profile reach 7d</label><input type="number" id="w-reach"></div>
-    <div class="f"><label>Installs iOS</label><input type="number" id="w-ios"></div>
-    <div class="f"><label>Installs Android</label><input type="number" id="w-android"></div>
-    <div class="f"><label>Link clicks</label><input type="number" id="w-clicks"></div>
-    <div class="f"><label>Free accounts</label><input type="number" id="w-accounts" class="auto"></div>
-    <div class="f"><label>Paid members</label><input type="number" id="w-paid" class="auto"></div>
-    <div class="f"><label>Notes</label><input type="text" id="w-notes"></div>
-    <div class="paidrow"><span class="lbl">Paid layer, from week 3 of the kick-off plan</span></div>
-    <div class="f"><label>Ad spend (euro)</label><input type="number" id="w-adspend" step="0.01"></div>
-    <div class="f"><label>Ad link clicks</label><input type="number" id="w-adclicks"></div>
-    <div class="f"><label>Quiz starts</label><input type="number" id="w-qstarts"></div>
-    <div class="f"><label>Quiz completions</label><input type="number" id="w-qdone"></div>
-    <div class="f"><label>Insider signups</label><input type="number" id="w-insider"></div>
-    <div class="f"><label>Cost per Insider</label><input type="text" id="w-cpi" class="auto" readonly></div>
-    <div class="actions">
-      <div class="weeknav"><button id="w-prev">&lsaquo;</button><span id="w-label"></span><button id="w-next">&rsaquo;</button></div>
-      <button class="btn ghost" id="w-auto">Fetch accounts and paid</button>
-      <button class="btn" id="w-save">Save week</button>
-      <span class="msg" id="w-msg"></span>
-    </div>
+  <div class="panel p-formats">
+    <h2>Formats <small>one KPI each, this month vs last</small></h2>
+    <table id="formats"></table>
   </div>
-  <div class="drop" id="drop"><b>Drop the Meta Insights export here (CSV)</b><br>Posts are matched to a format by the code at the end of the caption (<span id="drop-codes"></span>). Reach, saves, shares and link taps fill the table below.<input type="file" id="csv" accept=".csv,text/csv" hidden></div>
-  <p class="msg" id="csv-msg" style="margin-top:8px"></p>
-
-  <h2>Formats <small>one KPI each, this month vs last</small></h2>
-  <table id="formats"></table>
-
-  <h2>Weekly plan <small>same slots every week, click a cell to fill it</small></h2>
-  <div class="plan" id="plan"></div>
-  <div class="editor" id="editor">
-    <div><label class="f" style="display:block;font-size:11.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#8a7f97;margin-bottom:6px" id="ed-title">Slot</label>
-      <select id="ed-format"></select></div>
-    <div style="flex:1;min-width:200px"><input type="text" id="ed-note" placeholder="what exactly (names, places)" style="width:100%"></div>
-    <label class="chk"><input type="checkbox" id="ed-posted"> posted</label>
-    <button class="btn" id="ed-save">Save</button>
-    <button class="btn ghost" id="ed-clear">Clear slot</button>
-    <button class="btn ghost" id="ed-close">Close</button>
-  </div>
-  <p class="legend">Green border = posted. Pink outline = today.</p>
 </section>
 
 <section class="tab" id="tab-concepts">
+  <div class="panel p-plan">
+    <h2>Weekly plan <small>same slots every week, click a cell to fill it</small></h2>
+    <div class="plan" id="plan"></div>
+    <div class="editor" id="editor">
+      <div><label class="f" style="display:block;font-size:11.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#8a7f97;margin-bottom:6px" id="ed-title">Slot</label>
+        <select id="ed-format"></select></div>
+      <div style="flex:1;min-width:200px"><input type="text" id="ed-note" placeholder="what exactly (names, places)" style="width:100%"></div>
+      <label class="chk"><input type="checkbox" id="ed-posted"> posted</label>
+      <button class="btn" id="ed-save">Save</button>
+      <button class="btn ghost" id="ed-clear">Clear slot</button>
+      <button class="btn ghost" id="ed-close">Close</button>
+    </div>
+    <p class="legend">Green border = posted. Pink outline = today.</p>
+  </div>
+
   <div class="concepts">
     <div>
       <h2>Concept grid <small>planned feed order, drag to reorder, click to edit</small><span class="right"><span class="msg" id="as-msg" style="text-transform:none;letter-spacing:0;font-weight:600"></span> <button class="btn ghost" id="as-ideas" style="padding:6px 10px;font-size:12px" title="17 ready made concepts: 12 organic posts and the 5 paid angle ads, with caption drafts">Load launch ideas</button></span></h2>
       <div class="grid3" id="grid"></div>
       <input type="file" id="as-file" accept="image/*,video/*" multiple hidden>
       <div class="adet" id="adet">
-        <div class="f"><label>Status</label><select id="ad-status"><option value="concept">concept</option><option value="feedback">under feedback</option><option value="placed">placed</option></select></div>
+        <div class="f" style="grid-row:span 3"><label>Preview</label><a id="ad-preview-link" target="_blank" rel="noopener"><img id="ad-preview" alt="" style="width:100%;border-radius:10px;border:1px solid #e7dfd2;display:block"></a></div>
+        <div class="f"><label>Status</label><select id="ad-status"><option value="concept">concept</option><option value="feedback">under feedback</option><option value="placed">placed</option><option value="parked">parked (drafts shelf)</option></select></div>
         <div class="f"><label>Format</label><select id="ad-format"></select></div>
         <div class="f"><label>Planned date</label><input type="date" id="ad-date"></div>
         <div class="f" style="grid-column:1 / -1"><label>Caption draft</label><textarea id="ad-caption" placeholder="caption, ends with the format code"></textarea></div>
@@ -291,11 +326,14 @@
           <button class="btn ghost" id="ad-close">Close</button>
         </div>
       </div>
-      <p class="legend">Images and reels up to 50 MB. Reels: the first frame is the thumbnail, Claude sees 3 frames, not the video.</p>
+      <p class="legend">Images and reels up to 50 MB. Reels: the first frame is the thumbnail, Claude sees 3 frames, not the video. Hover a tile: x deletes it, the arrow parks it on the drafts shelf.</p>
+      <h2 class="sub">Drafts shelf <small>parked concepts, not in the feed order. Click one to edit or put it back</small><span class="right"><span class="msg" id="shelf-count" style="text-transform:none;letter-spacing:0;font-weight:600"></span></span></h2>
+      <div class="shelf" id="shelf"></div>
     </div>
     <div>
       <h2>Ask Claude <small>images, reels, captions, timing</small><span class="right"><button class="btn ghost" id="ch-clear" style="padding:6px 10px;font-size:12px">Clear history</button></span></h2>
-      <div class="chat">
+      <div id="chat-slot-concepts"></div>
+      <div class="chat" id="chat-box">
         <div class="log" id="ch-log"></div>
         <div class="att" id="ch-att"></div>
         <div class="in">
@@ -322,9 +360,12 @@
     <div class="f"><label>Email</label><input type="email" id="ac-email"></div>
     <div class="f"><label>Phone</label><input type="text" id="ac-phone"></div>
     <div class="f"><label>Notes</label><input type="text" id="ac-notes"></div>
+    <div class="f" style="grid-column:1 / -1"><label>Lists (comma separated, e.g. newsletter monthly, launch partners)</label><input type="text" id="ac-listsfield"></div>
     <div class="row"><button class="btn" id="ac-save">Save</button><button class="btn ghost" id="ac-cancel">Cancel</button><span style="flex:1"></span><button class="btn ghost hidden" id="ac-delete">Delete</button><span class="msg" id="ac-msg"></span></div>
   </div>
   <div class="filters" id="ac-filters"></div>
+  <div class="filters" id="ac-lists"></div>
+  <div class="selbar"><span class="msg" id="ac-selcount"></span><input type="text" id="ac-listname" placeholder="list name"><button class="btn ghost" id="ac-addlist">Add to list</button><button class="btn ghost" id="ac-removelist">Remove from list</button><button class="btn ghost" id="ac-export">Export CSV</button></div>
   <table id="accounts"></table>
 </section>
 
@@ -756,6 +797,9 @@ function showTab(t) {
   tab = t; localStorage.setItem('fm-tab', t);
   $('tabs').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.t === t));
   document.querySelectorAll('section.tab').forEach(s => s.classList.toggle('on', s.id === 'tab-' + t));
+  const box = $('chat-box');
+  if (t === 'dashboard') { $('chat-slot-dashboard').appendChild(box); box.classList.add('compact'); }
+  else if (t === 'concepts') { $('chat-slot-concepts').appendChild(box); box.classList.remove('compact'); }
   if (session) loadTab(t);
 }
 $('tabs').querySelectorAll('button').forEach(b => b.onclick = () => showTab(b.dataset.t));
@@ -764,7 +808,8 @@ function loadTab(t, force) {
   const key = t + '|' + city;
   if (!force && loaded[key]) return;
   loaded[key] = true;
-  if (t === 'concepts') { loadAssets(); loadChat(); }
+  if (t === 'concepts') loadAssets();
+  if (t === 'concepts' || t === 'dashboard') loadChat();
   if (t === 'accounts') loadAccounts();
   if (t === 'formats') loadFormatsPage();
   if (t === 'campaigns') loadCampaigns();
@@ -853,17 +898,24 @@ async function loadAssets() {
 }
 function renderGrid() {
   const stLabel = { concept: 'concept', feedback: 'feedback', placed: 'placed' };
-  let html = assets.map(a => `<div class="gi ${a.status} ${selAsset === a.id ? 'sel' : ''}" draggable="true" data-id="${a.id}">
+  const tile = a => `<div class="gi ${a.status} ${selAsset === a.id ? 'sel' : ''}" draggable="${a.status !== 'parked'}" data-id="${a.id}">
       <img src="${esc(a.thumb_url || a.url)}" alt="" loading="lazy">
       <span class="st">${stLabel[a.status] || a.status}</span>
       ${a.format_code ? `<span class="fc">${esc(a.format_code)}</span>` : ''}
       ${a.kind === 'reel' ? '<span class="reel">&#9654;</span>' : ''}
       ${a.planned_date ? `<span class="dt">${fmtDate(a.planned_date)}</span>` : ''}
-    </div>`).join('');
+      <button class="park" data-act="${a.status === 'parked' ? 'unpark' : 'park'}" title="${a.status === 'parked' ? 'back to the grid' : 'park on the drafts shelf'}">${a.status === 'parked' ? '&#8593;' : '&#8595;'}</button>
+      <button class="x" data-act="delete" title="delete">&#215;</button>
+    </div>`;
+  stLabel.parked = 'draft';
+  let html = assets.filter(a => a.status !== 'parked').map(tile).join('');
+  const parked = assets.filter(a => a.status === 'parked');
+  $('shelf').innerHTML = parked.length ? parked.map(tile).join('') : '<div class="empty">Nothing parked. Hover a tile in the grid and press the arrow to park it here.</div>';
+  $('shelf-count').textContent = parked.length ? parked.length + ' parked' : '';
   html += `<div class="gi up" id="as-up">+ add images or reels<br><span class="muted" style="font-size:11px">or drop them here</span></div>`;
   $('grid').innerHTML = html;
-  $('grid').querySelectorAll('.gi[data-id]').forEach(el => {
-    el.onclick = () => openAsset(el.dataset.id);
+  document.querySelectorAll('#grid .gi[data-id], #shelf .gi[data-id]').forEach(el => {
+    el.onclick = e => { const b = e.target.closest('button[data-act]'); if (b) { e.stopPropagation(); tileAction(el.dataset.id, b.dataset.act); return; } openAsset(el.dataset.id); };
     el.ondragstart = e => { dragId = el.dataset.id; e.dataTransfer.effectAllowed = 'move'; };
     el.ondragover = e => { if (dragId) { e.preventDefault(); el.classList.add('dragover'); } };
     el.ondragleave = () => el.classList.remove('dragover');
@@ -902,8 +954,24 @@ async function reorder(fromId, toId) {
   const { error } = await sb.from('marketing_assets').upsert(assets.map(a => ({ id: a.id, city: a.city, kind: a.kind, url: a.url, sort: a.sort })), { onConflict: 'id' });
   if (error) $('as-msg').textContent = 'Reorder not saved: ' + error.message;
 }
+async function tileAction(id, act) {
+  const a = assets.find(x => x.id === id); if (!a) return;
+  if (act === 'delete') {
+    if (!confirm('Delete this concept? The file stays in storage.')) return;
+    const { error } = await sb.from('marketing_assets').delete().eq('id', id);
+    if (error) { $('as-msg').textContent = 'Delete failed: ' + error.message; return; }
+    assets = assets.filter(x => x.id !== id); if (selAsset === id) { selAsset = null; $('adet').classList.remove('on'); }
+  } else {
+    const status = act === 'park' ? 'parked' : 'concept';
+    const { error } = await sb.from('marketing_assets').update({ status, updated_at: new Date().toISOString() }).eq('id', id);
+    if (error) { $('as-msg').textContent = 'Not saved: ' + error.message; return; }
+    a.status = status;
+  }
+  renderGrid();
+}
 function openAsset(id) {
   selAsset = id; const a = assets.find(x => x.id === id); if (!a) return;
+  $('ad-preview').src = a.thumb_url || a.url; $('ad-preview-link').href = a.url;
   $('ad-format').innerHTML = '<option value="">no format yet</option>' + FORMATS.map(f => `<option value="${code(f.n)}">${code(f.n)} ${f.name}</option>`).join('') + '<optgroup label="Paid angles (ads, not organic)">' + ANGLES.map(a => `<option value="${a.code}">${a.code} ${a.name}</option>`).join('') + '</optgroup>';
   $('ad-status').value = a.status || 'concept'; $('ad-format').value = a.format_code || ''; $('ad-date').value = a.planned_date || '';
   $('ad-caption').value = a.caption || ''; $('ad-feedback').value = a.feedback || ''; $('ad-open').href = a.url;
@@ -1175,6 +1243,7 @@ $('ch-send').onclick = async () => {
   chat.push({ role: 'user', content: text, images, created_at: new Date().toISOString() }); renderChat();
   $('ch-text').value = ''; pending = []; renderAtt();
   $('ch-send').disabled = true; $('ch-send').textContent = 'Thinking...';
+  $('ch-log').insertAdjacentHTML('beforeend', '<div class="typing" id="ch-typing"><i></i><i></i><i></i> Claude is looking at this, 10 to 30 seconds</div>'); $('ch-log').scrollTop = $('ch-log').scrollHeight;
   try {
     const r = await callFn({ action: 'chat', city, message: text, images, asset_id });
     if (r.error) throw new Error(r.error);
@@ -1188,7 +1257,7 @@ $('ch-clear').onclick = async () => {
 };
 
 /* ---------- accounts ---------- */
-let accounts = [], acFilter = 'all', acEditing = null;
+let accounts = [], acFilter = 'all', acList = '', acEditing = null; const acSel = new Set();
 const ST = ['to contact', 'contacted', 'agreed', 'posted'];
 const stClass = s => 's-' + (s === 'to contact' ? 'to' : s);
 async function loadAccounts() {
@@ -1201,21 +1270,49 @@ function renderAccounts() {
   const counts = { all: accounts.length }; ST.forEach(s => counts[s] = accounts.filter(a => a.status === s).length);
   $('ac-filters').innerHTML = ['all', ...ST].map(s => `<button data-s="${s}" class="${acFilter === s ? 'on' : ''}">${s} <span class="muted">${counts[s]}</span></button>`).join('') + `<span class="msg" style="margin-left:auto">${accounts.filter(a => a.last_checked).length ? 'followers checked ' + fmtDate(accounts.map(a => a.last_checked).filter(Boolean).sort().pop()) : 'followers not checked yet'}</span>`;
   $('ac-filters').querySelectorAll('button').forEach(b => b.onclick = () => { acFilter = b.dataset.s; renderAccounts(); });
-  const rows = accounts.filter(a => acFilter === 'all' || a.status === acFilter);
-  let html = '<tr><th>Account</th><th>Type</th><th>Status</th><th>Followers</th><th>Contact</th><th>Notes</th></tr>';
-  if (!rows.length) html += '<tr><td colspan="6" class="muted">No accounts here yet. Press Add account.</td></tr>';
+  const allLists = [...new Set(accounts.flatMap(a => a.lists || []))].sort();
+  $('ac-lists').innerHTML = allLists.length ? '<span class="msg">lists:</span>' + allLists.map(l => `<button data-l="${esc(l)}" class="${acList === l ? 'on' : ''}">${esc(l)} <span class="muted">${accounts.filter(a => (a.lists || []).includes(l)).length}</span></button>`).join('') : '<span class="msg">No lists yet. Tick accounts, type a list name, press Add to list.</span>';
+  $('ac-lists').querySelectorAll('button').forEach(b => b.onclick = () => { acList = acList === b.dataset.l ? '' : b.dataset.l; renderAccounts(); });
+  const rows = accounts.filter(a => (acFilter === 'all' || a.status === acFilter) && (!acList || (a.lists || []).includes(acList)));
+  let html = `<tr><th><input type="checkbox" id="ac-all" ${rows.length && rows.every(a => acSel.has(a.id)) ? 'checked' : ''}></th><th>Account</th><th>Type</th><th>Status</th><th>Followers</th><th>Contact</th><th>Lists</th><th>Notes</th></tr>`;
+  if (!rows.length) html += '<tr><td colspan="8" class="muted">No accounts here yet. Press Add account.</td></tr>';
   for (const a of rows) {
     const d = (a.followers != null && a.followers_prev != null) ? a.followers - a.followers_prev : null;
     const contact = [a.web ? `<a href="${esc(a.web)}" target="_blank" rel="noopener" class="linkish">web</a>` : '', a.email ? `<a href="mailto:${esc(a.email)}" class="linkish">${esc(a.email)}</a>` : '', a.phone ? esc(a.phone) : ''].filter(Boolean).join(' &middot; ');
-    html += `<tr class="clickable" data-id="${a.id}"><td><b>${esc(a.name || a.handle)}</b>${a.handle ? `<br><a href="https://instagram.com/${esc(a.handle.replace(/^@/, ''))}" target="_blank" rel="noopener" class="linkish">@${esc(a.handle.replace(/^@/, ''))}</a>` : ''}</td><td>${esc(a.type)}</td><td><span class="status ${stClass(a.status)}">${esc(a.status)}</span></td><td>${a.followers != null ? '<b>' + fmtN(a.followers) + '</b>' : '<span class="muted">–</span>'}${d != null && d !== 0 ? `<span class="delta ${d > 0 ? 'up' : 'down'}" style="background:none;padding:0">${d > 0 ? '+' : ''}${d}</span>` : ''}</td><td>${contact || '<span class="muted">–</span>'}</td><td class="muted">${esc(a.notes || '')}</td></tr>`;
+    html += `<tr class="clickable" data-id="${a.id}"><td><input type="checkbox" class="ac-chk" data-id="${a.id}" ${acSel.has(a.id) ? 'checked' : ''}></td><td><b>${esc(a.name || a.handle)}</b>${a.handle ? `<br><a href="https://instagram.com/${esc(a.handle.replace(/^@/, ''))}" target="_blank" rel="noopener" class="linkish">@${esc(a.handle.replace(/^@/, ''))}</a>` : ''}</td><td>${esc(a.type)}</td><td><span class="status ${stClass(a.status)}">${esc(a.status)}</span></td><td>${a.followers != null ? '<b>' + fmtN(a.followers) + '</b>' : '<span class="muted">–</span>'}${d != null && d !== 0 ? `<span class="delta ${d > 0 ? 'up' : 'down'}" style="background:none;padding:0">${d > 0 ? '+' : ''}${d}</span>` : ''}</td><td>${contact || '<span class="muted">–</span>'}</td><td>${(a.lists || []).map(l => `<span class="status s-to">${esc(l)}</span>`).join(' ')}</td><td class="muted">${esc(a.notes || '')}</td></tr>`;
   }
   $('accounts').innerHTML = html;
-  $('accounts').querySelectorAll('tr.clickable').forEach(tr => tr.onclick = e => { if (e.target.closest('a')) return; openAccount(tr.dataset.id); });
+  $('accounts').querySelectorAll('tr.clickable').forEach(tr => tr.onclick = e => { if (e.target.closest('a') || e.target.closest('input')) return; openAccount(tr.dataset.id); });
+  $('accounts').querySelectorAll('.ac-chk').forEach(c => c.onchange = () => { if (c.checked) acSel.add(c.dataset.id); else acSel.delete(c.dataset.id); updateSelBar(); });
+  const all = $('ac-all'); if (all) all.onchange = () => { rows.forEach(a => all.checked ? acSel.add(a.id) : acSel.delete(a.id)); renderAccounts(); };
+  updateSelBar();
 }
-const AF = { name: 'ac-name', handle: 'ac-handle', type: 'ac-type', status: 'ac-status', web: 'ac-web', email: 'ac-email', phone: 'ac-phone', notes: 'ac-notes' };
+function updateSelBar() { $('ac-selcount').textContent = acSel.size ? acSel.size + ' selected' : 'none selected, export takes the visible rows'; }
+function csvCell(v) { v = v == null ? '' : String(v); return /[",;\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
+$('ac-export').onclick = () => {
+  const rows = acSel.size ? accounts.filter(a => acSel.has(a.id)) : accounts.filter(a => (acFilter === 'all' || a.status === acFilter) && (!acList || (a.lists || []).includes(acList)));
+  if (!rows.length) { alert('Nothing to export.'); return; }
+  const cols = ['name', 'handle', 'type', 'status', 'web', 'email', 'phone', 'followers', 'followers_prev', 'last_checked', 'lists', 'notes'];
+  const csv = [cols.join(',')].concat(rows.map(a => cols.map(c => csvCell(c === 'lists' ? (a.lists || []).join('|') : a[c])).join(','))).join('\n');
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
+  const u = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = u; link.download = `accounts-${city}-${acList || acFilter}-${iso(new Date())}.csv`; document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(u);
+};
+$('ac-addlist').onclick = async () => {
+  const name = $('ac-listname').value.trim(); if (!name) { $('ac-listname').focus(); return; }
+  if (!acSel.size) { alert('Tick the accounts first.'); return; }
+  for (const id of acSel) { const a = accounts.find(x => x.id === id); if (!a) continue; const lists = [...new Set([...(a.lists || []), name])]; const { error } = await sb.from('marketing_accounts').update({ lists, updated_at: new Date().toISOString() }).eq('id', id); if (error) { alert(error.message); return; } a.lists = lists; }
+  $('ac-listname').value = ''; renderAccounts();
+};
+$('ac-removelist').onclick = async () => {
+  const name = acList || $('ac-listname').value.trim(); if (!name) { alert('Pick a list (click it) or type its name.'); return; }
+  if (!acSel.size) { alert('Tick the accounts first.'); return; }
+  for (const id of acSel) { const a = accounts.find(x => x.id === id); if (!a) continue; const lists = (a.lists || []).filter(l => l !== name); const { error } = await sb.from('marketing_accounts').update({ lists, updated_at: new Date().toISOString() }).eq('id', id); if (error) { alert(error.message); return; } a.lists = lists; }
+  renderAccounts();
+};
+const AF = { name: 'ac-name', handle: 'ac-handle', type: 'ac-type', status: 'ac-status', web: 'ac-web', email: 'ac-email', phone: 'ac-phone', notes: 'ac-notes', lists: 'ac-listsfield' };
 function openAccount(id) {
   acEditing = id; const a = id ? accounts.find(x => x.id === id) : null;
-  Object.entries(AF).forEach(([k, el]) => $(el).value = a ? (a[k] || (k === 'type' ? 'influencer' : k === 'status' ? 'to contact' : '')) : (k === 'type' ? 'influencer' : k === 'status' ? 'to contact' : ''));
+  Object.entries(AF).forEach(([k, el]) => $(el).value = a ? (k === 'lists' ? (a.lists || []).join(', ') : (a[k] || (k === 'type' ? 'influencer' : k === 'status' ? 'to contact' : ''))) : (k === 'type' ? 'influencer' : k === 'status' ? 'to contact' : ''));
   $('ac-delete').classList.toggle('hidden', !a); $('ac-msg').textContent = a && a.last_checked ? 'followers checked ' + fmtWhen(a.last_checked) : '';
   $('acform').classList.remove('hidden'); $('ac-name').focus();
 }
@@ -1223,13 +1320,19 @@ $('ac-new').onclick = () => openAccount(null);
 $('ac-cancel').onclick = () => { $('acform').classList.add('hidden'); acEditing = null; };
 $('ac-save').onclick = async () => {
   const row = { city, updated_at: new Date().toISOString() };
-  Object.entries(AF).forEach(([k, el]) => row[k] = $(el).value.trim() || null);
+  Object.entries(AF).forEach(([k, el]) => row[k] = k === 'lists' ? $(el).value.split(',').map(x => x.trim()).filter(Boolean) : ($(el).value.trim() || null));
   if (row.handle) row.handle = row.handle.replace(/^@/, '').replace(/^https?:\/\/(www\.)?instagram\.com\//i, '').replace(/[\/?].*$/, '');
   if (!row.name && !row.handle) { $('ac-msg').textContent = 'A name or a handle, at least.'; return; }
-  const q = acEditing ? sb.from('marketing_accounts').update(row).eq('id', acEditing) : sb.from('marketing_accounts').insert(row);
-  const { error } = await q;
+  const wasNew = !acEditing, handleChanged = acEditing ? (accounts.find(x => x.id === acEditing) || {}).handle !== row.handle : true;
+  const q = acEditing ? sb.from('marketing_accounts').update(row).eq('id', acEditing).select().single() : sb.from('marketing_accounts').insert(row).select().single();
+  const { data, error } = await q;
   if (error) { $('ac-msg').textContent = 'Save failed: ' + error.message; return; }
-  $('acform').classList.add('hidden'); acEditing = null; loadAccounts();
+  $('acform').classList.add('hidden'); acEditing = null; await loadAccounts();
+  if (data && row.handle && (wasNew || handleChanged)) {   // fetch followers for this one handle right away
+    $('ac-msg').textContent = 'Checking followers of @' + row.handle + '...';
+    try { const r = await callFn({ action: 'followers', city, ids: [data.id] }); if (r.error) throw new Error(r.error); if (!r.updated) throw new Error(r.error_detail || 'profile not found'); await loadAccounts(); }
+    catch (e) { alert('Followers for @' + row.handle + ' not fetched: ' + e.message); }
+  }
 };
 $('ac-delete').onclick = async () => {
   if (!acEditing || !confirm('Delete this account?')) return;
@@ -1244,7 +1347,7 @@ $('ac-refresh').onclick = async () => {
     const r = await callFn({ action: 'followers', city });
     if (r.error) throw new Error(r.error);
     await loadAccounts();
-    alert(`${r.updated} updated` + (r.failed && r.failed.length ? `, not found: ${r.failed.join(', ')}` : '') + '.');
+    alert(`${r.updated} updated` + (r.failed && r.failed.length ? `, not found: ${r.failed.join(', ')}` : '') + (r.error_detail ? `. Apify said: ${r.error_detail}` : '') + '.');
   } catch (e) { alert('Follower check failed: ' + e.message); }
   $('ac-refresh').disabled = false; $('ac-refresh').textContent = 'Refresh followers';
 };
