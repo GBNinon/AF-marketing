@@ -1,11 +1,12 @@
 <!DOCTYPE html>
-<!-- Families App marketing dashboard v2.4 (11 Sep 2026): coloured panels, plan moved to Concepts, chat on the dashboard, drafts shelf, account lists and export. v2.3: model settings panel. v2.2 (10 Sep 2026): paid layer (quiz funnel, ad spend), kick-off plan campaigns and panel, ad concepts AD1 to AD5. v1 = funnel, advice, weeks, CSV, formats table, plan. v2 adds tabs: Concepts (grid + chat), Accounts, Formats, Campaigns, plus newsletter ideas and 12 week trends. -->
+<!-- Families App marketing dashboard v2.6 (16 Sep 2026): Library tab (knowledge, app screens, design kit), Make a visual (Claude writes the artboard, rendered here to PNG). v2.5 (14 Sep 2026): settings dropdowns prefilled, retry link. v2.4 (11 Sep 2026): coloured panels, plan moved to Concepts, chat on the dashboard, drafts shelf, account lists and export. v2.3: model settings panel. v2.2 (10 Sep 2026): paid layer (quiz funnel, ad spend), kick-off plan campaigns and panel, ad concepts AD1 to AD5. v1 = funnel, advice, weeks, CSV, formats table, plan. v2 adds tabs: Concepts (grid + chat), Accounts, Formats, Campaigns, plus newsletter ideas and 12 week trends. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Families App marketing</title>
 <link href="https://fonts.googleapis.com/css2?family=Karla:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
   *{box-sizing:border-box;margin:0;padding:0;}
@@ -81,7 +82,7 @@
   .settings{background:#fff;border:1px solid #e7dfd2;border-radius:14px;padding:10px 14px;margin:-8px 0 14px auto;max-width:560px;display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;}
   .settings .f label{font-size:10.5px;margin-bottom:3px;}
   .settings select{width:100%;border:1.5px solid #e0d8ea;border-radius:10px;padding:6px 8px;font-size:13px;font-weight:700;font-family:inherit;color:#2f2a38;background:#fff;}
-  .settings .row{grid-column:1 / -1;display:flex;gap:8px;align-items:center;flex-wrap:wrap;} .settings .row .msg{font-size:12px;}
+  .settings .row{grid-column:1 / -1;display:flex;gap:8px;align-items:center;flex-wrap:wrap;} .settings .row .msg{font-size:12px;flex-basis:100%;} .settings .row .msg a{color:#7a5f8c;}
   /* coloured panels: one border and tint per area so the page reads as distinct blocks */
   .panel{border:1.5px solid #e7dfd2;border-radius:22px;padding:6px 20px 20px;margin:18px 0;background:rgba(255,255,255,.35);}
   .panel > h2:first-child{margin-top:14px;}
@@ -93,6 +94,37 @@
   .p-formats{border-color:#b7cee0;background:rgba(127,169,204,.10);} .p-formats h2{color:#2f5878;}
   .p-plan{border-color:#b7cee0;background:rgba(127,169,204,.10);} .p-plan h2{color:#2f5878;}
   .two > .panel{margin:0;}
+  .p-know{border-color:#f0cf9e;background:rgba(240,190,120,.14);} .p-know h2{color:#9a6a2e;}
+  .p-screens{border-color:#b7cee0;background:rgba(127,169,204,.10);} .p-screens h2{color:#2f5878;}
+  .p-kit{border-color:#c9b6d6;background:rgba(181,151,193,.10);} .p-kit h2{color:#6d5185;}
+  .p-vis{border-color:#e6b9cc;background:rgba(232,176,200,.14);} .p-vis h2{color:#9a4f70;}
+  .know{display:flex;flex-direction:column;gap:6px;margin-bottom:10px;}
+  .know .k{background:#fff;border:1px solid #e7dfd2;border-radius:12px;padding:8px 12px;display:flex;gap:10px;align-items:flex-start;font-size:14px;}
+  .know .k .kind{font-size:10.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#8a7f97;padding-top:3px;min-width:56px;}
+  .know .k .kind.never{color:#b0405f;} .know .k .kind.example{color:#3f7a56;}
+  .know .k span.t{flex:1;white-space:pre-wrap;} .know .k .city{font-size:11px;color:#8a7f97;padding-top:3px;}
+  .know .k button{border:none;background:none;color:#8a7f97;font-size:16px;cursor:pointer;padding:0 2px;line-height:1;}
+  .kform{display:grid;grid-template-columns:130px 1fr 130px auto;gap:8px;align-items:end;}
+  .kform textarea,.kform select,.kform input{width:100%;border:1.5px solid #e0d8ea;border-radius:10px;padding:8px 10px;font-family:inherit;font-size:14px;color:#2f2a38;background:#fff;}
+  .kform textarea{min-height:44px;resize:vertical;}
+  .lib{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:10px;}
+  .lib .li{position:relative;background:#fff;border:1px solid #e7dfd2;border-radius:12px;overflow:hidden;}
+  .lib .li img{width:100%;aspect-ratio:9/16;object-fit:contain;background:#f3eee6;display:block;}
+  .lib .li.kit img{aspect-ratio:1;}
+  .lib .li .lb{font-size:12px;font-weight:700;padding:6px 8px;color:#2f2a38;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .lib .li .x{position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:50%;border:none;background:rgba(47,42,56,.78);color:#fff;font-size:13px;font-weight:800;cursor:pointer;display:none;line-height:1;}
+  .lib .li:hover .x{display:block;}
+  .lib .up{border:1.5px dashed #c9b6d6;border-radius:12px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:13px;color:#8a7f97;cursor:pointer;min-height:120px;padding:10px;}
+  .lib .up.dragover{background:#f3eaf6;}
+  .vis{display:grid;grid-template-columns:1fr 340px;gap:16px;align-items:start;}
+  .vis textarea{width:100%;border:1.5px solid #e0d8ea;border-radius:10px;padding:8px 10px;font-family:inherit;font-size:14px;color:#2f2a38;min-height:70px;resize:vertical;background:#fff;}
+  .vis .out{background:#fff;border:1px solid #e7dfd2;border-radius:14px;padding:8px;min-height:120px;}
+  .vis .out img{width:100%;display:block;border-radius:8px;}
+  .vis .out .ph{aspect-ratio:4/5;display:flex;align-items:center;justify-content:center;color:#8a7f97;font-size:13px;text-align:center;padding:20px;}
+  .vis .meta{font-size:13.5px;color:#2f2a38;margin-top:8px;} .vis .meta b{display:block;font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:#8a7f97;margin-top:8px;}
+  #vis-frame{position:fixed;left:-3000px;top:0;width:1080px;height:1350px;border:0;}
+  .thinking{display:inline-block;color:#8a7f97;font-size:13px;} .thinking::after{content:"";display:inline-block;width:1.2em;text-align:left;animation:dots 1.2s steps(4,end) infinite;}
+  @keyframes dots{0%{content:""}25%{content:"."}50%{content:".."}75%{content:"..."}}
   .two{margin:18px 0;}
   .gi .x,.gi .park{position:absolute;top:6px;width:22px;height:22px;border-radius:50%;border:none;background:rgba(47,42,56,.78);color:#fff;font-size:13px;font-weight:800;cursor:pointer;display:none;align-items:center;justify-content:center;line-height:1;}
   .gi .x{right:6px;} .gi .park{right:32px;font-size:12px;}
@@ -186,7 +218,7 @@
     .funnel{grid-template-columns:1fr 1fr;} .conv{display:none;}
     .inputs{grid-template-columns:1fr 1fr;}
     .plan{grid-template-columns:44px repeat(7,1fr);} .cell{min-height:60px;font-size:10.5px;padding:5px;}
-    .two,.concepts,.cards,.plan-panel,.settings{grid-template-columns:1fr;} .shelf{grid-template-columns:repeat(3,1fr);} .panel{padding:4px 12px 14px;} .chat{height:70vh;} .acform{grid-template-columns:1fr 1fr;} .adet{grid-template-columns:1fr 1fr;}
+    .two,.concepts,.cards,.plan-panel,.settings{grid-template-columns:1fr;} .shelf{grid-template-columns:repeat(3,1fr);} .panel{padding:4px 12px 14px;} .chat{height:70vh;} .acform{grid-template-columns:1fr 1fr;} .adet{grid-template-columns:1fr 1fr;} .lib{grid-template-columns:repeat(3,1fr);} .kform{grid-template-columns:1fr 1fr;} .vis{grid-template-columns:1fr;}
   }
 </style>
 </head>
@@ -227,6 +259,7 @@
     <button data-t="accounts">Accounts</button>
     <button data-t="formats">Formats</button>
     <button data-t="campaigns">Campaigns</button>
+    <button data-t="library">Library</button>
   </nav>
 
 <section class="tab on" id="tab-dashboard">
@@ -320,6 +353,7 @@
         <div class="row">
           <button class="btn" id="ad-save">Save</button>
           <button class="btn ghost" id="ad-ask">Ask Claude about this</button>
+          <button class="btn ghost" id="ad-make">Make visual</button>
           <a class="linkish" id="ad-open" target="_blank" rel="noopener">open original</a>
           <span style="flex:1"></span>
           <button class="btn ghost" id="ad-delete">Delete</button>
@@ -327,6 +361,29 @@
         </div>
       </div>
       <p class="legend">Images and reels up to 50 MB. Reels: the first frame is the thumbnail, Claude sees 3 frames, not the video. Hover a tile: x deletes it, the arrow parks it on the drafts shelf.</p>
+      <div class="panel p-vis" id="vispanel">
+        <h2>Make a visual <small>Claude composes it from your design kit and app screens, in the house style. You see it here in seconds</small><span class="right"><span class="msg" id="vis-msg"></span></span></h2>
+        <div class="vis">
+          <div>
+            <div class="f"><label id="vis-for">Brief</label><textarea id="vis-brief" placeholder="e.g. AF5 Wednesday theme post: three rainy day cafés with a play corner, Kinderkookkafé, Noorderlicht, Boerderij Meerzicht. Phone with the Food Spots screen, a polaroid of poffertjes."></textarea></div>
+            <div class="row" style="margin-top:8px;flex-wrap:wrap;gap:8px">
+              <select id="vis-size" style="border:1.5px solid #e0d8ea;border-radius:10px;padding:8px 10px;font-family:inherit;font-size:13px;background:#fff"><option value="post">feed post 4:5</option><option value="story">story 9:16</option></select>
+              <button class="btn" id="vis-make">Make visual</button>
+              <span style="flex:1"></span>
+              <button class="btn ghost" id="vis-close">Close</button>
+            </div>
+            <div class="f" style="margin-top:10px"><label>Then say what to change</label><textarea id="vis-feedback" placeholder="e.g. shorter headline, use the Dailies screen, move the polaroid left" style="min-height:48px"></textarea></div>
+            <div class="row" style="margin-top:8px;gap:8px;flex-wrap:wrap">
+              <button class="btn ghost" id="vis-redo" disabled>Redo with this feedback</button>
+              <button class="btn ghost" id="vis-save" disabled>Save to grid</button>
+              <button class="btn ghost" id="vis-download" disabled>Download PNG</button>
+            </div>
+            <div class="meta" id="vis-meta"></div>
+          </div>
+          <div class="out" id="vis-out"><div class="ph">Nothing made yet. Write a brief, or open a tile and press Make visual.</div></div>
+        </div>
+      </div>
+      <div class="row" style="margin:6px 0 0"><button class="btn ghost" id="as-newvis" style="padding:6px 10px;font-size:12px">New visual from a brief</button></div>
       <h2 class="sub">Drafts shelf <small>parked concepts, not in the feed order. Click one to edit or put it back</small><span class="right"><span class="msg" id="shelf-count" style="text-transform:none;letter-spacing:0;font-weight:600"></span></span></h2>
       <div class="shelf" id="shelf"></div>
     </div>
@@ -389,7 +446,47 @@
   <h2>Campaigns <small>status and notes are per city. Organic from the Ibiza playbook, paid and retention from the kick-off plan</small></h2>
   <div id="ccards"></div>
 </section>
+
+<section class="tab" id="tab-library">
+  <div class="panel p-know">
+    <h2>What Claude knows <small>rules, facts and examples it gets with every question, advice and visual. Yours to edit</small><span class="right"><span class="msg" id="kn-msg"></span></span></h2>
+    <div class="know" id="kn-list"></div>
+    <div class="kform">
+      <div class="f"><label>Kind</label><select id="kn-kind"><option value="rule">rule (always do)</option><option value="never">never (do not)</option><option value="fact">fact (about the app)</option><option value="example">example (a caption that worked)</option></select></div>
+      <div class="f"><label>Text</label><textarea id="kn-text" placeholder="e.g. Our sitters are called sitters, never nannies. Or: the Dailies Sunday theme is Reset, keep it soft."></textarea></div>
+      <div class="f"><label>Applies to</label><select id="kn-city"><option value="">every city</option><option value="this">this city only</option></select></div>
+      <button class="btn" id="kn-add" style="padding:9px 14px">Add</button>
+    </div>
+    <p class="legend">Claude reads the whole list on every call, so keep each line short and specific. Things it gets wrong twice belong here.</p>
+  </div>
+
+  <div class="panel p-screens">
+    <h2>App screens <small>real screenshots of this city's app. Claude attaches them when you name the section, and composes visuals with them</small><span class="right"><span class="msg" id="sc-msg"></span></span></h2>
+    <div class="kform" style="grid-template-columns:1fr 1fr auto">
+      <div class="f"><label>Section</label><input type="text" id="sc-label" list="sc-sections" placeholder="Dailies, Event Agenda, Top 100..."><datalist id="sc-sections"></datalist></div>
+      <div class="f"><label>Note (optional)</label><input type="text" id="sc-note" placeholder="e.g. Thursday theme, filters open"></div>
+      <button class="btn" id="sc-add" style="padding:9px 14px">Choose screenshots</button>
+    </div>
+    <input type="file" id="sc-file" accept="image/*" multiple hidden>
+    <div class="lib" id="sc-list"></div>
+    <p class="legend">Phone screenshots as they are, one section per upload (you can select several files for the same section). PNG or JPG.</p>
+  </div>
+
+  <div class="panel p-kit">
+    <h2>Design kit <small>what Claude composes visuals from: phone mockups, polaroids, logo, your own photos</small><span class="right"><span class="msg" id="kit-msg"></span></span></h2>
+    <div class="kform" style="grid-template-columns:150px 1fr 150px auto">
+      <div class="f"><label>Kind</label><select id="kit-kind"><option value="kit">kit (phone, polaroid, logo)</option><option value="photo">photo (your own)</option></select></div>
+      <div class="f"><label>Label</label><input type="text" id="kit-label" placeholder="e.g. phone Food Spots, polaroid poffertjes, logo, Westerpark morning"></div>
+      <div class="f"><label>Applies to</label><select id="kit-city"><option value="">every city</option><option value="this">this city only</option></select></div>
+      <button class="btn" id="kit-add" style="padding:9px 14px">Choose files</button>
+    </div>
+    <input type="file" id="kit-file" accept="image/*" multiple hidden>
+    <div class="lib" id="kit-list"></div>
+    <p class="legend">Start with the folder ideas-src/assets from the launch covers: the phone-*.png mockups (kit, label "phone Food Spots" etc), pol-*.png (kit, "polaroid ...") and logo.png. Transparent PNGs work best. Photos with people: only your own, with consent.</p>
+  </div>
+</section>
 </div>
+<iframe id="vis-frame" sandbox="allow-same-origin" title="artboard"></iframe>
 
 <script>
 /* ======================= config ======================= */
@@ -813,23 +910,29 @@ function loadTab(t, force) {
   if (t === 'accounts') loadAccounts();
   if (t === 'formats') loadFormatsPage();
   if (t === 'campaigns') loadCampaigns();
+  if (t === 'library') loadLibrary();
 }
 
 /* ---------- settings: model choice ---------- */
 $('settings-btn').onclick = async () => {
   const el = $('settings'); el.classList.toggle('hidden'); if (el.classList.contains('hidden')) return;
+  loadModelSettings();
+};
+async function loadModelSettings() {
   $('s-msg').textContent = 'Loading the model list from Anthropic...';
+  // saved choice first, so the dropdowns are never empty while the live list loads
+  const { data } = await sb.from('marketing_settings').select('key,value');
+  const st = {}; (data || []).forEach(x => st[x.key] = x.value || '');
+  const opts = (cur, list, fb) => `<option value="">default (${esc(fb)})</option>` + (cur && !list.some(m => m.id === cur) ? `<option value="${esc(cur)}" selected>${esc(cur)}</option>` : '') + list.map(m => `<option value="${esc(m.id)}" ${m.id === cur ? 'selected' : ''}>${esc(m.name)} (${esc(m.id)})</option>`).join('');
+  $('s-model-text').innerHTML = opts(st.model_text, [], 'claude-sonnet-5'); $('s-model-chat').innerHTML = opts(st.model_chat, [], 'claude-sonnet-5');
   try {
     const r = await callFn({ action: 'models' });
     if (r.error) throw new Error(r.error);
     const list = (r.models || []).sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
-    const opts = cur => `<option value="">default (${esc(r.fallback)})</option>` + list.map(m => `<option value="${esc(m.id)}" ${m.id === cur ? 'selected' : ''}>${esc(m.name)} (${esc(m.id)})</option>`).join('');
-    const { data } = await sb.from('marketing_settings').select('key,value');
-    const st = {}; (data || []).forEach(x => st[x.key] = x.value || '');
-    $('s-model-text').innerHTML = opts(st.model_text); $('s-model-chat').innerHTML = opts(st.model_chat);
+    $('s-model-text').innerHTML = opts(st.model_text, list, r.fallback); $('s-model-chat').innerHTML = opts(st.model_chat, list, r.fallback);
     $('s-msg').textContent = `${list.length} models available on your key. Now: advice ${r.model_text}, chat ${r.model_chat}.`;
-  } catch (e) { $('s-msg').textContent = 'Could not load models: ' + e.message + ' (is ANTHROPIC_API_KEY set?)'; }
-};
+  } catch (e) { $('s-msg').innerHTML = 'Could not load the model list: ' + esc(e.message) + '. <a href="#" id="s-retry">Try again</a>'; $('s-retry').onclick = ev => { ev.preventDefault(); loadModelSettings(); }; }
+}
 $('s-close').onclick = () => $('settings').classList.add('hidden');
 $('s-save').onclick = async () => {
   const rows = [{ key: 'model_text', value: $('s-model-text').value, updated_at: new Date().toISOString() }, { key: 'model_chat', value: $('s-model-chat').value, updated_at: new Date().toISOString() }];
@@ -1011,6 +1114,174 @@ $('ad-ask').onclick = async () => {
   $('ch-text').value = `What do you think of this ${isVideo ? 'reel (3 frames)' : a.kind === 'reel' ? 'reel cover' : 'image'}${parts.length ? ', ' + parts.join(', ') : ''}? Which format, what to change, caption in our voice, when to post.`;
   $('ch-text').focus();
   if (window.innerWidth <= 820) $('ch-log').scrollIntoView({ behavior: 'smooth' });
+};
+
+/* ======================= Library: knowledge, app screens, design kit ======================= */
+const SECTIONS = {
+  amsterdam: ['Home', 'Dailies', 'Event Agenda', 'Top 100 Family Fun', 'Family Food Spots', 'Schools', 'After-school', 'Birthday Directory', 'Playgrounds', 'Babysitter Finder', 'Dinner Sorted', 'Little Chef', 'Fridge Rescue', 'Playdates', 'Memory game', 'Chores', 'Groceries', 'Favorites', 'Quick tour', 'Quiz result', 'Paywall'],
+  ibiza: ['Home', 'Dailies', 'Event Agenda', 'Top 100 plans', 'Family Food Spots', 'Playgrounds and beaches', 'Sunset Finder', 'Babysitters', 'Schools', 'After school', 'All things Birthday', 'Dinner Sorted', 'Play Mate Finder', 'Memory game', 'Chores', 'Groceries', 'Favorites', 'Quick tour', 'Paywall'],
+  valencia: ['Home', 'Dailies', 'Event Agenda', 'Top 100 plans', 'Family Food Spots', 'Playgrounds', 'Babysitters', 'Schools', 'After school', 'Birthday Directory', 'Dinner Sorted', 'Playdates', 'Favorites', 'Paywall'],
+};
+let knowledge = [], library = [];
+async function loadLibrary() {
+  const [k, l] = await Promise.all([
+    sb.from('marketing_knowledge').select('*').or(`city.is.null,city.eq.${city}`).order('created_at'),
+    sb.from('marketing_library').select('*').or(`city.is.null,city.eq.${city}`).order('created_at'),
+  ]);
+  if (k.error || l.error) { $('kn-msg').textContent = 'Run marketing-schema-v6.sql first (' + (k.error || l.error).message + ')'; return; }
+  knowledge = k.data || []; library = l.data || [];
+  $('sc-sections').innerHTML = (SECTIONS[city] || []).map(x => `<option value="${esc(x)}">`).join('');
+  renderKnowledge(); renderLibrary();
+}
+function renderKnowledge() {
+  $('kn-list').innerHTML = knowledge.length ? knowledge.map(k => `<div class="k" data-id="${k.id}"><span class="kind ${k.kind}">${esc(k.kind)}</span><span class="t">${esc(k.text)}</span><span class="city">${k.city ? esc(k.city) : 'all cities'}</span><button title="remove" data-id="${k.id}">&#215;</button></div>`).join('')
+    : '<div class="empty" style="font-size:13px;color:#8a7f97">Nothing yet. The first good candidates: names you insist on, the tone of a caption you loved, a fact Claude got wrong.</div>';
+  $('kn-list').querySelectorAll('button[data-id]').forEach(b => b.onclick = async () => {
+    const { error } = await sb.from('marketing_knowledge').delete().eq('id', b.dataset.id);
+    if (error) { $('kn-msg').textContent = 'Remove failed: ' + error.message; return; }
+    knowledge = knowledge.filter(x => x.id !== b.dataset.id); renderKnowledge();
+  });
+}
+$('kn-add').onclick = async () => {
+  const text = $('kn-text').value.trim(); if (!text) return;
+  const row = { kind: $('kn-kind').value, text, city: $('kn-city').value === 'this' ? city : null };
+  const { data, error } = await sb.from('marketing_knowledge').insert(row).select().single();
+  if (error) { $('kn-msg').textContent = 'Add failed: ' + error.message; return; }
+  knowledge.push(data); $('kn-text').value = ''; $('kn-msg').textContent = 'Added. Claude gets it from the next call on.'; renderKnowledge();
+};
+function renderLibrary() {
+  const item = l => `<div class="li ${l.kind}" data-id="${l.id}"><img src="${esc(l.url)}" alt="" loading="lazy"><span class="lb" title="${esc(l.label)}${l.note ? ', ' + esc(l.note) : ''}">${esc(l.label)}${l.city ? '' : ' <span style="color:#8a7f97;font-weight:600">(all)</span>'}</span><button class="x" data-id="${l.id}" title="remove">&#215;</button></div>`;
+  const screens = library.filter(l => l.kind === 'screen'), kit = library.filter(l => l.kind !== 'screen');
+  $('sc-list').innerHTML = screens.map(item).join('') + `<div class="up" id="sc-up">+ drop screenshots here<br><span style="font-size:11px">section from the field above</span></div>`;
+  $('kit-list').innerHTML = kit.map(item).join('') + `<div class="up" id="kit-up">+ drop kit files here<br><span style="font-size:11px">label from the field above</span></div>`;
+  document.querySelectorAll('.lib .x').forEach(b => b.onclick = async () => {
+    const { error } = await sb.from('marketing_library').delete().eq('id', b.dataset.id);
+    if (error) { $('sc-msg').textContent = 'Remove failed: ' + error.message; return; }
+    library = library.filter(x => x.id !== b.dataset.id); renderLibrary();
+  });
+  const wire = (upId, fileInputId, kind) => {
+    const up = $(upId); if (!up) return;
+    up.onclick = () => $(fileInputId).click();
+    up.ondragover = e => { e.preventDefault(); up.classList.add('dragover'); };
+    up.ondragleave = () => up.classList.remove('dragover');
+    up.ondrop = e => { e.preventDefault(); up.classList.remove('dragover'); if (e.dataTransfer.files.length) addLibrary(kind, [...e.dataTransfer.files]); };
+  };
+  wire('sc-up', 'sc-file', 'screen'); wire('kit-up', 'kit-file', null);
+}
+$('sc-add').onclick = () => $('sc-file').click();
+$('kit-add').onclick = () => $('kit-file').click();
+$('sc-file').onchange = () => { if ($('sc-file').files.length) addLibrary('screen', [...$('sc-file').files]); $('sc-file').value = ''; };
+$('kit-file').onchange = () => { if ($('kit-file').files.length) addLibrary(null, [...$('kit-file').files]); $('kit-file').value = ''; };
+async function addLibrary(kind, files) {
+  const isScreen = kind === 'screen';
+  const msgEl = $(isScreen ? 'sc-msg' : 'kit-msg');
+  const label = (isScreen ? $('sc-label').value : $('kit-label').value).trim();
+  if (!label) { msgEl.textContent = isScreen ? 'Type the section first (e.g. Dailies).' : 'Type a label first (e.g. phone Food Spots).'; return; }
+  const rowKind = isScreen ? 'screen' : $('kit-kind').value;
+  const rowCity = isScreen ? city : ($('kit-city').value === 'this' ? city : null);
+  const note = isScreen ? ($('sc-note').value.trim() || null) : null;
+  let n = 0;
+  for (const f of files) {
+    if (!f.type.startsWith('image/')) continue;
+    msgEl.textContent = `Uploading ${f.name}...`;
+    try {
+      const url = await uploadFile('library', f, label.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 30));
+      const lbl = files.length > 1 && !isScreen ? `${label} ${n + 1}` : label;
+      const { data, error } = await sb.from('marketing_library').insert({ city: rowCity, kind: rowKind, label: lbl, url, note }).select().single();
+      if (error) throw new Error(error.message);
+      library.push(data); n++;
+    } catch (e) { msgEl.textContent = 'Upload failed: ' + e.message; renderLibrary(); return; }
+  }
+  msgEl.textContent = n ? `${n} added.` : ''; renderLibrary();
+}
+
+/* ======================= Make a visual (artboard written by Claude, rendered here) ======================= */
+let vis = { html: null, blob: null, assetId: null, size: 'post', out: null };
+function openVisual(asset) {
+  vis = { html: null, blob: null, assetId: asset ? asset.id : null, size: 'post', out: null };
+  $('vis-for').textContent = asset ? 'Brief for this tile' + (asset.format_code ? ' (' + asset.format_code + ')' : '') : 'Brief';
+  const parts = [];
+  if (asset) { if (asset.brief) parts.push(asset.brief); else { if (asset.format_code) parts.push(asset.format_code + ' post.'); if (asset.caption) parts.push('Caption idea: ' + asset.caption.slice(0, 300)); if (asset.feedback) parts.push('Feedback so far: ' + asset.feedback); } }
+  $('vis-brief').value = parts.join(' '); $('vis-feedback').value = '';
+  $('vis-out').innerHTML = asset && asset.html ? '<div class="ph">This tile was made here before. Press Make visual to redo it from the brief, or write feedback and press Redo.</div>' : '<div class="ph">Write the brief and press Make visual.</div>';
+  if (asset && asset.html) vis.html = asset.html;
+  $('vis-meta').innerHTML = ''; $('vis-msg').textContent = '';
+  ['vis-save', 'vis-download'].forEach(id => $(id).disabled = true); $('vis-redo').disabled = !vis.html;
+  $('vispanel').style.display = 'block'; $('vispanel').scrollIntoView({ behavior: 'smooth', block: 'nearest' }); $('vis-brief').focus();
+}
+$('vispanel').style.display = 'none';
+$('vis-close').onclick = () => { $('vispanel').style.display = 'none'; };
+$('as-newvis').onclick = () => openVisual(null);
+$('ad-make').onclick = () => { const a = assets.find(x => x.id === selAsset); if (a) openVisual(a); };
+async function makeVisual(withFeedback) {
+  const brief = $('vis-brief').value.trim(); if (!brief) { $('vis-msg').textContent = 'Write a brief first.'; return; }
+  const a = vis.assetId ? assets.find(x => x.id === vis.assetId) : null;
+  vis.size = $('vis-size').value;
+  $('vis-make').disabled = true; $('vis-redo').disabled = true;
+  $('vis-msg').innerHTML = '<span class="thinking">Claude is composing</span>';
+  try {
+    const body = { action: 'visual', city, brief, size: vis.size, format_code: (brief.match(/\b[AIV][FD]\d\b/) || [a && a.format_code || ''])[0] };
+    if (withFeedback && vis.html) { body.prev_html = vis.html; body.feedback = $('vis-feedback').value.trim(); }
+    const r = await callFn(body);
+    if (r.error) throw new Error(r.error + (r.raw ? ' ' + r.raw.slice(0, 200) : ''));
+    vis.html = r.html; vis.out = r;
+    $('vis-msg').innerHTML = '<span class="thinking">Rendering</span>';
+    const canvas = await renderArtboard(r.html, vis.size === 'story' ? 1920 : 1350);
+    vis.blob = await new Promise(res => canvas.toBlob(b => res(b), 'image/png'));
+    const url = URL.createObjectURL(vis.blob);
+    $('vis-out').innerHTML = `<img src="${url}" alt="">`;
+    $('vis-meta').innerHTML = `<b>Headline</b>${esc(r.headline || '')}${r.sub ? ' <i style="color:#7a5d8c">' + esc(r.sub) + '</i>' : ''}<b>Caption draft</b><span style="white-space:pre-wrap">${esc(r.caption || '')}</span>${r.first_comment ? '<b>First comment</b>' + esc(r.first_comment) : ''}${r.notes ? '<b>Notes</b>' + esc(r.notes) : ''}<b>Model</b>${esc(r.model || '')}`;
+    $('vis-msg').textContent = 'Done. Say what to change, or save it.';
+    ['vis-save', 'vis-download', 'vis-redo'].forEach(id => $(id).disabled = false);
+    $('vis-feedback').value = '';
+  } catch (e) { $('vis-msg').textContent = 'Failed: ' + e.message; $('vis-redo').disabled = !vis.html; }
+  $('vis-make').disabled = false;
+}
+function renderArtboard(html, height) {
+  return new Promise((resolve, reject) => {
+    const fr = $('vis-frame'); fr.style.height = height + 'px';
+    const timer = setTimeout(() => reject(new Error('the artboard took too long to load (fonts or images)')), 25000);
+    fr.onload = async () => {
+      try {
+        const doc = fr.contentDocument;
+        doc.body.style.margin = '0';
+        if (doc.fonts && doc.fonts.ready) { try { await doc.fonts.ready; } catch (_) { /* ignore */ } }
+        await Promise.all([...doc.images].map(im => im.complete ? null : new Promise(res => { im.onload = im.onerror = res; })));
+        await new Promise(res => setTimeout(res, 250));
+        const canvas = await html2canvas(doc.body, { useCORS: true, allowTaint: false, width: 1080, height, windowWidth: 1080, windowHeight: height, scale: 1, backgroundColor: '#faf6ef', logging: false });
+        clearTimeout(timer); resolve(canvas);
+      } catch (e) { clearTimeout(timer); reject(e); }
+    };
+    fr.srcdoc = html;
+  });
+}
+$('vis-make').onclick = () => makeVisual(false);
+$('vis-redo').onclick = () => makeVisual(true);
+$('vis-download').onclick = () => {
+  if (!vis.blob) return;
+  const a = document.createElement('a'); a.href = URL.createObjectURL(vis.blob); a.download = `${city}-${(vis.out && vis.out.headline || 'visual').toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40)}.png`; a.click();
+};
+$('vis-save').onclick = async () => {
+  if (!vis.blob) return;
+  $('vis-msg').textContent = 'Saving...';
+  try {
+    const file = new File([vis.blob], 'visual.png', { type: 'image/png' });
+    const url = await uploadFile('assets', file, 'made');
+    const brief = $('vis-brief').value.trim(); const r = vis.out || {};
+    const a = vis.assetId ? assets.find(x => x.id === vis.assetId) : null;
+    if (a) {
+      const patch = { url, thumb_url: null, kind: 'image', html: vis.html, brief, caption: a.caption || r.caption || null, updated_at: new Date().toISOString() };
+      const { error } = await sb.from('marketing_assets').update(patch).eq('id', a.id); if (error) throw new Error(error.message);
+      Object.assign(a, patch); if (selAsset === a.id) openAsset(a.id);
+    } else {
+      const sort = assets.length ? Math.max(...assets.map(x => x.sort || 0)) + 1 : 0;
+      const fc = (brief.match(/\b[AIV][FD]\d\b/) || [null])[0];
+      const { data, error } = await sb.from('marketing_assets').insert({ city, kind: 'image', url, status: 'concept', sort, html: vis.html, brief, caption: r.caption || null, format_code: fc }).select().single();
+      if (error) throw new Error(error.message);
+      assets.push(data); vis.assetId = data.id;
+    }
+    renderGrid(); $('vis-msg').textContent = 'Saved to the grid.';
+  } catch (e) { $('vis-msg').textContent = 'Save failed: ' + e.message; }
 };
 
 const ANGLES = [ { code: 'AD1', name: 'Which Amsterdam family are you' }, { code: 'AD2', name: 'Family Food Map' }, { code: 'AD3', name: 'Parent Battery Check' }, { code: 'AD4', name: 'Fridge Rescue' }, { code: 'AD5', name: 'Birthday Panic' } ];
