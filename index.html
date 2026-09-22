@@ -1,1764 +1,435 @@
-<!DOCTYPE html>
-<!-- Families App marketing dashboard v2.6 (16 Sep 2026): Library tab (knowledge, app screens, design kit), Make a visual (Claude writes the artboard, rendered here to PNG). v2.5 (14 Sep 2026): settings dropdowns prefilled, retry link. v2.4 (11 Sep 2026): coloured panels, plan moved to Concepts, chat on the dashboard, drafts shelf, account lists and export. v2.3: model settings panel. v2.2 (10 Sep 2026): paid layer (quiz funnel, ad spend), kick-off plan campaigns and panel, ad concepts AD1 to AD5. v1 = funnel, advice, weeks, CSV, formats table, plan. v2 adds tabs: Concepts (grid + chat), Accounts, Formats, Campaigns, plus newsletter ideas and 12 week trends. -->
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Families App marketing</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Home CMS - Amsterdam Families</title>
 <link href="https://fonts.googleapis.com/css2?family=Karla:wght@400;600;700;800&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
   *{box-sizing:border-box;margin:0;padding:0;}
   body{background:#faf6ef;color:#2f2a38;font-family:'Karla',-apple-system,sans-serif;padding:24px 20px 80px;}
   .wrap{max-width:1240px;margin:0 auto;}
-  header{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-bottom:24px;}
+  header{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-bottom:20px;}
   h1{font-size:24px;font-weight:800;margin-right:auto;}
-  .pills{display:flex;gap:4px;background:#fff;border:1px solid #e7dfd2;border-radius:14px;padding:4px;}
-  .pills button{padding:8px 14px;border-radius:10px;font-weight:700;font-size:14px;color:#6f6680;border:none;background:none;font-family:inherit;cursor:pointer;}
-  .pills button.on{background:#2f2a38;color:#fff;}
-  .month{display:flex;align-items:center;gap:6px;background:#fff;border:1px solid #e7dfd2;border-radius:14px;padding:6px 8px;font-weight:700;font-size:14px;}
-  .month button{border:none;background:#f3eee6;border-radius:8px;width:28px;height:28px;cursor:pointer;font-weight:800;color:#6f6680;}
-  .month span{min-width:130px;text-align:center;}
+  a.back{font-size:13px;color:#6f6680;text-decoration:underline;}
   .out{border:none;background:none;color:#a79dbb;font-family:inherit;font-size:13px;cursor:pointer;text-decoration:underline;}
-  h2{font-size:15px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:#8a7f97;margin:30px 0 12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
-  h2 small{font-weight:600;text-transform:none;letter-spacing:0;color:#a79dbb;}
+  h2{font-size:15px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:#8a7f97;margin:26px 0 12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
   h2 .right{margin-left:auto;}
-  .funnel{display:grid;grid-template-columns:1fr 34px 1fr 34px 1fr 34px 1fr 34px 1fr;gap:6px;}
-  .tile{background:#fff;border:1px solid #e7dfd2;border-radius:18px;padding:16px 16px 14px;}
-  .tile .lbl{font-size:12.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#8a7f97;}
-  .tile .src{font-size:11.5px;color:#a79dbb;margin-top:2px;}
-  .tile .big{font-size:34px;font-weight:800;margin:10px 0 2px;letter-spacing:-.5px;}
-  .tile .tgt{font-size:13px;color:#6f6680;cursor:pointer;}
-  .tile .tgt:hover{text-decoration:underline;}
-  .chip{display:inline-block;font-size:12px;font-weight:800;padding:3px 8px;border-radius:8px;margin-top:8px;}
-  .up{background:#e3efe6;color:#2f6b45;} .down{background:#f8e3e0;color:#9a3b2e;} .flat{background:#eeeaf2;color:#6f6680;}
-  .conv{display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#6f6680;}
-  .conv b{font-size:14px;color:#2f2a38;} .conv i{font-style:normal;font-size:18px;color:#c9bfd6;line-height:1;}
-  .advice{background:#fff;border:1px solid #e7dfd2;border-radius:18px;padding:18px 20px;border-left:5px solid #B597C1;}
-  .advice p{font-size:15px;line-height:1.6;white-space:pre-wrap;}
-  .advice .when{font-size:12.5px;color:#a79dbb;margin-top:10px;}
   .btn{background:linear-gradient(135deg,#B597C1,#E8B0C8);color:#fff;font-weight:800;padding:11px 18px;border:none;border-radius:12px;font-size:14px;font-family:inherit;cursor:pointer;white-space:nowrap;}
   .btn.ghost{background:#fff;color:#6f6680;border:1.5px solid #e0d8ea;}
-  .btn:disabled{opacity:.6;cursor:default;}
-  .inputs{background:#fff;border:1px solid #e7dfd2;border-radius:18px;padding:18px;display:grid;grid-template-columns:repeat(6,1fr);gap:12px;align-items:end;}
-  .f label{display:block;font-size:11.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#8a7f97;margin-bottom:6px;}
-  .f input{width:100%;border:1.5px solid #e0d8ea;border-radius:12px;padding:10px 12px;font-size:15px;font-weight:700;font-family:inherit;color:#2f2a38;}
-  .f input:focus{outline:none;border-color:#B597C1;}
-  .f input.auto{background:#f6f3f9;}
-  .actions{grid-column:1 / -1;display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
-  .weeknav{display:flex;align-items:center;gap:6px;font-weight:700;font-size:14px;}
-  .weeknav button{border:none;background:#f3eee6;border-radius:8px;width:28px;height:28px;cursor:pointer;font-weight:800;color:#6f6680;}
-  .msg{font-size:13px;color:#6f6680;}
-  .drop{margin-top:12px;border:2px dashed #B597C1;border-radius:14px;padding:16px;text-align:center;color:#6f6680;font-size:14px;cursor:pointer;}
-  .drop.hover{background:#f6f0f8;} .drop b{color:#2f2a38;}
-  table{width:100%;border-collapse:collapse;background:#fff;border:1px solid #e7dfd2;border-radius:18px;overflow:hidden;}
-  th{font-size:11.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#8a7f97;text-align:left;padding:12px 14px;border-bottom:1px solid #eee7dc;background:#fdfbf7;}
-  td{padding:12px 14px;border-bottom:1px solid #f1ece4;font-size:14px;vertical-align:middle;}
-  tr:last-child td{border-bottom:none;} td b{font-weight:800;}
-  .lane{font-size:11px;font-weight:800;padding:3px 8px;border-radius:7px;letter-spacing:.4px;}
-  .dream{background:#e8e0f0;color:#5a3f78;} .show{background:#dfeaf3;color:#2f5878;} .trust{background:#e3efe6;color:#2f6b45;}
-  .muted{color:#8a7f97;}
-  .plan{display:grid;grid-template-columns:70px repeat(7,1fr);gap:6px;}
-  .plan .h{font-size:11.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#8a7f97;text-align:center;padding:6px 0;}
-  .plan .wk{font-size:12px;font-weight:800;color:#6f6680;display:flex;align-items:center;}
-  .cell{background:#fff;border:1px solid #e7dfd2;border-radius:12px;min-height:74px;padding:8px;font-size:12px;line-height:1.35;cursor:pointer;}
-  .cell.empty{background:transparent;border-style:dashed;}
-  .cell .tag{display:block;font-weight:800;color:#2f2a38;} .cell .who{color:#8a7f97;}
-  .cell.done{border-color:#9BC29B;} .cell.done .tag::after{content:" \2713";color:#2f6b45;}
-  .cell.today{box-shadow:0 0 0 2px #E8B0C8 inset;}
-  .editor{margin-top:10px;background:#fff;border:1px solid #e7dfd2;border-radius:14px;padding:14px;display:none;gap:10px;align-items:end;flex-wrap:wrap;}
-  .editor select,.editor input[type=text]{border:1.5px solid #e0d8ea;border-radius:10px;padding:9px 10px;font-family:inherit;font-size:14px;}
-  .editor label.chk{display:flex;align-items:center;gap:6px;font-size:14px;font-weight:700;}
-  .legend{font-size:12.5px;color:#8a7f97;margin-top:10px;}
-  .login{max-width:380px;margin:80px auto;background:#fff;border:1px solid #e7dfd2;border-radius:20px;padding:26px;text-align:center;}
-  .login input{width:100%;border:1.5px solid #e0d8ea;border-radius:12px;padding:12px 14px;font-size:16px;font-family:inherit;margin:14px 0 10px;}
-  .login .btn{width:100%;}
-  .hidden{display:none;}
-  /* ---------- v2 ---------- */
-  .paidrow{grid-column:1 / -1;border-top:1px dashed #e7dfd2;padding-top:10px;margin-top:2px;}
-  .paidrow .lbl{font-size:11.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#8a7f97;}
-  .funnel.qf .tile{border-left:4px solid #7FA9CC;}
-  .settings{background:#fff;border:1px solid #e7dfd2;border-radius:14px;padding:10px 14px;margin:-8px 0 14px auto;max-width:560px;display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;}
-  .settings .f label{font-size:10.5px;margin-bottom:3px;}
-  .settings select{width:100%;border:1.5px solid #e0d8ea;border-radius:10px;padding:6px 8px;font-size:13px;font-weight:700;font-family:inherit;color:#2f2a38;background:#fff;}
-  .settings .row{grid-column:1 / -1;display:flex;gap:8px;align-items:center;flex-wrap:wrap;} .settings .row .msg{font-size:12px;flex-basis:100%;} .settings .row .msg a{color:#7a5f8c;}
-  /* coloured panels: one border and tint per area so the page reads as distinct blocks */
-  .panel{border:1.5px solid #e7dfd2;border-radius:22px;padding:6px 20px 20px;margin:18px 0;background:rgba(255,255,255,.35);}
-  .panel > h2:first-child{margin-top:14px;}
-  .panel h2.sub{margin-top:22px;}
-  .p-funnel{border-color:#c9b6d6;background:rgba(181,151,193,.10);} .p-funnel h2{color:#6d5185;}
-  .p-weeks{border-color:#a8cbb4;background:rgba(111,162,132,.10);} .p-weeks h2{color:#3f7a56;}
-  .p-advice{border-color:#e6b9cc;background:rgba(232,176,200,.14);} .p-advice h2{color:#9a4f70;} .p-advice .advice{border-left-color:#E8B0C8;}
-  .p-news{border-color:#f0cf9e;background:rgba(240,190,120,.14);} .p-news h2{color:#9a6a2e;} .p-news .news{border-left-color:#e6b06a;}
-  .p-formats{border-color:#b7cee0;background:rgba(127,169,204,.10);} .p-formats h2{color:#2f5878;}
-  .p-plan{border-color:#b7cee0;background:rgba(127,169,204,.10);} .p-plan h2{color:#2f5878;}
-  .two > .panel{margin:0;}
-  .p-know{border-color:#f0cf9e;background:rgba(240,190,120,.14);} .p-know h2{color:#9a6a2e;}
-  .p-screens{border-color:#b7cee0;background:rgba(127,169,204,.10);} .p-screens h2{color:#2f5878;}
-  .p-kit{border-color:#c9b6d6;background:rgba(181,151,193,.10);} .p-kit h2{color:#6d5185;}
-  .p-vis{border-color:#e6b9cc;background:rgba(232,176,200,.14);} .p-vis h2{color:#9a4f70;}
-  .know{display:flex;flex-direction:column;gap:6px;margin-bottom:10px;}
-  .know .k{background:#fff;border:1px solid #e7dfd2;border-radius:12px;padding:8px 12px;display:flex;gap:10px;align-items:flex-start;font-size:14px;}
-  .know .k .kind{font-size:10.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#8a7f97;padding-top:3px;min-width:56px;}
-  .know .k .kind.never{color:#b0405f;} .know .k .kind.example{color:#3f7a56;}
-  .know .k span.t{flex:1;white-space:pre-wrap;} .know .k .city{font-size:11px;color:#8a7f97;padding-top:3px;}
-  .know .k button{border:none;background:none;color:#8a7f97;font-size:16px;cursor:pointer;padding:0 2px;line-height:1;}
-  .kform{display:grid;grid-template-columns:130px 1fr 130px auto;gap:8px;align-items:end;}
-  .kform textarea,.kform select,.kform input{width:100%;border:1.5px solid #e0d8ea;border-radius:10px;padding:8px 10px;font-family:inherit;font-size:14px;color:#2f2a38;background:#fff;}
-  .kform textarea{min-height:44px;resize:vertical;}
-  .lib{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:10px;}
-  .lib .li{position:relative;background:#fff;border:1px solid #e7dfd2;border-radius:12px;overflow:hidden;}
-  .lib .li img{width:100%;aspect-ratio:9/16;object-fit:contain;background:#f3eee6;display:block;}
-  .lib .li.kit img{aspect-ratio:1;}
-  .lib .li .lb{font-size:12px;font-weight:700;padding:6px 8px;color:#2f2a38;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .lib .li .x{position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:50%;border:none;background:rgba(47,42,56,.78);color:#fff;font-size:13px;font-weight:800;cursor:pointer;display:none;line-height:1;}
-  .lib .li:hover .x{display:block;}
-  .lib .up{border:1.5px dashed #c9b6d6;border-radius:12px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:13px;color:#8a7f97;cursor:pointer;min-height:120px;padding:10px;}
-  .lib .up.dragover{background:#f3eaf6;}
-  .vis{display:grid;grid-template-columns:1fr 340px;gap:16px;align-items:start;}
-  .vis textarea{width:100%;border:1.5px solid #e0d8ea;border-radius:10px;padding:8px 10px;font-family:inherit;font-size:14px;color:#2f2a38;min-height:70px;resize:vertical;background:#fff;}
-  .vis .out{background:#fff;border:1px solid #e7dfd2;border-radius:14px;padding:8px;min-height:120px;}
-  .vis .out img{width:100%;display:block;border-radius:8px;}
-  .vis .out .ph{aspect-ratio:4/5;display:flex;align-items:center;justify-content:center;color:#8a7f97;font-size:13px;text-align:center;padding:20px;}
-  .vis .meta{font-size:13.5px;color:#2f2a38;margin-top:8px;} .vis .meta b{display:block;font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:#8a7f97;margin-top:8px;}
-  #vis-frame{position:fixed;left:-3000px;top:0;width:1080px;height:1350px;border:0;}
-  .thinking{display:inline-block;color:#8a7f97;font-size:13px;} .thinking::after{content:"";display:inline-block;width:1.2em;text-align:left;animation:dots 1.2s steps(4,end) infinite;}
-  @keyframes dots{0%{content:""}25%{content:"."}50%{content:".."}75%{content:"..."}}
-  .two{margin:18px 0;}
-  .gi .x,.gi .park{position:absolute;top:6px;width:22px;height:22px;border-radius:50%;border:none;background:rgba(47,42,56,.78);color:#fff;font-size:13px;font-weight:800;cursor:pointer;display:none;align-items:center;justify-content:center;line-height:1;}
-  .gi .x{right:6px;} .gi .park{right:32px;font-size:12px;}
-  .gi:hover .x,.gi:hover .park{display:flex;}
-  .gi .fc{transition:opacity .1s;} .gi:hover .fc{opacity:0;}
-  .shelf{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;min-height:40px;}
-  .shelf .gi.parked .st{color:#8a7f97;background:rgba(238,234,242,.95);}
-  .shelf .empty{grid-column:1 / -1;font-size:13px;color:#8a7f97;padding:6px 0;}
-  .chat .typing{align-self:flex-start;background:#fdfbf7;border:1px solid #eee7dc;border-radius:14px;border-bottom-left-radius:4px;padding:10px 14px;font-size:13px;color:#8a7f97;}
-  .chat .typing i{display:inline-block;width:6px;height:6px;border-radius:50%;background:#B597C1;margin-right:3px;animation:blink 1.2s infinite;} .chat .typing i:nth-child(2){animation-delay:.2s;} .chat .typing i:nth-child(3){animation-delay:.4s;}
-  @keyframes blink{0%,80%,100%{opacity:.25}40%{opacity:1}}
-  .chat.compact{height:440px;min-height:320px;}
-  .tabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid #e7dfd2;margin-bottom:6px;}
-  .tabs button{background:none;border:none;font-family:inherit;font-size:14.5px;font-weight:800;color:#8a7f97;padding:10px 14px;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px;}
-  .tabs button.on{color:#2f2a38;border-bottom-color:#B597C1;}
-  section.tab{display:none;} section.tab.on{display:block;}
-  .two{display:grid;grid-template-columns:2fr 1fr;gap:20px;align-items:start;}
-  .spark{display:block;width:100%;height:28px;margin-top:8px;}
-  .spark polyline{fill:none;stroke:#B597C1;stroke-width:2;stroke-linejoin:round;stroke-linecap:round;}
-  .spark circle{fill:#E8B0C8;}
-  .news{background:#fff;border:1px solid #e7dfd2;border-radius:18px;padding:16px 18px;border-left:5px solid #6FA284;}
-  .news .idea{padding:10px 0;border-bottom:1px solid #f1ece4;} .news .idea:last-child{border-bottom:none;}
-  .news .idea b{display:block;font-size:14.5px;margin-bottom:3px;} .news .idea p{font-size:13.5px;line-height:1.5;color:#4d465a;white-space:pre-wrap;}
-  .news .idea i{display:block;font-style:normal;font-size:12.5px;color:#2f6b45;margin-top:4px;}
-  .news textarea{width:100%;border:1.5px solid #e0d8ea;border-radius:10px;padding:8px 10px;font-family:inherit;font-size:13.5px;min-height:54px;margin:8px 0;}
-  /* concepts */
-  .concepts{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:20px;align-items:start;}
-  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:#fff;border:1px solid #e7dfd2;border-radius:18px;padding:6px;}
-  .gi{position:relative;aspect-ratio:4/5;border-radius:10px;overflow:hidden;background:#f3eee6;cursor:pointer;}
-  .gi img{width:100%;height:100%;object-fit:cover;object-position:center top;display:block;}
-  .gi .st{position:absolute;left:6px;top:6px;font-size:10.5px;font-weight:800;padding:3px 7px;border-radius:7px;background:rgba(255,255,255,.92);color:#6f6680;letter-spacing:.3px;}
-  .gi.concept .st{color:#6f6680;} .gi.feedback .st{color:#9a6a2e;background:rgba(255,241,220,.95);} .gi.placed .st{color:#2f6b45;background:rgba(227,239,230,.95);}
-  .gi .fc{position:absolute;right:6px;top:6px;font-size:10.5px;font-weight:800;padding:3px 7px;border-radius:7px;background:rgba(47,42,56,.85);color:#fff;}
-  .gi .reel{position:absolute;right:6px;bottom:6px;width:22px;height:22px;border-radius:6px;background:rgba(47,42,56,.75);color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;font-weight:800;}
-  .gi .dt{position:absolute;left:6px;bottom:6px;font-size:10.5px;font-weight:700;padding:2px 6px;border-radius:6px;background:rgba(255,255,255,.9);color:#2f2a38;}
-  .gi.sel{outline:3px solid #B597C1;outline-offset:-3px;}
-  .gi.dragover{outline:3px dashed #E8B0C8;outline-offset:-3px;}
-  .gi.up{display:flex;align-items:center;justify-content:center;text-align:center;font-size:13px;color:#8a7f97;border:2px dashed #d9cfe6;background:transparent;padding:10px;}
-  .adet{margin-top:12px;background:#fff;border:1px solid #e7dfd2;border-radius:14px;padding:14px;display:none;grid-template-columns:1fr 1fr 1fr;gap:10px;}
-  .adet.on{display:grid;}
-  .adet select,.adet input,.adet textarea{width:100%;border:1.5px solid #e0d8ea;border-radius:10px;padding:8px 10px;font-family:inherit;font-size:14px;color:#2f2a38;}
-  .adet textarea{min-height:64px;grid-column:1 / -1;}
-  .adet .row{grid-column:1 / -1;display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
-  .chat{background:#fff;border:1px solid #e7dfd2;border-radius:18px;display:flex;flex-direction:column;height:calc(100vh - 230px);min-height:480px;}
-  .chat .log{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;}
-  .bub{max-width:88%;padding:10px 14px;border-radius:14px;font-size:14.5px;line-height:1.55;white-space:pre-wrap;}
-  .bub.user{align-self:flex-end;background:#f0e8f4;border-bottom-right-radius:4px;}
-  .bub.assistant{align-self:flex-start;background:#fdfbf7;border:1px solid #eee7dc;border-bottom-left-radius:4px;}
-  .bub .imgs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;} .bub .imgs img{width:72px;height:90px;object-fit:cover;border-radius:8px;}
-  .bub .when{display:block;font-size:11px;color:#a79dbb;margin-top:4px;}
-  .chat .att{display:flex;gap:6px;flex-wrap:wrap;padding:0 14px;} .chat .att div{position:relative;} .chat .att img{width:56px;height:70px;object-fit:cover;border-radius:8px;border:1px solid #e7dfd2;}
-  .chat .att button{position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;border:none;background:#2f2a38;color:#fff;font-size:11px;cursor:pointer;}
-  .chat .in{display:flex;gap:8px;padding:12px 14px;border-top:1px solid #eee7dc;align-items:flex-end;}
-  .chat textarea{flex:1;border:1.5px solid #e0d8ea;border-radius:12px;padding:10px 12px;font-family:inherit;font-size:14.5px;min-height:44px;max-height:140px;resize:vertical;}
-  .chat .clip{background:#f3eee6;border:none;border-radius:12px;width:44px;height:44px;font-size:18px;cursor:pointer;color:#6f6680;}
-  /* accounts */
-  .filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;align-items:center;}
-  .filters button{background:#fff;border:1.5px solid #e0d8ea;border-radius:10px;padding:6px 12px;font-family:inherit;font-size:13px;font-weight:700;color:#6f6680;cursor:pointer;}
-  .filters button.on{background:#2f2a38;color:#fff;border-color:#2f2a38;}
-  .selbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0 10px;} .selbar input{border:1.5px solid #e0d8ea;border-radius:10px;padding:7px 10px;font-family:inherit;font-size:13px;width:180px;} .selbar .btn{padding:7px 12px;font-size:13px;} .selbar .msg{margin-right:auto;}
-  .acform{background:#fff;border:1px solid #e7dfd2;border-radius:18px;padding:16px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;}
-  .acform input,.acform select{width:100%;border:1.5px solid #e0d8ea;border-radius:10px;padding:9px 10px;font-family:inherit;font-size:14px;color:#2f2a38;}
-  .acform .row{grid-column:1 / -1;display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
-  tr.clickable{cursor:pointer;} tr.clickable:hover td{background:#fdfbf7;}
-  .status{font-size:11px;font-weight:800;padding:3px 8px;border-radius:7px;letter-spacing:.3px;white-space:nowrap;}
-  .s-to{background:#eeeaf2;color:#6f6680;} .s-contacted{background:#dfeaf3;color:#2f5878;} .s-agreed{background:#fff1dc;color:#9a6a2e;} .s-posted{background:#e3efe6;color:#2f6b45;}
-  .delta{font-size:12px;font-weight:800;margin-left:4px;}
-  /* formats + campaigns */
-  .cards{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-  .card{background:#fff;border:1px solid #e7dfd2;border-radius:18px;overflow:hidden;display:grid;grid-template-columns:150px 1fr;}
-  .card .ex{background:#f3eee6;aspect-ratio:4/5;position:relative;cursor:pointer;display:flex;align-items:center;justify-content:center;text-align:center;font-size:12px;color:#8a7f97;padding:8px;}
-  .card .ex img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;}
-  .card .ex span{position:relative;z-index:1;background:rgba(255,255,255,.9);border-radius:8px;padding:4px 8px;}
-  .card .bd{padding:14px 16px;}
-  .card .bd h3{font-size:16px;font-weight:800;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
-  .card .bd .meta{font-size:12.5px;color:#8a7f97;margin:4px 0 8px;} .card .bd p{font-size:14px;line-height:1.5;}
-  .card .bd textarea{width:100%;border:1.5px solid #e0d8ea;border-radius:10px;padding:8px 10px;font-family:inherit;font-size:13.5px;min-height:90px;margin-top:6px;}
-  .card .bd .edit{margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
-  .camp{background:#fff;border:1px solid #e7dfd2;border-radius:18px;padding:18px;}
-  .camp h3{font-size:17px;font-weight:800;display:flex;gap:10px;align-items:center;flex-wrap:wrap;} .camp h3 select{margin-left:auto;border:1.5px solid #e0d8ea;border-radius:10px;padding:6px 10px;font-family:inherit;font-size:13px;font-weight:700;}
-  .camp p{font-size:14px;line-height:1.5;margin:8px 0;} .camp ol{margin:6px 0 6px 20px;font-size:14px;line-height:1.55;}
-  .camp .kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:13.5px;margin-top:8px;} .camp .kv b{color:#8a7f97;font-size:11.5px;text-transform:uppercase;letter-spacing:.5px;padding-top:2px;}
-  .camp input{width:100%;border:1.5px solid #e0d8ea;border-radius:10px;padding:8px 10px;font-family:inherit;font-size:13.5px;margin-top:10px;}
-  .plan-panel{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
-  .plan-panel div{background:#fff;border:1px solid #e7dfd2;border-radius:16px;padding:14px 16px;} .plan-panel b{display:block;font-size:11.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#8a7f97;margin-bottom:6px;} .plan-panel p{font-size:13.5px;line-height:1.5;}
-  .cgroup{font-size:13px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#8a7f97;margin:22px 0 10px;} .cgroup small{font-weight:600;text-transform:none;letter-spacing:0;color:#a79dbb;margin-left:8px;}
-  .camp.paid{border-top:4px solid #E8B0C8;} .camp.retention{border-top:4px solid #7FA9CC;}
-  .camp.running{border-left:5px solid #6FA284;} .camp.planned{border-left:5px solid #7FA9CC;} .camp.done{opacity:.7;}
-  .linkish{color:#7a5d8c;text-decoration:underline;cursor:pointer;font-size:13px;}
-  @media (max-width:820px){
-    .funnel{grid-template-columns:1fr 1fr;} .conv{display:none;}
-    .inputs{grid-template-columns:1fr 1fr;}
-    .plan{grid-template-columns:44px repeat(7,1fr);} .cell{min-height:60px;font-size:10.5px;padding:5px;}
-    .two,.concepts,.cards,.plan-panel,.settings{grid-template-columns:1fr;} .shelf{grid-template-columns:repeat(3,1fr);} .panel{padding:4px 12px 14px;} .chat{height:70vh;} .acform{grid-template-columns:1fr 1fr;} .adet{grid-template-columns:1fr 1fr;} .lib{grid-template-columns:repeat(3,1fr);} .kform{grid-template-columns:1fr 1fr;} .vis{grid-template-columns:1fr;}
-  }
+  .btn.small{padding:7px 12px;font-size:12.5px;border-radius:10px;}
+  .btn:disabled{opacity:.5;}
+  .layout{display:grid;grid-template-columns:400px 1fr;gap:22px;align-items:start;}
+  @media(max-width:960px){.layout{grid-template-columns:1fr;}}
+
+  /* ---------- phone preview ---------- */
+  .phone{position:sticky;top:16px;background:#F8F6FA;border:10px solid #2f2a38;border-radius:34px;padding:14px 10px;max-height:82vh;overflow-y:auto;}
+  .phone::-webkit-scrollbar{width:0;}
+  .p-sec{font-size:13px;font-weight:800;color:#E8A090;margin:12px 4px 6px;}
+  .p-slide{position:relative;border-radius:14px;overflow:hidden;min-height:110px;display:flex;flex-direction:column;justify-content:flex-end;background-size:cover;background-position:center;margin-bottom:8px;}
+  .p-slide .ov{position:absolute;inset:0;}
+  .p-slide .cc{position:relative;padding:10px 12px;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.3);}
+  .p-slide .eb{font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase;}
+  .p-slide .tt{font-size:18px;font-weight:800;line-height:1.1;}
+  .p-slide .ln{font-size:10.5px;margin-top:2px;}
+  .p-slide .bt{display:inline-block;margin-top:6px;background:#fff;color:#2f2a38;font-size:9.5px;font-weight:800;padding:4px 9px;border-radius:8px;}
+  .p-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+  .p-grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;}
+  .p-tile{position:relative;border-radius:12px;overflow:hidden;aspect-ratio:1.4;background-size:cover;background-position:center;}
+  .p-grid3 .p-tile{aspect-ratio:.9;}
+  .p-tile.wide{aspect-ratio:auto;height:64px;grid-column:1/-1;}
+  .p-tile .ov{position:absolute;inset:0;}
+  .p-tile .tt{position:absolute;left:8px;bottom:7px;color:#fff;font-weight:800;font-size:12px;text-shadow:0 1px 4px rgba(0,0,0,.35);max-width:85%;}
+  .p-tile .pl{position:absolute;left:8px;bottom:24px;color:#fff;font-size:8px;font-weight:700;background:rgba(255,255,255,.25);padding:2px 6px;border-radius:6px;}
+  .p-tile .bd{position:absolute;top:6px;right:6px;font-size:8.5px;font-weight:800;color:#fff;padding:2px 7px;border-radius:8px;}
+  .p-tile .nr{position:absolute;top:6px;left:6px;width:18px;height:18px;border-radius:50%;background:#2f2a38;color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;}
+  .p-note{font-size:11px;color:#a79dbb;margin:8px 4px 0;}
+
+  /* ---------- editors ---------- */
+  .card{background:#fff;border:1px solid #e7dfd2;border-radius:18px;padding:16px;margin-bottom:12px;}
+  .card h3{font-size:15px;font-weight:800;display:flex;align-items:center;gap:8px;}
+  .card h3 .nr{width:22px;height:22px;border-radius:50%;background:#2f2a38;color:#fff;font-size:12px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .card h3 small{font-weight:600;color:#a79dbb;font-size:12px;}
+  .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+  .fld{flex:1;min-width:130px;}
+  .fld label{display:block;font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#8a7f97;margin-bottom:3px;}
+  .fld input,.fld select,.fld textarea{width:100%;border:1.5px solid #e0d8ea;border-radius:10px;padding:8px 10px;font-family:inherit;font-size:13.5px;background:#fff;color:#2f2a38;outline:none;}
+  .fld input:focus,.fld select:focus{border-color:#B597C1;}
+  .imgprev{width:54px;height:54px;border-radius:10px;background-size:cover;background-position:center;background-color:#eeeaf2;flex-shrink:0;align-self:flex-end;}
+  .swatches{display:flex;gap:6px;align-items:center;}
+  .sw{width:26px;height:26px;border-radius:50%;border:2.5px solid transparent;cursor:pointer;}
+  .sw.on{border-color:#2f2a38;}
+  .badgeopts{display:flex;gap:6px;flex-wrap:wrap;}
+  .bo{border:1.5px solid #e0d8ea;background:#fff;border-radius:10px;padding:6px 11px;font-size:12.5px;font-weight:800;font-family:inherit;cursor:pointer;color:#6f6680;}
+  .bo.on{background:#2f2a38;border-color:#2f2a38;color:#fff;}
+  .savebar{position:sticky;bottom:12px;display:flex;gap:10px;justify-content:flex-end;background:rgba(250,246,239,.94);padding:10px 0;}
+  .msg{font-size:13px;font-weight:700;color:#2f6b45;align-self:center;}
+  .msg.err{color:#9a3b2e;}
+  .muted{font-size:12.5px;color:#a79dbb;line-height:1.5;}
+  .pd-item{display:flex;align-items:center;gap:10px;border-top:1px solid #f3eee6;padding:9px 0;font-size:13.5px;}
+  .pd-item b{font-weight:800;}
+  .pd-item .when{color:#8a7f97;font-size:12px;}
+  .pd-item button{margin-left:auto;border:none;background:#f8e3e0;color:#9a3b2e;font-weight:800;font-size:12px;border-radius:8px;padding:5px 10px;cursor:pointer;font-family:inherit;}
+
+  /* login */
+  #login{max-width:380px;margin:80px auto;background:#fff;border:1px solid #e7dfd2;border-radius:20px;padding:26px;}
+  #login h2{margin:0 0 12px;}
+  #login input{width:100%;border:1.5px solid #e0d8ea;border-radius:12px;padding:11px 12px;font-family:inherit;font-size:15px;margin-bottom:10px;}
+  #login .btn{width:100%;}
+  #login p{font-size:13px;color:#8a7f97;margin-bottom:10px;line-height:1.5;}
+  .hidden{display:none!important;}
 </style>
 </head>
 <body>
+<div class="wrap">
 
-<div id="login" class="login hidden">
-  <h1 style="margin:0">Families App marketing</h1>
-  <p class="msg" style="margin-top:8px">Log in with your email code.</p>
-  <div id="l-step1">
-    <input type="email" id="l-email" placeholder="email address">
-    <button class="btn" id="l-send">Send code</button>
-  </div>
-  <div id="l-step2" class="hidden">
-    <input type="text" id="l-code" inputmode="numeric" maxlength="10" autocomplete="one-time-code" placeholder="code from the email">
-    <button class="btn" id="l-verify">Log in</button>
-  </div>
-  <p class="msg" id="l-msg" style="margin-top:10px"></p>
-</div>
-
-<div id="app" class="wrap hidden">
-  <header>
-    <h1>Families App marketing</h1>
-    <div class="pills" id="cities"></div>
-    <div class="month"><button id="m-prev">&lsaquo;</button><span id="m-label"></span><button id="m-next">&rsaquo;</button></div>
-    <button class="out" id="settings-btn">settings</button>
-    <button class="out" id="logout">log out</button>
-  </header>
-
-  <div class="settings hidden" id="settings">
-    <div class="f"><label>Model, advice and newsletter</label><select id="s-model-text"></select></div>
-    <div class="f"><label>Model, chat about visuals</label><select id="s-model-chat"></select></div>
-    <div class="row"><button class="btn" id="s-save" style="padding:7px 12px;font-size:13px">Save</button><button class="btn ghost" id="s-close" style="padding:7px 12px;font-size:13px">Close</button><span class="msg" id="s-msg"></span></div>
-  </div>
-
-  <nav class="tabs" id="tabs">
-    <button data-t="dashboard" class="on">Dashboard</button>
-    <button data-t="concepts">Concepts</button>
-    <button data-t="accounts">Accounts</button>
-    <button data-t="formats">Formats</button>
-    <button data-t="campaigns">Campaigns</button>
-    <button data-t="library">Library</button>
-  </nav>
-
-<section class="tab on" id="tab-dashboard">
-  <div class="panel p-funnel">
-    <h2>Funnel this month <small>actual vs target, click a target to change it. Line = last 12 weeks</small></h2>
-    <div class="funnel" id="funnel"></div>
-    <h2 class="sub">Quiz funnel <small>the paid layer: ads to web quiz to Insider. Bars from the kick-off plan</small></h2>
-    <div class="funnel qf" id="qfunnel"></div>
-  </div>
-
-  <div class="panel p-weeks">
-    <h2>Week numbers <small>type in on Monday, 2 minutes</small></h2>
-    <div class="inputs">
-      <div class="f"><label>Followers</label><input type="number" id="w-followers"></div>
-      <div class="f"><label>Profile reach 7d</label><input type="number" id="w-reach"></div>
-      <div class="f"><label>Installs iOS</label><input type="number" id="w-ios"></div>
-      <div class="f"><label>Installs Android</label><input type="number" id="w-android"></div>
-      <div class="f"><label>Link clicks</label><input type="number" id="w-clicks"></div>
-      <div class="f"><label>Free accounts</label><input type="number" id="w-accounts" class="auto"></div>
-      <div class="f"><label>Paid members</label><input type="number" id="w-paid" class="auto"></div>
-      <div class="f"><label>Notes</label><input type="text" id="w-notes"></div>
-      <div class="paidrow"><span class="lbl">Paid layer, from week 3 of the kick-off plan</span></div>
-      <div class="f"><label>Ad spend (euro)</label><input type="number" id="w-adspend" step="0.01"></div>
-      <div class="f"><label>Ad link clicks</label><input type="number" id="w-adclicks"></div>
-      <div class="f"><label>Quiz starts</label><input type="number" id="w-qstarts"></div>
-      <div class="f"><label>Quiz completions</label><input type="number" id="w-qdone"></div>
-      <div class="f"><label>Insider signups</label><input type="number" id="w-insider"></div>
-      <div class="f"><label>Cost per Insider</label><input type="text" id="w-cpi" class="auto" readonly></div>
-      <div class="actions">
-        <div class="weeknav"><button id="w-prev">&lsaquo;</button><span id="w-label"></span><button id="w-next">&rsaquo;</button></div>
-        <button class="btn ghost" id="w-auto">Fetch accounts and paid</button>
-        <button class="btn" id="w-save">Save week</button>
-        <span class="msg" id="w-msg"></span>
-      </div>
+  <div id="login">
+    <h2>Home CMS</h2>
+    <p>Log in with your dashboard email. You get a code by mail.</p>
+    <div id="step1">
+      <input id="email" type="email" placeholder="email">
+      <button class="btn" onclick="sendCode()">Send code</button>
     </div>
-    <div class="drop" id="drop"><b>Drop the Meta Insights export here (CSV)</b><br>Posts are matched to a format by the code at the end of the caption (<span id="drop-codes"></span>). Reach, saves, shares and link taps fill the formats table.<input type="file" id="csv" accept=".csv,text/csv" hidden></div>
-    <p class="msg" id="csv-msg" style="margin-top:8px"></p>
-  </div>
-
-  <div class="two">
-    <div class="panel p-advice">
-      <h2>Claude says <small id="adv-when"></small><span class="right"><button class="btn" id="adv-btn">Refresh advice</button></span></h2>
-      <div class="advice"><p id="adv-text" class="muted">No advice yet. Fill in a few weeks of numbers, then press Refresh advice.</p><div class="when" id="adv-model"></div></div>
-      <h2 class="sub">Ask Claude <small>questions, ad screenshots, images. Same conversation as on Concepts</small></h2>
-      <div id="chat-slot-dashboard"></div>
+    <div id="step2" class="hidden">
+      <input id="code" inputmode="numeric" placeholder="code from the email">
+      <button class="btn" onclick="verifyCode()">Log in</button>
     </div>
-    <div class="panel p-news">
-      <h2>Newsletter ideas <small id="nl-when"></small></h2>
-      <div class="news">
-        <div id="nl-list"><p class="msg">No ideas yet. Add a note if you want, then press the button.</p></div>
-        <textarea id="nl-notes" placeholder="anything Claude should know this week (new partner, app update, a holiday)"></textarea>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn ghost" id="nl-btn">New ideas</button><span class="msg" id="nl-msg"></span></div>
-      </div>
-    </div>
+    <p id="loginmsg"></p>
   </div>
 
-  <div class="panel p-formats">
-    <h2>Formats <small>one KPI each, this month vs last</small></h2>
-    <table id="formats"></table>
-  </div>
-</section>
+  <div id="app" class="hidden">
+    <header>
+      <h1>Home CMS</h1>
+      <a class="back" href="index.html">back to dashboard</a>
+      <button class="out" onclick="logout()">log out</button>
+    </header>
 
-<section class="tab" id="tab-concepts">
-  <div class="panel p-plan">
-    <h2>Weekly plan <small>same slots every week, click a cell to fill it</small></h2>
-    <div class="plan" id="plan"></div>
-    <div class="editor" id="editor">
-      <div><label class="f" style="display:block;font-size:11.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#8a7f97;margin-bottom:6px" id="ed-title">Slot</label>
-        <select id="ed-format"></select></div>
-      <div style="flex:1;min-width:200px"><input type="text" id="ed-note" placeholder="what exactly (names, places)" style="width:100%"></div>
-      <label class="chk"><input type="checkbox" id="ed-posted"> posted</label>
-      <button class="btn" id="ed-save">Save</button>
-      <button class="btn ghost" id="ed-clear">Clear slot</button>
-      <button class="btn ghost" id="ed-close">Close</button>
-    </div>
-    <p class="legend">Green border = posted. Pink outline = today.</p>
-  </div>
+    <div class="layout">
+      <!-- ================= PREVIEW ================= -->
+      <div class="phone" id="phone"></div>
 
-  <div class="concepts">
-    <div>
-      <h2>Concept grid <small>planned feed order, drag to reorder, click to edit</small><span class="right"><span class="msg" id="as-msg" style="text-transform:none;letter-spacing:0;font-weight:600"></span> <button class="btn ghost" id="as-ideas" style="padding:6px 10px;font-size:12px" title="17 ready made concepts: 12 organic posts and the 5 paid angle ads, with caption drafts">Load launch ideas</button></span></h2>
-      <div class="grid3" id="grid"></div>
-      <input type="file" id="as-file" accept="image/*,video/*" multiple hidden>
-      <div class="adet" id="adet">
-        <div class="f" style="grid-row:span 3"><label>Preview</label><a id="ad-preview-link" target="_blank" rel="noopener"><img id="ad-preview" alt="" style="width:100%;border-radius:10px;border:1px solid #e7dfd2;display:block"></a></div>
-        <div class="f"><label>Status</label><select id="ad-status"><option value="concept">concept</option><option value="feedback">under feedback</option><option value="placed">placed</option><option value="parked">parked (drafts shelf)</option></select></div>
-        <div class="f"><label>Format</label><select id="ad-format"></select></div>
-        <div class="f"><label>Planned date</label><input type="date" id="ad-date"></div>
-        <div class="f" style="grid-column:1 / -1"><label>Caption draft</label><textarea id="ad-caption" placeholder="caption, ends with the format code"></textarea></div>
-        <div class="f" style="grid-column:1 / -1"><label>Feedback</label><textarea id="ad-feedback" placeholder="what to change before it is placed"></textarea></div>
-        <div class="row">
-          <button class="btn" id="ad-save">Save</button>
-          <button class="btn ghost" id="ad-ask">Ask Claude about this</button>
-          <button class="btn ghost" id="ad-make">Make visual</button>
-          <a class="linkish" id="ad-open" target="_blank" rel="noopener">open original</a>
-          <span style="flex:1"></span>
-          <button class="btn ghost" id="ad-delete">Delete</button>
-          <button class="btn ghost" id="ad-close">Close</button>
+      <!-- ================= EDITORS ================= -->
+      <div>
+        <h2>Hero slides <span class="right"><button class="btn small ghost" onclick="addSlide()">+ add slide</button></span></h2>
+        <div id="slidesEd"></div>
+        <div class="row" style="max-width:280px;">
+          <div class="fld"><label>Seconds per slide (0 = off)</label><input id="slideInterval" type="number" min="0" onchange="draft.slides.interval=parseInt(this.value)||0"></div>
         </div>
-      </div>
-      <p class="legend">Images and reels up to 50 MB. Reels: the first frame is the thumbnail, Claude sees 3 frames, not the video. Hover a tile: x deletes it, the arrow parks it on the drafts shelf.</p>
-      <div class="panel p-vis" id="vispanel">
-        <h2>Make a visual <small>Claude composes it from your design kit and app screens, in the house style. You see it here in seconds</small><span class="right"><span class="msg" id="vis-msg"></span></span></h2>
-        <div class="vis">
-          <div>
-            <div class="f"><label id="vis-for">Brief</label><textarea id="vis-brief" placeholder="e.g. AF5 Wednesday theme post: three rainy day cafés with a play corner, Kinderkookkafé, Noorderlicht, Boerderij Meerzicht. Phone with the Food Spots screen, a polaroid of poffertjes."></textarea></div>
-            <div class="row" style="margin-top:8px;flex-wrap:wrap;gap:8px">
-              <select id="vis-size" style="border:1.5px solid #e0d8ea;border-radius:10px;padding:8px 10px;font-family:inherit;font-size:13px;background:#fff"><option value="post">feed post 4:5</option><option value="story">story 9:16</option></select>
-              <button class="btn" id="vis-make">Make visual</button>
-              <span style="flex:1"></span>
-              <button class="btn ghost" id="vis-close">Close</button>
+
+        <h2 style="margin-top:30px;">Home buttons</h2>
+        <p class="muted" style="margin-bottom:10px;">The numbers match the phone preview on the left. Leave a field empty to keep the app's own default. Corner label is the little flag in the top corner (New, Hot). Images: paste any link, your Cloudinary links work great.</p>
+        <div id="tilesEd"></div>
+
+        <div class="savebar">
+          <span class="msg" id="saveMsg"></span>
+          <button class="btn ghost" onclick="loadAll()">Reset to saved</button>
+          <button class="btn" id="saveBtn" onclick="saveAll()">Save everything</button>
+        </div>
+
+        <h2 style="margin-top:34px;">Playdates to join</h2>
+        <div class="card">
+          <p class="muted">These appear inside the app as plans people can join. Pick a real event or Top 100 plan as the base, or start empty, then give it a friendly host name.</p>
+          <div class="row">
+            <div class="fld" style="flex:2;"><label>Base it on</label>
+              <select id="pdSource" onchange="pdPrefill()"><option value="">Start empty...</option></select>
             </div>
-            <div class="f" style="margin-top:10px"><label>Then say what to change</label><textarea id="vis-feedback" placeholder="e.g. shorter headline, use the Dailies screen, move the polaroid left" style="min-height:48px"></textarea></div>
-            <div class="row" style="margin-top:8px;gap:8px;flex-wrap:wrap">
-              <button class="btn ghost" id="vis-redo" disabled>Redo with this feedback</button>
-              <button class="btn ghost" id="vis-save" disabled>Save to grid</button>
-              <button class="btn ghost" id="vis-download" disabled>Download PNG</button>
-            </div>
-            <div class="meta" id="vis-meta"></div>
           </div>
-          <div class="out" id="vis-out"><div class="ph">Nothing made yet. Write a brief, or open a tile and press Make visual.</div></div>
+          <div class="row">
+            <div class="fld" style="flex:2;"><label>Title</label><input id="pdTitle" placeholder="Picnic and playground at Vondelpark"></div>
+            <div class="fld"><label>Date &amp; time</label><input id="pdWhen" type="datetime-local"></div>
+          </div>
+          <div class="row">
+            <div class="fld"><label>Area</label><input id="pdArea" placeholder="Oost"></div>
+            <div class="fld" style="flex:2;"><label>Location</label><input id="pdLoc" placeholder="Vondelpark, by the big playground"></div>
+          </div>
+          <div class="row">
+            <div class="fld"><label>Kids ages</label><input id="pdAges" placeholder="3-6"></div>
+            <div class="fld"><label>Spots</label><input id="pdSpots" type="number" value="4" min="1"></div>
+            <div class="fld" style="flex:2;"><label>Shown as host</label><input id="pdName" placeholder="Sophie (mama van Mees, 4)"></div>
+          </div>
+          <div class="row">
+            <div class="fld" style="flex:3;"><label>Little description</label><input id="pdDesc" placeholder="We bring snacks, join us!"></div>
+            <button class="btn" style="align-self:flex-end;" onclick="pdCreate()">Add playdate</button>
+          </div>
+          <div id="pdMsg" class="msg" style="display:block;margin-top:6px;"></div>
+          <div id="pdList" style="margin-top:12px;"></div>
         </div>
       </div>
-      <div class="row" style="margin:6px 0 0"><button class="btn ghost" id="as-newvis" style="padding:6px 10px;font-size:12px">New visual from a brief</button></div>
-      <h2 class="sub">Drafts shelf <small>parked concepts, not in the feed order. Click one to edit or put it back</small><span class="right"><span class="msg" id="shelf-count" style="text-transform:none;letter-spacing:0;font-weight:600"></span></span></h2>
-      <div class="shelf" id="shelf"></div>
-    </div>
-    <div>
-      <h2>Ask Claude <small>images, reels, captions, timing</small><span class="right"><button class="btn ghost" id="ch-clear" style="padding:6px 10px;font-size:12px">Clear history</button></span></h2>
-      <div id="chat-slot-concepts"></div>
-      <div class="chat" id="chat-box">
-        <div class="log" id="ch-log"></div>
-        <div class="att" id="ch-att"></div>
-        <div class="in">
-          <button class="clip" id="ch-clip" title="attach image or reel">+</button>
-          <input type="file" id="ch-file" accept="image/*,video/*" multiple hidden>
-          <textarea id="ch-text" placeholder="drop an image or write a question. Enter sends, Shift+Enter is a new line"></textarea>
-          <button class="btn" id="ch-send">Send</button>
-        </div>
-      </div>
     </div>
   </div>
-</section>
-
-<section class="tab" id="tab-accounts">
-  <h2>Accounts <small>influencers, famous parents, partner Instagrams</small><span class="right"><button class="btn ghost" id="ac-import">Import CSV</button> <button class="btn ghost" id="ac-refresh">Refresh followers</button> <button class="btn" id="ac-new">Add account</button></span></h2>
-  <input type="file" id="ac-csv" accept=".csv,text/csv,.txt" hidden>
-  <div class="drop hidden" id="ac-drop" style="margin:0 0 14px"><b>Drop a CSV of accounts here</b><br>Columns by header, any order: name, handle (or instagram, a full profile URL is fine), web, email, phone, type, status, notes, followers. Existing handles are updated, new ones added.<br><span class="msg" id="ac-imsg"></span></div>
-  <div class="acform hidden" id="acform">
-    <div class="f"><label>Name</label><input type="text" id="ac-name"></div>
-    <div class="f"><label>Instagram handle</label><input type="text" id="ac-handle" placeholder="without @"></div>
-    <div class="f"><label>Type</label><select id="ac-type"><option>influencer</option><option>famous parent</option><option>partner</option><option>press</option><option>other</option></select></div>
-    <div class="f"><label>Status</label><select id="ac-status"><option>to contact</option><option>contacted</option><option>agreed</option><option>posted</option></select></div>
-    <div class="f"><label>Web</label><input type="url" id="ac-web"></div>
-    <div class="f"><label>Email</label><input type="email" id="ac-email"></div>
-    <div class="f"><label>Phone</label><input type="text" id="ac-phone"></div>
-    <div class="f"><label>Notes</label><input type="text" id="ac-notes"></div>
-    <div class="f" style="grid-column:1 / -1"><label>Lists (comma separated, e.g. newsletter monthly, launch partners)</label><input type="text" id="ac-listsfield"></div>
-    <div class="row"><button class="btn" id="ac-save">Save</button><button class="btn ghost" id="ac-cancel">Cancel</button><span style="flex:1"></span><button class="btn ghost hidden" id="ac-delete">Delete</button><span class="msg" id="ac-msg"></span></div>
-  </div>
-  <div class="filters" id="ac-filters"></div>
-  <div class="filters" id="ac-lists"></div>
-  <div class="selbar"><span class="msg" id="ac-selcount"></span><input type="text" id="ac-listname" placeholder="list name"><button class="btn ghost" id="ac-addlist">Add to list</button><button class="btn ghost" id="ac-removelist">Remove from list</button><button class="btn ghost" id="ac-export">Export CSV</button></div>
-  <table id="accounts"></table>
-</section>
-
-<section class="tab" id="tab-formats">
-  <h2>The 8 formats <small>click the picture to upload a real example, Edit to change the text</small></h2>
-  <div class="cards" id="fcards"></div>
-  <input type="file" id="fx-file" accept="image/*" hidden>
-</section>
-
-<section class="tab" id="tab-campaigns">
-  <h2>The kick-off plan <small>September 2026, the story every campaign serves</small></h2>
-  <div class="plan-panel">
-    <div><b>What we sell</b><p>A curated, bilingual, ad-free super app for family life. Nobody paid to be recommended. No agency commissions. Members pay for independence, and independence is a feeling, not a feature. Insider: first week 0.49, then 1 euro a week, no free trial, cancel in one tap. Founding Family badge for the first 90 days.</p></div>
-    <div><b>The funnel</b><p>Ad asks a question about the family, never about the app. Web quiz, 5 to 7 questions. Result card, half visible, shareable as a story. Insider welcome with the price on screen. Then the hooks: Dailies, Favorites, Playdates, Babysitters.</p></div>
-    <div><b>Channels</b><p>Attention on Meta (one ad set per angle, four creatives, review weekly, kill losers, scale winners 20 to 30 percent). Intent on Apple Ads and Google (kinderfeestje Amsterdam, kindvriendelijk restaurant Amsterdam, basisschool Amsterdam kiezen, babysitter Amsterdam, wat te doen met kinderen Amsterdam). Trust on Instagram organic: the 8 formats.</p></div>
-    <div><b>The bar to beat</b><p>60% quiz completion. 5% quiz completers to Insider (10 is the dream). 45% first renewal. Search subscribers 3x cheaper than Meta. Read the numbers against this every Monday in the quiz funnel on the Dashboard.</p></div>
-    <div><b>Eight weeks</b><p>W1 pricing FAQ, paywall, 0.49 intro, rename Food AI to Dinner Sorted. W2 web quiz at /quiz, result cards. W3 film Fridge Rescue, launch Meta and Apple Ads, babysitter supply. W4 to 5 hosted playdates filmed, Founding Family badge live, first member gift newsletter. W6 to 8 scale the winning angle, second quiz, partner badge wave.</p></div>
-    <div><b>Creative rules</b><p>Phone shot beats polished. The hook is a question. One moment per ad. Price on screen, honestly. Result cards are ads: 1080x1920 in our palette, members post it, we repost it. Test, kill, scale.</p></div>
-  </div>
-
-  <h2>Campaigns <small>status and notes are per city. Organic from the Ibiza playbook, paid and retention from the kick-off plan</small></h2>
-  <div id="ccards"></div>
-</section>
-
-<section class="tab" id="tab-library">
-  <div class="panel p-know">
-    <h2>What Claude knows <small>rules, facts and examples it gets with every question, advice and visual. Yours to edit</small><span class="right"><span class="msg" id="kn-msg"></span></span></h2>
-    <div class="know" id="kn-list"></div>
-    <div class="kform">
-      <div class="f"><label>Kind</label><select id="kn-kind"><option value="rule">rule (always do)</option><option value="never">never (do not)</option><option value="fact">fact (about the app)</option><option value="example">example (a caption that worked)</option></select></div>
-      <div class="f"><label>Text</label><textarea id="kn-text" placeholder="e.g. Our sitters are called sitters, never nannies. Or: the Dailies Sunday theme is Reset, keep it soft."></textarea></div>
-      <div class="f"><label>Applies to</label><select id="kn-city"><option value="">every city</option><option value="this">this city only</option></select></div>
-      <button class="btn" id="kn-add" style="padding:9px 14px">Add</button>
-    </div>
-    <p class="legend">Claude reads the whole list on every call, so keep each line short and specific. Things it gets wrong twice belong here.</p>
-  </div>
-
-  <div class="panel p-screens">
-    <h2>App screens <small>real screenshots of this city's app. Claude attaches them when you name the section, and composes visuals with them</small><span class="right"><span class="msg" id="sc-msg"></span></span></h2>
-    <div class="kform" style="grid-template-columns:1fr 1fr auto">
-      <div class="f"><label>Section</label><input type="text" id="sc-label" list="sc-sections" placeholder="Dailies, Event Agenda, Top 100..."><datalist id="sc-sections"></datalist></div>
-      <div class="f"><label>Note (optional)</label><input type="text" id="sc-note" placeholder="e.g. Thursday theme, filters open"></div>
-      <button class="btn" id="sc-add" style="padding:9px 14px">Choose screenshots</button>
-    </div>
-    <input type="file" id="sc-file" accept="image/*" multiple hidden>
-    <div class="lib" id="sc-list"></div>
-    <p class="legend">Phone screenshots as they are, one section per upload (you can select several files for the same section). PNG or JPG.</p>
-  </div>
-
-  <div class="panel p-kit">
-    <h2>Design kit <small>what Claude composes visuals from: phone mockups, polaroids, logo, your own photos</small><span class="right"><span class="msg" id="kit-msg"></span></span></h2>
-    <div class="kform" style="grid-template-columns:150px 1fr 150px auto">
-      <div class="f"><label>Kind</label><select id="kit-kind"><option value="kit">kit (phone, polaroid, logo)</option><option value="photo">photo (your own)</option></select></div>
-      <div class="f"><label>Label</label><input type="text" id="kit-label" placeholder="e.g. phone Food Spots, polaroid poffertjes, logo, Westerpark morning"></div>
-      <div class="f"><label>Applies to</label><select id="kit-city"><option value="">every city</option><option value="this">this city only</option></select></div>
-      <button class="btn" id="kit-add" style="padding:9px 14px">Choose files</button>
-    </div>
-    <input type="file" id="kit-file" accept="image/*" multiple hidden>
-    <div class="lib" id="kit-list"></div>
-    <p class="legend">Start with the folder ideas-src/assets from the launch covers: the phone-*.png mockups (kit, label "phone Food Spots" etc), pol-*.png (kit, "polaroid ...") and logo.png. Transparent PNGs work best. Photos with people: only your own, with consent.</p>
-  </div>
-</section>
 </div>
-<iframe id="vis-frame" sandbox="allow-same-origin" title="artboard"></iframe>
 
 <script>
-/* ======================= config ======================= */
+'use strict';
+/* ---------------- constants ---------------- */
 const SUPABASE_URL  = 'https://qczutthumgpgxwepatte.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFjenV0dGh1bWdwZ3h3ZXBhdHRlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkwNzg5NzAsImV4cCI6MjA4NDY1NDk3MH0.vleNYVReRJnMruKBTXEb9gwdKVdhbiuLJTZoDiuUM0g';
-const FN_URL = SUPABASE_URL + '/functions/v1/marketing-advice';
-const CITIES = { ibiza: 'Ibiza', amsterdam: 'Amsterdam', valencia: 'Valencia' };
-const FORMATS = [
-  { n: 1, name: 'Weekly events story',     sub: 'fed by the events table',        lane: 'show',  surface: 'Story',         cadence: 'Mon, weekly',   kpi: 'Link taps',                 metric: 'link_taps' },
-  { n: 2, name: 'Kids services update',    sub: 'new in the app this week',       lane: 'show',  surface: 'Story',         cadence: 'Thu, weekly',   kpi: 'Link taps',                 metric: 'link_taps' },
-  { n: 3, name: 'Mom-Manager series',      sub: 'collab post, she reshares',      lane: 'trust', surface: 'Grid carousel', cadence: 'every 2nd Sun', kpi: 'Shares',                    metric: 'shares' },
-  { n: 4, name: 'Places reel',             sub: 'Top 100 table',                  lane: 'dream', surface: 'Reel',          cadence: 'Fri, weekly',   kpi: 'Saves',                     metric: 'saves' },
-  { n: 5, name: 'Theme post',              sub: 'eat + playground combos',        lane: 'show',  surface: 'Multi-image',   cadence: 'Wed, weekly',   kpi: 'Saves',                     metric: 'saves' },
-  { n: 6, name: 'Feature clip',            sub: 'the one that sells the app',     lane: 'show',  surface: 'Reel',          cadence: '2 per month',   kpi: 'Profile visits',            metric: 'profile_visits' },
-  { n: 7, name: 'Real parent testimonial', sub: '20s, phone, unscripted',         lane: 'trust', surface: 'Reel',          cadence: 'monthly',       kpi: 'Comments',                  metric: 'comments' },
-  { n: 8, name: 'Partner reposts',         sub: 'badge stream, businesses post',  lane: 'trust', surface: 'Story reshare', cadence: 'as they come',  kpi: 'Partners posting',          metric: 'count' },
-];
-
-/* ======================= state ======================= */
+const FN_SAVE = SUPABASE_URL + '/functions/v1/cms-save';
+const CB_URL  = 'https://cbldlpuhmuojdvljdtsk.supabase.co';
+const CB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNibGRscHVobXVvamR2bGpkdHNrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAxNTY5OTUsImV4cCI6MjA3NTczMjk5NX0.HqkbwYs6wpr4Ui78H2AUcGnlIxUWkrvJ2m1JPqACPxM';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
-let session = null;
-let city = localStorage.getItem('fm-city') || 'amsterdam';
-let month = firstOfMonth(new Date());
-let week = mondayOf(new Date());
-let cache = { weeks: [], prevWeeks: [], posts: [], prevPosts: [], targets: null, plan: [], advice: null };
-let editing = null;
 
-const $ = id => document.getElementById(id);
-const fmtN = n => n == null ? '–' : (n >= 10000 ? (n / 1000).toFixed(1) + 'k' : String(n));
-const iso = d => d.toISOString().slice(0, 10);
-function firstOfMonth(d) { return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1)); }
-function addMonths(d, k) { return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + k, 1)); }
-function mondayOf(d) { const x = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())); const dow = (x.getUTCDay() + 6) % 7; x.setUTCDate(x.getUTCDate() - dow); return x; }
-function addDays(d, k) { const x = new Date(d); x.setUTCDate(x.getUTCDate() + k); return x; }
-const prefix = () => city[0].toUpperCase();
-const code = n => prefix() + 'F' + n;
-const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-
-/* ======================= auth ======================= */
-async function boot() {
-  const { data } = await sb.auth.getSession();
-  session = data.session;
-  if (!session) { $('login').classList.remove('hidden'); return; }
-  $('app').classList.remove('hidden');
-  renderCities();
-  await loadAll();
-}
-$('l-send').onclick = async () => {
-  const email = $('l-email').value.trim().toLowerCase();
-  if (!email) return;
-  $('l-msg').textContent = 'Sending...';
-  const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
-  if (error) { $('l-msg').textContent = error.message; return; }
-  $('l-step1').classList.add('hidden'); $('l-step2').classList.remove('hidden');
-  $('l-msg').textContent = 'Code sent to ' + email;
-};
-$('l-verify').onclick = async () => {
-  const email = $('l-email').value.trim().toLowerCase();
-  const token = $('l-code').value.trim();
-  let r = await sb.auth.verifyOtp({ email, token, type: 'email' });
-  if (r.error) r = await sb.auth.verifyOtp({ email, token, type: 'magiclink' });
-  if (r.error) { $('l-msg').textContent = 'That code did not work (' + r.error.message + ')'; return; }
-  location.reload();
-};
-$('logout').onclick = async () => { await sb.auth.signOut(); location.reload(); };
-
-/* ======================= loading ======================= */
-async function loadAll() {
-  const mStart = iso(month), mEnd = iso(addMonths(month, 1));
-  const pStart = iso(addMonths(month, -1));
-  const wkFrom = iso(addDays(week, -7)), wkTo = iso(addDays(week, 14));
-  const trFrom = iso(addDays(mondayOf(addMonths(month, 1)), -12 * 7));
-  const [w, pw, p, pp, t, pl, a, tr, nl] = await Promise.all([
-    sb.from('marketing_weeks').select('*').eq('city', city).gte('week', mStart).lt('week', mEnd).order('week'),
-    sb.from('marketing_weeks').select('*').eq('city', city).gte('week', pStart).lt('week', mStart).order('week'),
-    sb.from('marketing_posts').select('*').eq('city', city).gte('posted_at', mStart).lt('posted_at', mEnd),
-    sb.from('marketing_posts').select('*').eq('city', city).gte('posted_at', pStart).lt('posted_at', mStart),
-    sb.from('marketing_targets').select('*').eq('city', city).eq('month', mStart).maybeSingle(),
-    sb.from('marketing_plan').select('*').eq('city', city).gte('week', wkFrom).lt('week', wkTo),
-    sb.from('marketing_advice').select('advice,created_at,model').eq('city', city).order('created_at', { ascending: false }).limit(1).maybeSingle(),
-    sb.from('marketing_weeks').select('week,reach_7d,link_clicks,installs_ios,installs_android,free_accounts,paid_members').eq('city', city).gte('week', trFrom).lt('week', mEnd).order('week'),
-    sb.from('marketing_newsletter_ideas').select('ideas,created_at,model').eq('city', city).order('created_at', { ascending: false }).limit(1).maybeSingle(),
-  ]);
-  cache = { weeks: w.data || [], prevWeeks: pw.data || [], posts: p.data || [], prevPosts: pp.data || [], targets: t.data, plan: pl.data || [], advice: a.data, trend: tr.data || [], news: nl.data };
-  const firstErr = [w, pw, p, pp, t, pl, a].find(r => r.error);
-  if (firstErr) $('w-msg').textContent = 'Load error: ' + firstErr.error.message + ' (did you run the SQL?)';
-  if (nl.error) $('nl-msg').textContent = 'Run marketing-schema-v2.sql for this block.';
-  renderAll();
-  loadTab(tab, true);
-}
-function renderAll() {
-  $('m-label').textContent = MONTHS[month.getUTCMonth()] + ' ' + month.getUTCFullYear();
-  $('drop-codes').textContent = code(1) + ' to ' + code(8);
-  renderFunnel(); renderQuizFunnel(); renderAdvice(); renderWeekForm(); renderFormats(); renderPlan(); renderNews();
-}
-
-/* ======================= header ======================= */
-function renderCities() {
-  $('cities').innerHTML = Object.entries(CITIES).map(([k, v]) => `<button data-c="${k}" class="${k === city ? 'on' : ''}">${v}</button>`).join('');
-  $('cities').querySelectorAll('button').forEach(b => b.onclick = () => { city = b.dataset.c; localStorage.setItem('fm-city', city); renderCities(); loadAll(); });
-}
-$('m-prev').onclick = () => { month = addMonths(month, -1); loadAll(); };
-$('m-next').onclick = () => { month = addMonths(month, 1); loadAll(); };
-
-/* ======================= funnel ======================= */
-function sum(rows, k) { return rows.reduce((s, r) => s + (r[k] || 0), 0); }
-function funnelNumbers(rows) {
-  const last = rows.length ? rows[rows.length - 1] : null;
-  return {
-    reach: sum(rows, 'reach_7d'),
-    link_clicks: sum(rows, 'link_clicks'),
-    installs: sum(rows, 'installs_ios') + sum(rows, 'installs_android'),
-    free_accounts: sum(rows, 'free_accounts'),
-    paid_members: last ? last.paid_members : null,
-  };
-}
-function renderFunnel() {
-  const cur = funnelNumbers(cache.weeks), prev = funnelNumbers(cache.prevWeeks), t = cache.targets || {};
-  const steps = [
-    ['reach', 'Reach', 'sum of weekly reach'],
-    ['link_clicks', 'Link clicks', 'smart link'],
-    ['installs', 'Installs', 'both stores'],
-    ['free_accounts', 'Free accounts', 'auto, Supabase'],
-    ['paid_members', 'Paid members', 'auto, RevenueCat'],
-  ];
-  const pct = (a, b) => (b && a != null) ? Math.round(a / b * 1000) / 10 + '%' : '–';
-  const convLabel = ['click', 'install', 'account', 'paid'];
-  let html = '';
-  steps.forEach(([k, label, src], i) => {
-    const v = cur[k], target = t[k], pv = prev[k];
-    let chip = '';
-    if (target) { const r = Math.round(v / target * 100); chip = `<span class="chip ${r >= 100 ? 'up' : 'flat'}">${r}% of target</span>`; }
-    else if (pv != null && v != null && cache.prevWeeks.length) { const d = v - pv; chip = `<span class="chip ${d >= 0 ? 'up' : 'down'}">${d >= 0 ? '+' : ''}${d} vs last month</span>`; }
-    html += `<div class="tile"><div class="lbl">${label}</div><div class="src">${src}</div><div class="big">${fmtN(v)}</div><div class="tgt" data-k="${k}">target ${target ? fmtN(target) : 'set'}</div>${chip}${sparkline(k)}</div>`;
-    if (i < 4) {
-      const next = cur[steps[i + 1][0]];
-      html += `<div class="conv"><i>&rsaquo;</i><b>${pct(next, v)}</b>${convLabel[i]}</div>`;
-    }
-  });
-  $('funnel').innerHTML = html;
-  $('funnel').querySelectorAll('.tgt').forEach(el => el.onclick = async () => {
-    const k = el.dataset.k;
-    const val = prompt('Target for ' + k.replace('_', ' ') + ' this month:', (cache.targets && cache.targets[k]) || '');
-    if (val === null) return;
-    const row = Object.assign({ city, month: iso(month) }, cache.targets || {}, { [k]: parseInt(val, 10) || null });
-    delete row.created_at;
-    const { error } = await sb.from('marketing_targets').upsert(row, { onConflict: 'city,month' });
-    if (error) alert(error.message); else loadAll();
-  });
-}
-
-function renderQuizFunnel() {
-  const rows = cache.weeks, prev = cache.prevWeeks, t = cache.targets || {};
-  const cur = { ad_spend: sum(rows, 'ad_spend'), ad_clicks: sum(rows, 'ad_clicks'), quiz_starts: sum(rows, 'quiz_starts'), quiz_completions: sum(rows, 'quiz_completions'), insider_signups: sum(rows, 'insider_signups') };
-  const any = Object.values(cur).some(v => v);
-  if (!any && !prev.some(r => r.ad_spend || r.insider_signups)) { $('qfunnel').innerHTML = '<p class="msg" style="grid-column:1 / -1">No paid numbers yet. From week 3 of the kick-off plan, type ad spend, clicks, quiz starts, completions and Insider signups in the week row below.</p>'; return; }
-  const pct = (a, b) => (b && a != null) ? Math.round(a / b * 1000) / 10 : null;
-  const completion = pct(cur.quiz_completions, cur.quiz_starts), toInsider = pct(cur.insider_signups, cur.quiz_completions);
-  const cpi = (cur.ad_spend > 0 && cur.insider_signups > 0) ? (cur.ad_spend / cur.insider_signups).toFixed(2) : null;
-  const bar = (v, b) => v == null ? '' : `<span class="chip ${v >= b ? 'up' : 'down'}">${v}% vs bar ${b}%</span>`;
-  const steps = [
-    ['ad_spend', 'Ad spend', 'euro, sum of weeks', cur.ad_spend ? cur.ad_spend.toFixed(0) : null, t.ad_spend ? `<span class="chip ${cur.ad_spend <= t.ad_spend ? 'up' : 'down'}">${Math.round(cur.ad_spend / t.ad_spend * 100)}% of budget</span>` : ''],
-    ['ad_clicks', 'Ad clicks', 'Meta plus search', cur.ad_clicks, cur.ad_spend && cur.ad_clicks ? `<span class="chip flat">${(cur.ad_spend / cur.ad_clicks).toFixed(2)} per click</span>` : ''],
-    ['quiz_starts', 'Quiz starts', 'web quiz', cur.quiz_starts, ''],
-    ['quiz_completions', 'Quiz completions', 'bar 60% of starts', cur.quiz_completions, bar(completion, 60)],
-    ['insider_signups', 'Insider signups', 'bar 5% of completions', cur.insider_signups, bar(toInsider, 5) + (cpi ? `<span class="chip ${cpi <= 20 ? 'up' : 'flat'}">${cpi} euro per Insider</span>` : '') + (t.insider_signups ? `<span class="chip ${cur.insider_signups >= t.insider_signups ? 'up' : 'flat'}">${Math.round(cur.insider_signups / t.insider_signups * 100)}% of target</span>` : '')],
-  ];
-  const conv = [null, pct(cur.quiz_starts, cur.ad_clicks), completion, toInsider];
-  const convLabel = ['clicks', 'start', 'complete', 'insider'];
-  let html = '';
-  steps.forEach(([k, label, src, v, chips], i) => {
-    const tgt = (k === 'ad_spend' || k === 'insider_signups') ? `<div class="tgt" data-k="${k}">${k === 'ad_spend' ? 'budget' : 'target'} ${t[k] ? fmtN(t[k]) : 'set'}</div>` : '<div class="tgt" style="visibility:hidden">.</div>';
-    html += `<div class="tile"><div class="lbl">${label}</div><div class="src">${src}</div><div class="big">${v == null ? '–' : fmtN(v)}</div>${tgt}${chips}</div>`;
-    if (i < 4) html += `<div class="conv"><i>&rsaquo;</i><b>${conv[i] == null ? '' : conv[i] + '%'}</b>${conv[i] == null ? '' : convLabel[i]}</div>`;
-  });
-  $('qfunnel').innerHTML = html;
-  $('qfunnel').querySelectorAll('.tgt[data-k]').forEach(el => el.onclick = async () => {
-    const k = el.dataset.k;
-    const val = prompt((k === 'ad_spend' ? 'Ad budget (euro)' : 'Insider signups target') + ' this month:', (cache.targets && cache.targets[k]) || '');
-    if (val === null) return;
-    const row = Object.assign({ city, month: iso(month) }, cache.targets || {}, { [k]: k === 'ad_spend' ? (parseFloat(val) || null) : (parseInt(val, 10) || null) });
-    delete row.created_at;
-    const { error } = await sb.from('marketing_targets').upsert(row, { onConflict: 'city,month' });
-    if (error) alert(error.message); else loadAll();
-  });
-}
-function sparkline(k) {
-  const rows = cache.trend || [];
-  const val = r => k === 'reach' ? r.reach_7d : k === 'installs' ? ((r.installs_ios || 0) + (r.installs_android || 0)) : r[k];
-  const pts = rows.map(val).filter(v => v != null);
-  if (pts.length < 2) return '';
-  const max = Math.max(...pts), min = Math.min(...pts), W = 100, H = 28, pad = 3;
-  const x = i => pad + i * (W - 2 * pad) / (pts.length - 1);
-  const y = v => max === min ? H / 2 : H - pad - (v - min) * (H - 2 * pad) / (max - min);
-  const line = pts.map((v, i) => x(i).toFixed(1) + ',' + y(v).toFixed(1)).join(' ');
-  return `<svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><polyline points="${line}"/><circle cx="${x(pts.length - 1).toFixed(1)}" cy="${y(pts[pts.length - 1]).toFixed(1)}" r="2.5"/></svg>`;
-}
-
-/* ======================= advice ======================= */
-function renderAdvice() {
-  const a = cache.advice;
-  if (!a) { $('adv-text').className = 'muted'; $('adv-text').textContent = 'No advice yet. Fill in a few weeks of numbers, then press Refresh advice.'; $('adv-when').textContent = ''; $('adv-model').textContent = ''; return; }
-  $('adv-text').className = ''; $('adv-text').textContent = a.advice;
-  $('adv-when').textContent = 'updated ' + new Date(a.created_at).toLocaleString();
-  $('adv-model').textContent = a.model || '';
-}
-$('adv-btn').onclick = async () => {
-  $('adv-btn').disabled = true; $('adv-btn').textContent = 'Thinking...';
-  try {
-    const r = await callFn({ action: 'advise', city });
-    if (r.error) throw new Error(r.error);
-    await loadAll();
-  } catch (e) { alert('Advice failed: ' + e.message); }
-  $('adv-btn').disabled = false; $('adv-btn').textContent = 'Refresh advice';
-};
-async function callFn(body) {
-  const { data } = await sb.auth.getSession();
-  const r = await fetch(FN_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: SUPABASE_ANON, Authorization: 'Bearer ' + data.session.access_token }, body: JSON.stringify(body) });
-  return r.json();
-}
-
-/* ======================= week form ======================= */
-const WF = { followers: 'w-followers', reach_7d: 'w-reach', installs_ios: 'w-ios', installs_android: 'w-android', link_clicks: 'w-clicks', free_accounts: 'w-accounts', paid_members: 'w-paid', notes: 'w-notes', ad_spend: 'w-adspend', ad_clicks: 'w-adclicks', quiz_starts: 'w-qstarts', quiz_completions: 'w-qdone', insider_signups: 'w-insider' };
-async function renderWeekForm() {
-  const end = addDays(week, 6);
-  $('w-label').textContent = 'week of ' + week.getUTCDate() + ' ' + MONTHS[week.getUTCMonth()].slice(0, 3) + ' to ' + end.getUTCDate() + ' ' + MONTHS[end.getUTCMonth()].slice(0, 3);
-  let row = cache.weeks.concat(cache.prevWeeks).find(r => r.week === iso(week));
-  if (!row) { const r = await sb.from('marketing_weeks').select('*').eq('city', city).eq('week', iso(week)).maybeSingle(); row = r.data; }
-  Object.entries(WF).forEach(([k, id]) => $(id).value = row && row[k] != null ? row[k] : '');
-  $('w-msg').textContent = row ? 'saved ' + new Date(row.updated_at).toLocaleDateString() : 'nothing saved for this week yet';
-  cpi();
-}
-function cpi() { const sp = parseFloat($('w-adspend').value), n = parseInt($('w-insider').value, 10); $('w-cpi').value = (sp > 0 && n > 0) ? (sp / n).toFixed(2) + ' euro' : ''; }
-$('w-adspend').oninput = cpi; $('w-insider').oninput = cpi;
-$('w-prev').onclick = () => { week = addDays(week, -7); renderWeekForm(); };
-$('w-next').onclick = () => { week = addDays(week, 7); renderWeekForm(); };
-$('w-save').onclick = async () => {
-  const row = { city, week: iso(week), updated_at: new Date().toISOString() };
-  Object.entries(WF).forEach(([k, id]) => { const v = $(id).value; row[k] = k === 'notes' ? (v || null) : v === '' ? null : k === 'ad_spend' ? parseFloat(v) : parseInt(v, 10); });
-  const { error } = await sb.from('marketing_weeks').upsert(row, { onConflict: 'city,week' });
-  $('w-msg').textContent = error ? 'Save failed: ' + error.message : 'Saved.';
-  if (!error) loadAll();
-};
-$('w-auto').onclick = async () => {
-  $('w-msg').textContent = 'Fetching...';
-  try {
-    const r = await callFn({ action: 'auto', city, week: iso(week) });
-    if (r.error) throw new Error(r.error);
-    if (r.free_accounts != null) $('w-accounts').value = r.free_accounts;
-    if (r.paid_members != null) $('w-paid').value = r.paid_members;
-    $('w-msg').textContent = 'Filled: accounts ' + (r.free_accounts ?? '?') + (r.paid_members != null ? ', paid ' + r.paid_members : ', paid not connected (RevenueCat keys not set)') + '. Press Save week.';
-  } catch (e) { $('w-msg').textContent = 'Fetch failed: ' + e.message; }
-};
-
-/* ======================= Meta CSV ======================= */
-const drop = $('drop');
-drop.onclick = () => $('csv').click();
-drop.ondragover = e => { e.preventDefault(); drop.classList.add('hover'); };
-drop.ondragleave = () => drop.classList.remove('hover');
-drop.ondrop = e => { e.preventDefault(); drop.classList.remove('hover'); if (e.dataTransfer.files[0]) importCsv(e.dataTransfer.files[0]); };
-$('csv').onchange = () => { if ($('csv').files[0]) importCsv($('csv').files[0]); };
-
-function parseCsv(text) {
-  const rows = []; let row = [], field = '', q = false;
-  text = text.replace(/^﻿/, '');
-  for (let i = 0; i < text.length; i++) {
-    const c = text[i];
-    if (q) { if (c === '"') { if (text[i + 1] === '"') { field += '"'; i++; } else q = false; } else field += c; }
-    else if (c === '"') q = true;
-    else if (c === ',' || c === ';' || c === '\t') { row.push(field); field = ''; }
-    else if (c === '\n' || c === '\r') { if (c === '\r' && text[i + 1] === '\n') i++; row.push(field); rows.push(row); row = []; field = ''; }
-    else field += c;
-  }
-  if (field !== '' || row.length) { row.push(field); rows.push(row); }
-  return rows.filter(r => r.some(x => x !== ''));
-}
-function findCol(headers, patterns) {
-  for (const p of patterns) { const i = headers.findIndex(h => p.test(h)); if (i >= 0) return i; }
-  return -1;
-}
-function num(v) { if (v == null) return null; const n = parseInt(String(v).replace(/[^\d-]/g, ''), 10); return isNaN(n) ? null : n; }
-function parseDate(v) { if (!v) return null; const d = new Date(v); if (!isNaN(d)) return iso(new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()))); const m = String(v).match(/(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})/); if (m) return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`; return null; }
-async function importCsv(file) {
-  const text = await file.text();
-  const rows = parseCsv(text);
-  if (rows.length < 2) { $('csv-msg').textContent = 'Could not read that file.'; return; }
-  const headers = rows[0].map(h => h.trim().toLowerCase());
-  const col = {
-    date: findCol(headers, [/publish time/, /^date$/, /created/, /^time/]),
-    caption: findCol(headers, [/description/, /caption/, /^title$/, /message/, /post text/]),
-    type: findCol(headers, [/post type/, /media type/, /^type$/, /format/]),
-    reach: findCol(headers, [/^reach/, /accounts reached/]),
-    likes: findCol(headers, [/^likes?$/, /reactions/]),
-    comments: findCol(headers, [/comment/]),
-    saves: findCol(headers, [/save/]),
-    shares: findCol(headers, [/share/]),
-    follows: findCol(headers, [/follow/]),
-    profile_visits: findCol(headers, [/profile visit/]),
-    link_taps: findCol(headers, [/link click/, /link tap/, /website tap/, /website click/]),
-  };
-  if (col.date < 0 || col.caption < 0) { $('csv-msg').textContent = 'No date or caption column found. Headers seen: ' + headers.slice(0, 12).join(', '); return; }
-  const re = new RegExp('\\b' + prefix() + 'F([1-8])\\b', 'i');
-  const out = []; let unmatched = 0;
-  for (const r of rows.slice(1)) {
-    const cap = r[col.caption] || '';
-    const d = parseDate(r[col.date]);
-    if (!d) continue;
-    const m = cap.match(re);
-    if (!m) unmatched++;
-    const typ = (col.type >= 0 ? r[col.type] : '').toLowerCase();
-    const surface = /reel|video/.test(typ) ? 'reel' : /story/.test(typ) ? 'story' : /carousel|album|multi/.test(typ) ? 'carousel' : typ ? 'image' : null;
-    out.push({
-      city, posted_at: d, format_code: m ? prefix() + 'F' + m[1] : null, surface, caption: cap.slice(0, 500),
-      reach: col.reach >= 0 ? num(r[col.reach]) : null, likes: col.likes >= 0 ? num(r[col.likes]) : null,
-      comments: col.comments >= 0 ? num(r[col.comments]) : null, saves: col.saves >= 0 ? num(r[col.saves]) : null,
-      shares: col.shares >= 0 ? num(r[col.shares]) : null, follows: col.follows >= 0 ? num(r[col.follows]) : null,
-      profile_visits: col.profile_visits >= 0 ? num(r[col.profile_visits]) : null, link_taps: col.link_taps >= 0 ? num(r[col.link_taps]) : null,
-      source: 'meta', dedupe_key: city + '|' + d + '|' + cap.slice(0, 80),
-    });
-  }
-  if (!out.length) { $('csv-msg').textContent = 'No post rows found.'; return; }
-  const { data: saved, error } = await sb.from('marketing_posts').upsert(out, { onConflict: 'dedupe_key' }).select('id,posted_at,format_code');
-  $('csv-msg').textContent = error ? 'Import failed: ' + error.message : `Imported ${out.length} posts, ${out.length - unmatched} matched to a format, ${unmatched} without a code.`;
-  if (!error) { await linkPlacedAssets(saved || []); loadAll(); }
-}
-// a placed concept with a format code and a planned date gets linked to the imported post of the same format within 3 days
-async function linkPlacedAssets(posts) {
-  if (!posts.length) return;
-  const { data: assets } = await sb.from('marketing_assets').select('id,format_code,planned_date').eq('city', city).eq('status', 'placed').is('post_id', null).not('planned_date', 'is', null);
-  let linked = 0;
-  for (const a of assets || []) {
-    const cands = posts.filter(p => p.format_code && p.format_code === a.format_code).map(p => ({ p, d: Math.abs(new Date(p.posted_at) - new Date(a.planned_date)) / 86400000 })).filter(x => x.d <= 3).sort((x, y) => x.d - y.d);
-    if (cands.length) { await sb.from('marketing_assets').update({ post_id: cands[0].p.id }).eq('id', a.id); linked++; }
-  }
-  if (linked) $('csv-msg').textContent += ` ${linked} placed concept${linked > 1 ? 's' : ''} linked to a post.`;
-}
-
-/* ======================= formats table ======================= */
-function agg(posts, f) {
-  const mine = posts.filter(p => p.format_code === code(f.n));
-  if (f.metric === 'count') return { v: mine.length, n: mine.length };
-  return { v: mine.reduce((s, p) => s + (p[f.metric] || 0), 0), n: mine.length };
-}
-function renderFormats() {
-  let html = '<tr><th>#</th><th>Format</th><th>Lane</th><th>Surface</th><th>Cadence</th><th>Primary KPI</th><th>This month</th><th>Last</th><th>Posts</th></tr>';
-  for (const f of FORMATS) {
-    const a = agg(cache.posts, f), b = agg(cache.prevPosts, f);
-    const trend = (a.n && b.n) ? (a.v > b.v ? '<span class="chip up">up</span>' : a.v < b.v ? '<span class="chip down">down</span>' : '<span class="chip flat">flat</span>') : '';
-    html += `<tr><td class="muted">${code(f.n)}</td><td><b>${f.name}</b><br><span class="muted">${f.sub}</span></td><td><span class="lane ${f.lane}">${f.lane[0].toUpperCase() + f.lane.slice(1)}</span></td><td>${f.surface}</td><td>${f.cadence}</td><td>${f.kpi}</td><td>${a.n ? '<b>' + fmtN(a.v) + '</b> ' + trend : '<span class="muted">no posts</span>'}</td><td class="muted">${b.n ? fmtN(b.v) : '–'}</td><td class="muted">${a.n}</td></tr>`;
-  }
-  $('formats').innerHTML = html;
-}
-
-/* ======================= plan ======================= */
-function renderPlan() {
-  const w0 = mondayOf(new Date()), today = iso(new Date());
-  const weeks = [w0, addDays(w0, 7)];
-  let html = '<div></div>' + ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d => `<div class="h">${d}</div>`).join('');
-  for (const wk of weeks) {
-    html += `<div class="wk">${wk.getUTCDate()} ${MONTHS[wk.getUTCMonth()].slice(0, 3)}</div>`;
-    for (let d = 0; d < 7; d++) {
-      const slot = cache.plan.find(p => p.week === iso(wk) && p.day === d);
-      const isToday = iso(addDays(wk, d)) === today;
-      const f = slot && slot.format_code ? FORMATS.find(x => code(x.n) === slot.format_code) : null;
-      html += `<div class="cell ${slot ? '' : 'empty'} ${slot && slot.posted ? 'done' : ''} ${isToday ? 'today' : ''}" data-w="${iso(wk)}" data-d="${d}">${slot ? `<span class="tag">${slot.format_code || ''} ${f ? f.name : ''}</span><span class="who">${slot.note || ''}</span>` : ''}</div>`;
-    }
-  }
-  $('plan').innerHTML = html;
-  $('plan').querySelectorAll('.cell').forEach(c => c.onclick = () => openEditor(c.dataset.w, parseInt(c.dataset.d, 10)));
-  $('ed-format').innerHTML = '<option value="">no format</option>' + FORMATS.map(f => `<option value="${code(f.n)}">${code(f.n)} ${f.name}</option>`).join('');
-}
-function openEditor(w, d) {
-  editing = { w, d };
-  const slot = cache.plan.find(p => p.week === w && p.day === d);
-  $('ed-title').textContent = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][d] + ' ' + addDays(new Date(w + 'T00:00:00Z'), d).getUTCDate();
-  $('ed-format').value = slot ? (slot.format_code || '') : '';
-  $('ed-note').value = slot ? (slot.note || '') : '';
-  $('ed-posted').checked = !!(slot && slot.posted);
-  $('editor').style.display = 'flex';
-  $('ed-note').focus();
-}
-$('ed-close').onclick = () => { $('editor').style.display = 'none'; editing = null; };
-$('ed-save').onclick = async () => {
-  if (!editing) return;
-  const row = { city, week: editing.w, day: editing.d, format_code: $('ed-format').value || null, note: $('ed-note').value || null, posted: $('ed-posted').checked };
-  const { error } = await sb.from('marketing_plan').upsert(row, { onConflict: 'city,week,day' });
-  if (error) alert(error.message); else { $('editor').style.display = 'none'; loadAll(); }
-};
-$('ed-clear').onclick = async () => {
-  if (!editing) return;
-  await sb.from('marketing_plan').delete().eq('city', city).eq('week', editing.w).eq('day', editing.d);
-  $('editor').style.display = 'none'; loadAll();
-};
-
-/* =====================================================================
-   v2: tabs, newsletter ideas, concept grid, chat, accounts, formats, campaigns
-   ===================================================================== */
-let tab = localStorage.getItem('fm-tab') || 'dashboard';
-const loaded = {};   // per tab per city, so switching tabs does not refetch
-const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const fmtDate = d => d ? new Date(d).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : '';
-const fmtWhen = d => d ? new Date(d).toLocaleString(undefined, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
-
-function showTab(t) {
-  tab = t; localStorage.setItem('fm-tab', t);
-  $('tabs').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.t === t));
-  document.querySelectorAll('section.tab').forEach(s => s.classList.toggle('on', s.id === 'tab-' + t));
-  const box = $('chat-box');
-  if (t === 'dashboard') { $('chat-slot-dashboard').appendChild(box); box.classList.add('compact'); }
-  else if (t === 'concepts') { $('chat-slot-concepts').appendChild(box); box.classList.remove('compact'); }
-  if (session) loadTab(t);
-}
-$('tabs').querySelectorAll('button').forEach(b => b.onclick = () => showTab(b.dataset.t));
-showTab(tab);
-function loadTab(t, force) {
-  const key = t + '|' + city;
-  if (!force && loaded[key]) return;
-  loaded[key] = true;
-  if (t === 'concepts') loadAssets();
-  if (t === 'concepts' || t === 'dashboard') loadChat();
-  if (t === 'accounts') loadAccounts();
-  if (t === 'formats') loadFormatsPage();
-  if (t === 'campaigns') loadCampaigns();
-  if (t === 'library') loadLibrary();
-}
-
-/* ---------- settings: model choice ---------- */
-$('settings-btn').onclick = async () => {
-  const el = $('settings'); el.classList.toggle('hidden'); if (el.classList.contains('hidden')) return;
-  loadModelSettings();
-};
-async function loadModelSettings() {
-  $('s-msg').textContent = 'Loading the model list from Anthropic...';
-  // saved choice first, so the dropdowns are never empty while the live list loads
-  const { data } = await sb.from('marketing_settings').select('key,value');
-  const st = {}; (data || []).forEach(x => st[x.key] = x.value || '');
-  const opts = (cur, list, fb) => `<option value="">default (${esc(fb)})</option>` + (cur && !list.some(m => m.id === cur) ? `<option value="${esc(cur)}" selected>${esc(cur)}</option>` : '') + list.map(m => `<option value="${esc(m.id)}" ${m.id === cur ? 'selected' : ''}>${esc(m.name)} (${esc(m.id)})</option>`).join('');
-  $('s-model-text').innerHTML = opts(st.model_text, [], 'claude-sonnet-5'); $('s-model-chat').innerHTML = opts(st.model_chat, [], 'claude-sonnet-5');
-  try {
-    const r = await callFn({ action: 'models' });
-    if (r.error) throw new Error(r.error);
-    const list = (r.models || []).sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
-    $('s-model-text').innerHTML = opts(st.model_text, list, r.fallback); $('s-model-chat').innerHTML = opts(st.model_chat, list, r.fallback);
-    $('s-msg').textContent = `${list.length} models available on your key. Now: advice ${r.model_text}, chat ${r.model_chat}.`;
-  } catch (e) { $('s-msg').innerHTML = 'Could not load the model list: ' + esc(e.message) + '. <a href="#" id="s-retry">Try again</a>'; $('s-retry').onclick = ev => { ev.preventDefault(); loadModelSettings(); }; }
-}
-$('s-close').onclick = () => $('settings').classList.add('hidden');
-$('s-save').onclick = async () => {
-  const rows = [{ key: 'model_text', value: $('s-model-text').value, updated_at: new Date().toISOString() }, { key: 'model_chat', value: $('s-model-chat').value, updated_at: new Date().toISOString() }];
-  const { error } = await sb.from('marketing_settings').upsert(rows, { onConflict: 'key' });
-  $('s-msg').textContent = error ? 'Save failed: ' + error.message : 'Saved. Next advice, newsletter and chat use these.';
-};
-
-/* ---------- storage upload ---------- */
-async function uploadFile(folder, file, name) {
-  const ext = (file.name || 'file').split('.').pop().toLowerCase().replace(/[^a-z0-9]/g, '') || 'bin';
-  const path = `${city}/${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 7)}${name ? '-' + name : ''}.${ext}`;
-  const { error } = await sb.storage.from('marketing').upload(path, file, { upsert: true, contentType: file.type || undefined });
-  if (error) throw new Error(error.message);
-  return sb.storage.from('marketing').getPublicUrl(path).data.publicUrl;
-}
-function canvasBlob(canvas) { return new Promise(res => canvas.toBlob(b => res(b), 'image/jpeg', 0.86)); }
-// 3 frames from a video (File or URL): start, middle, near the end. Returns array of jpeg Files.
-function videoFrames(src, count = 3) {
-  return new Promise((resolve) => {
-    const v = document.createElement('video'); v.muted = true; v.playsInline = true; v.preload = 'auto'; v.crossOrigin = 'anonymous';
-    const frames = []; let times = []; let i = 0;
-    const done = () => { if (v.src.startsWith('blob:')) URL.revokeObjectURL(v.src); resolve(frames); };
-    v.onerror = done;
-    v.onloadedmetadata = () => {
-      const d = v.duration || 1; times = count === 1 ? [Math.min(0.5, d / 2)] : [Math.min(0.5, d / 2), d / 2, Math.max(d - 0.6, d / 2)];
-      v.currentTime = times[0];
-    };
-    v.onseeked = async () => {
-      try {
-        const c = document.createElement('canvas'); const s = Math.min(1, 1080 / (v.videoWidth || 1080));
-        c.width = Math.round((v.videoWidth || 720) * s); c.height = Math.round((v.videoHeight || 1280) * s);
-        c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
-        const b = await canvasBlob(c); if (b) frames.push(new File([b], `frame${i + 1}.jpg`, { type: 'image/jpeg' }));
-      } catch (e) { /* tainted canvas or decode issue: skip */ }
-      i++; if (i < times.length) v.currentTime = times[i]; else done();
-    };
-    v.src = typeof src === 'string' ? src : URL.createObjectURL(src);
-    v.load();
-  });
-}
-
-/* ---------- newsletter ideas ---------- */
-function renderNews() {
-  const n = cache.news;
-  if (!n || !Array.isArray(n.ideas) || !n.ideas.length) { $('nl-list').innerHTML = '<p class="msg">No ideas yet. Add a note if you want, then press the button.</p>'; $('nl-when').textContent = ''; return; }
-  $('nl-when').textContent = fmtWhen(n.created_at);
-  $('nl-list').innerHTML = n.ideas.map(i => `<div class="idea"><b>${esc(i.subject)}</b><p>${esc(i.angle)}</p>${i.feature ? `<i>${esc(i.feature)}</i>` : ''}</div>`).join('');
-}
-$('nl-btn').onclick = async () => {
-  $('nl-btn').disabled = true; $('nl-msg').textContent = 'Reading events, partners, app news...';
-  try {
-    const r = await callFn({ action: 'newsletter', city, notes: $('nl-notes').value.trim() });
-    if (r.error) throw new Error(r.error);
-    $('nl-msg').textContent = r.events != null ? `${r.events} upcoming events read.` : '';
-    await loadAll();
-  } catch (e) { $('nl-msg').textContent = 'Failed: ' + e.message; }
-  $('nl-btn').disabled = false;
-};
-
-/* ---------- concept grid ---------- */
-let assets = [], selAsset = null, dragId = null;
-async function loadAssets() {
-  const { data, error } = await sb.from('marketing_assets').select('*').eq('city', city).order('sort').order('created_at');
-  if (error) { $('as-msg').textContent = 'Run marketing-schema-v2.sql first (' + error.message + ')'; return; }
-  assets = data || []; renderGrid();
-}
-function renderGrid() {
-  const stLabel = { concept: 'concept', feedback: 'feedback', placed: 'placed' };
-  const tile = a => `<div class="gi ${a.status} ${selAsset === a.id ? 'sel' : ''}" draggable="${a.status !== 'parked'}" data-id="${a.id}">
-      <img src="${esc(a.thumb_url || a.url)}" alt="" loading="lazy">
-      <span class="st">${stLabel[a.status] || a.status}</span>
-      ${a.format_code ? `<span class="fc">${esc(a.format_code)}</span>` : ''}
-      ${a.kind === 'reel' ? '<span class="reel">&#9654;</span>' : ''}
-      ${a.planned_date ? `<span class="dt">${fmtDate(a.planned_date)}</span>` : ''}
-      <button class="park" data-act="${a.status === 'parked' ? 'unpark' : 'park'}" title="${a.status === 'parked' ? 'back to the grid' : 'park on the drafts shelf'}">${a.status === 'parked' ? '&#8593;' : '&#8595;'}</button>
-      <button class="x" data-act="delete" title="delete">&#215;</button>
-    </div>`;
-  stLabel.parked = 'draft';
-  let html = assets.filter(a => a.status !== 'parked').map(tile).join('');
-  const parked = assets.filter(a => a.status === 'parked');
-  $('shelf').innerHTML = parked.length ? parked.map(tile).join('') : '<div class="empty">Nothing parked. Hover a tile in the grid and press the arrow to park it here.</div>';
-  $('shelf-count').textContent = parked.length ? parked.length + ' parked' : '';
-  html += `<div class="gi up" id="as-up">+ add images or reels<br><span class="muted" style="font-size:11px">or drop them here</span></div>`;
-  $('grid').innerHTML = html;
-  document.querySelectorAll('#grid .gi[data-id], #shelf .gi[data-id]').forEach(el => {
-    el.onclick = e => { const b = e.target.closest('button[data-act]'); if (b) { e.stopPropagation(); tileAction(el.dataset.id, b.dataset.act); return; } openAsset(el.dataset.id); };
-    el.ondragstart = e => { dragId = el.dataset.id; e.dataTransfer.effectAllowed = 'move'; };
-    el.ondragover = e => { if (dragId) { e.preventDefault(); el.classList.add('dragover'); } };
-    el.ondragleave = () => el.classList.remove('dragover');
-    el.ondrop = e => { e.preventDefault(); el.classList.remove('dragover'); if (dragId && dragId !== el.dataset.id) reorder(dragId, el.dataset.id); dragId = null; };
-  });
-  const up = $('as-up');
-  up.onclick = () => $('as-file').click();
-  up.ondragover = e => { if (!dragId) { e.preventDefault(); up.classList.add('dragover'); } };
-  up.ondragleave = () => up.classList.remove('dragover');
-  up.ondrop = e => { e.preventDefault(); up.classList.remove('dragover'); if (e.dataTransfer.files.length) addAssets([...e.dataTransfer.files]); };
-}
-$('as-file').onchange = () => { if ($('as-file').files.length) addAssets([...$('as-file').files]); $('as-file').value = ''; };
-async function addAssets(files) {
-  let n = 0;
-  for (const f of files) {
-    const isVideo = f.type.startsWith('video/');
-    if (!isVideo && !f.type.startsWith('image/')) continue;
-    if (f.size > 50 * 1024 * 1024) { $('as-msg').textContent = f.name + ' is over 50 MB, skipped.'; continue; }
-    $('as-msg').textContent = `Uploading ${f.name}...`;
-    try {
-      const url = await uploadFile('assets', f);
-      let thumb = null;
-      if (isVideo) { const fr = await videoFrames(f, 1); if (fr[0]) thumb = await uploadFile('thumbs', fr[0]); }
-      const sort = assets.length ? Math.max(...assets.map(a => a.sort || 0)) + 1 : 0;
-      const { data, error } = await sb.from('marketing_assets').insert({ city, kind: isVideo ? 'reel' : 'image', url, thumb_url: thumb, status: 'concept', sort }).select().single();
-      if (error) throw new Error(error.message);
-      assets.push(data); n++;
-    } catch (e) { $('as-msg').textContent = 'Upload failed: ' + e.message; renderGrid(); return; }
-  }
-  $('as-msg').textContent = n ? `${n} added.` : ''; renderGrid();
-}
-async function reorder(fromId, toId) {
-  const from = assets.findIndex(a => a.id === fromId), to = assets.findIndex(a => a.id === toId);
-  const [m] = assets.splice(from, 1); assets.splice(to, 0, m);
-  assets.forEach((a, i) => a.sort = i); renderGrid();
-  const { error } = await sb.from('marketing_assets').upsert(assets.map(a => ({ id: a.id, city: a.city, kind: a.kind, url: a.url, sort: a.sort })), { onConflict: 'id' });
-  if (error) $('as-msg').textContent = 'Reorder not saved: ' + error.message;
-}
-async function tileAction(id, act) {
-  const a = assets.find(x => x.id === id); if (!a) return;
-  if (act === 'delete') {
-    if (!confirm('Delete this concept? The file stays in storage.')) return;
-    const { error } = await sb.from('marketing_assets').delete().eq('id', id);
-    if (error) { $('as-msg').textContent = 'Delete failed: ' + error.message; return; }
-    assets = assets.filter(x => x.id !== id); if (selAsset === id) { selAsset = null; $('adet').classList.remove('on'); }
-  } else {
-    const status = act === 'park' ? 'parked' : 'concept';
-    const { error } = await sb.from('marketing_assets').update({ status, updated_at: new Date().toISOString() }).eq('id', id);
-    if (error) { $('as-msg').textContent = 'Not saved: ' + error.message; return; }
-    a.status = status;
-  }
-  renderGrid();
-}
-function openAsset(id) {
-  selAsset = id; const a = assets.find(x => x.id === id); if (!a) return;
-  $('ad-preview').src = a.thumb_url || a.url; $('ad-preview-link').href = a.url;
-  $('ad-format').innerHTML = '<option value="">no format yet</option>' + FORMATS.map(f => `<option value="${code(f.n)}">${code(f.n)} ${f.name}</option>`).join('') + '<optgroup label="Paid angles (ads, not organic)">' + ANGLES.map(a => `<option value="${a.code}">${a.code} ${a.name}</option>`).join('') + '</optgroup>';
-  $('ad-status').value = a.status || 'concept'; $('ad-format').value = a.format_code || ''; $('ad-date').value = a.planned_date || '';
-  $('ad-caption').value = a.caption || ''; $('ad-feedback').value = a.feedback || ''; $('ad-open').href = a.url;
-  $('adet').classList.add('on'); renderGrid();
-  $('adet').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-}
-$('ad-close').onclick = () => { $('adet').classList.remove('on'); selAsset = null; renderGrid(); };
-$('ad-save').onclick = async () => {
-  const a = assets.find(x => x.id === selAsset); if (!a) return;
-  const patch = { status: $('ad-status').value, format_code: $('ad-format').value || null, planned_date: $('ad-date').value || null, caption: $('ad-caption').value || null, feedback: $('ad-feedback').value || null, updated_at: new Date().toISOString() };
-  const { error } = await sb.from('marketing_assets').update(patch).eq('id', a.id);
-  if (error) { $('as-msg').textContent = 'Save failed: ' + error.message; return; }
-  Object.assign(a, patch); $('as-msg').textContent = 'Saved.'; renderGrid();
-};
-$('ad-delete').onclick = async () => {
-  const a = assets.find(x => x.id === selAsset); if (!a) return;
-  if (!confirm('Delete this concept? The file stays in storage.')) return;
-  const { error } = await sb.from('marketing_assets').delete().eq('id', a.id);
-  if (error) { $('as-msg').textContent = 'Delete failed: ' + error.message; return; }
-  assets = assets.filter(x => x.id !== a.id); selAsset = null; $('adet').classList.remove('on'); renderGrid();
-};
-$('ad-ask').onclick = async () => {
-  const a = assets.find(x => x.id === selAsset); if (!a) return;
-  pending = [];
-  const isVideo = a.kind === 'reel' && !/\.(png|jpe?g|webp|gif)(\?|$)/i.test(a.url);   // reel concepts can be a still cover (launch ideas)
-  if (isVideo) {
-    $('as-msg').textContent = 'Taking 3 frames from the reel...';
-    const fr = await videoFrames(a.url, 3);
-    for (const f of fr) { try { pending.push({ url: await uploadFile('chat', f), asset_id: a.id }); } catch (e) { /* skip */ } }
-    if (!pending.length && a.thumb_url) pending.push({ url: a.thumb_url, asset_id: a.id });
-    $('as-msg').textContent = '';
-  } else pending.push({ url: a.url, asset_id: a.id });
-  renderAtt();
-  const parts = [];
-  if (a.format_code) parts.push('meant as ' + a.format_code);
-  if (a.caption) parts.push('caption draft: ' + a.caption);
-  $('ch-text').value = `What do you think of this ${isVideo ? 'reel (3 frames)' : a.kind === 'reel' ? 'reel cover' : 'image'}${parts.length ? ', ' + parts.join(', ') : ''}? Which format, what to change, caption in our voice, when to post.`;
-  $('ch-text').focus();
-  if (window.innerWidth <= 820) $('ch-log').scrollIntoView({ behavior: 'smooth' });
-};
-
-/* ======================= Library: knowledge, app screens, design kit ======================= */
-const SECTIONS = {
-  amsterdam: ['Home', 'Dailies', 'Event Agenda', 'Top 100 Family Fun', 'Family Food Spots', 'Schools', 'After-school', 'Birthday Directory', 'Playgrounds', 'Babysitter Finder', 'Dinner Sorted', 'Little Chef', 'Fridge Rescue', 'Playdates', 'Memory game', 'Chores', 'Groceries', 'Favorites', 'Quick tour', 'Quiz result', 'Paywall'],
-  ibiza: ['Home', 'Dailies', 'Event Agenda', 'Top 100 plans', 'Family Food Spots', 'Playgrounds and beaches', 'Sunset Finder', 'Babysitters', 'Schools', 'After school', 'All things Birthday', 'Dinner Sorted', 'Play Mate Finder', 'Memory game', 'Chores', 'Groceries', 'Favorites', 'Quick tour', 'Paywall'],
-  valencia: ['Home', 'Dailies', 'Event Agenda', 'Top 100 plans', 'Family Food Spots', 'Playgrounds', 'Babysitters', 'Schools', 'After school', 'Birthday Directory', 'Dinner Sorted', 'Playdates', 'Favorites', 'Paywall'],
-};
-let knowledge = [], library = [];
-async function loadLibrary() {
-  const [k, l] = await Promise.all([
-    sb.from('marketing_knowledge').select('*').or(`city.is.null,city.eq.${city}`).order('created_at'),
-    sb.from('marketing_library').select('*').or(`city.is.null,city.eq.${city}`).order('created_at'),
-  ]);
-  if (k.error || l.error) { $('kn-msg').textContent = 'Run marketing-schema-v6.sql first (' + (k.error || l.error).message + ')'; return; }
-  knowledge = k.data || []; library = l.data || [];
-  $('sc-sections').innerHTML = (SECTIONS[city] || []).map(x => `<option value="${esc(x)}">`).join('');
-  renderKnowledge(); renderLibrary();
-}
-function renderKnowledge() {
-  $('kn-list').innerHTML = knowledge.length ? knowledge.map(k => `<div class="k" data-id="${k.id}"><span class="kind ${k.kind}">${esc(k.kind)}</span><span class="t">${esc(k.text)}</span><span class="city">${k.city ? esc(k.city) : 'all cities'}</span><button title="remove" data-id="${k.id}">&#215;</button></div>`).join('')
-    : '<div class="empty" style="font-size:13px;color:#8a7f97">Nothing yet. The first good candidates: names you insist on, the tone of a caption you loved, a fact Claude got wrong.</div>';
-  $('kn-list').querySelectorAll('button[data-id]').forEach(b => b.onclick = async () => {
-    const { error } = await sb.from('marketing_knowledge').delete().eq('id', b.dataset.id);
-    if (error) { $('kn-msg').textContent = 'Remove failed: ' + error.message; return; }
-    knowledge = knowledge.filter(x => x.id !== b.dataset.id); renderKnowledge();
-  });
-}
-$('kn-add').onclick = async () => {
-  const text = $('kn-text').value.trim(); if (!text) return;
-  const row = { kind: $('kn-kind').value, text, city: $('kn-city').value === 'this' ? city : null };
-  const { data, error } = await sb.from('marketing_knowledge').insert(row).select().single();
-  if (error) { $('kn-msg').textContent = 'Add failed: ' + error.message; return; }
-  knowledge.push(data); $('kn-text').value = ''; $('kn-msg').textContent = 'Added. Claude gets it from the next call on.'; renderKnowledge();
-};
-function renderLibrary() {
-  const item = l => `<div class="li ${l.kind}" data-id="${l.id}"><img src="${esc(l.url)}" alt="" loading="lazy"><span class="lb" title="${esc(l.label)}${l.note ? ', ' + esc(l.note) : ''}">${esc(l.label)}${l.city ? '' : ' <span style="color:#8a7f97;font-weight:600">(all)</span>'}</span><button class="x" data-id="${l.id}" title="remove">&#215;</button></div>`;
-  const screens = library.filter(l => l.kind === 'screen'), kit = library.filter(l => l.kind !== 'screen');
-  $('sc-list').innerHTML = screens.map(item).join('') + `<div class="up" id="sc-up">+ drop screenshots here<br><span style="font-size:11px">section from the field above</span></div>`;
-  $('kit-list').innerHTML = kit.map(item).join('') + `<div class="up" id="kit-up">+ drop kit files here<br><span style="font-size:11px">label from the field above</span></div>`;
-  document.querySelectorAll('.lib .x').forEach(b => b.onclick = async () => {
-    const { error } = await sb.from('marketing_library').delete().eq('id', b.dataset.id);
-    if (error) { $('sc-msg').textContent = 'Remove failed: ' + error.message; return; }
-    library = library.filter(x => x.id !== b.dataset.id); renderLibrary();
-  });
-  const wire = (upId, fileInputId, kind) => {
-    const up = $(upId); if (!up) return;
-    up.onclick = () => $(fileInputId).click();
-    up.ondragover = e => { e.preventDefault(); up.classList.add('dragover'); };
-    up.ondragleave = () => up.classList.remove('dragover');
-    up.ondrop = e => { e.preventDefault(); up.classList.remove('dragover'); if (e.dataTransfer.files.length) addLibrary(kind, [...e.dataTransfer.files]); };
-  };
-  wire('sc-up', 'sc-file', 'screen'); wire('kit-up', 'kit-file', null);
-}
-$('sc-add').onclick = () => $('sc-file').click();
-$('kit-add').onclick = () => $('kit-file').click();
-$('sc-file').onchange = () => { if ($('sc-file').files.length) addLibrary('screen', [...$('sc-file').files]); $('sc-file').value = ''; };
-$('kit-file').onchange = () => { if ($('kit-file').files.length) addLibrary(null, [...$('kit-file').files]); $('kit-file').value = ''; };
-async function addLibrary(kind, files) {
-  const isScreen = kind === 'screen';
-  const msgEl = $(isScreen ? 'sc-msg' : 'kit-msg');
-  const label = (isScreen ? $('sc-label').value : $('kit-label').value).trim();
-  if (!label) { msgEl.textContent = isScreen ? 'Type the section first (e.g. Dailies).' : 'Type a label first (e.g. phone Food Spots).'; return; }
-  const rowKind = isScreen ? 'screen' : $('kit-kind').value;
-  const rowCity = isScreen ? city : ($('kit-city').value === 'this' ? city : null);
-  const note = isScreen ? ($('sc-note').value.trim() || null) : null;
-  let n = 0;
-  for (const f of files) {
-    if (!f.type.startsWith('image/')) continue;
-    msgEl.textContent = `Uploading ${f.name}...`;
-    try {
-      const url = await uploadFile('library', f, label.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 30));
-      const lbl = files.length > 1 && !isScreen ? `${label} ${n + 1}` : label;
-      const { data, error } = await sb.from('marketing_library').insert({ city: rowCity, kind: rowKind, label: lbl, url, note }).select().single();
-      if (error) throw new Error(error.message);
-      library.push(data); n++;
-    } catch (e) { msgEl.textContent = 'Upload failed: ' + e.message; renderLibrary(); return; }
-  }
-  msgEl.textContent = n ? `${n} added.` : ''; renderLibrary();
-}
-
-/* ======================= Make a visual (artboard written by Claude, rendered here) ======================= */
-let vis = { html: null, blob: null, assetId: null, size: 'post', out: null };
-function openVisual(asset) {
-  vis = { html: null, blob: null, assetId: asset ? asset.id : null, size: 'post', out: null };
-  $('vis-for').textContent = asset ? 'Brief for this tile' + (asset.format_code ? ' (' + asset.format_code + ')' : '') : 'Brief';
-  const parts = [];
-  if (asset) { if (asset.brief) parts.push(asset.brief); else { if (asset.format_code) parts.push(asset.format_code + ' post.'); if (asset.caption) parts.push('Caption idea: ' + asset.caption.slice(0, 300)); if (asset.feedback) parts.push('Feedback so far: ' + asset.feedback); } }
-  $('vis-brief').value = parts.join(' '); $('vis-feedback').value = '';
-  $('vis-out').innerHTML = asset && asset.html ? '<div class="ph">This tile was made here before. Press Make visual to redo it from the brief, or write feedback and press Redo.</div>' : '<div class="ph">Write the brief and press Make visual.</div>';
-  if (asset && asset.html) vis.html = asset.html;
-  $('vis-meta').innerHTML = ''; $('vis-msg').textContent = '';
-  ['vis-save', 'vis-download'].forEach(id => $(id).disabled = true); $('vis-redo').disabled = !vis.html;
-  $('vispanel').style.display = 'block'; $('vispanel').scrollIntoView({ behavior: 'smooth', block: 'nearest' }); $('vis-brief').focus();
-}
-$('vispanel').style.display = 'none';
-$('vis-close').onclick = () => { $('vispanel').style.display = 'none'; };
-$('as-newvis').onclick = () => openVisual(null);
-$('ad-make').onclick = () => { const a = assets.find(x => x.id === selAsset); if (a) openVisual(a); };
-async function makeVisual(withFeedback) {
-  const brief = $('vis-brief').value.trim(); if (!brief) { $('vis-msg').textContent = 'Write a brief first.'; return; }
-  const a = vis.assetId ? assets.find(x => x.id === vis.assetId) : null;
-  vis.size = $('vis-size').value;
-  $('vis-make').disabled = true; $('vis-redo').disabled = true;
-  $('vis-msg').innerHTML = '<span class="thinking">Claude is composing</span>';
-  try {
-    const body = { action: 'visual', city, brief, size: vis.size, format_code: (brief.match(/\b[AIV][FD]\d\b/) || [a && a.format_code || ''])[0] };
-    if (withFeedback && vis.html) { body.prev_html = vis.html; body.feedback = $('vis-feedback').value.trim(); }
-    const r = await callFn(body);
-    if (r.error) throw new Error(r.error + (r.raw ? ' ' + r.raw.slice(0, 200) : ''));
-    vis.html = r.html; vis.out = r;
-    $('vis-msg').innerHTML = '<span class="thinking">Rendering</span>';
-    const canvas = await renderArtboard(r.html, vis.size === 'story' ? 1920 : 1350);
-    vis.blob = await new Promise(res => canvas.toBlob(b => res(b), 'image/png'));
-    const url = URL.createObjectURL(vis.blob);
-    $('vis-out').innerHTML = `<img src="${url}" alt="">`;
-    $('vis-meta').innerHTML = `<b>Headline</b>${esc(r.headline || '')}${r.sub ? ' <i style="color:#7a5d8c">' + esc(r.sub) + '</i>' : ''}<b>Caption draft</b><span style="white-space:pre-wrap">${esc(r.caption || '')}</span>${r.first_comment ? '<b>First comment</b>' + esc(r.first_comment) : ''}${r.notes ? '<b>Notes</b>' + esc(r.notes) : ''}<b>Model</b>${esc(r.model || '')}`;
-    $('vis-msg').textContent = 'Done. Say what to change, or save it.';
-    ['vis-save', 'vis-download', 'vis-redo'].forEach(id => $(id).disabled = false);
-    $('vis-feedback').value = '';
-  } catch (e) { $('vis-msg').textContent = 'Failed: ' + e.message; $('vis-redo').disabled = !vis.html; }
-  $('vis-make').disabled = false;
-}
-function renderArtboard(html, height) {
-  return new Promise((resolve, reject) => {
-    const fr = $('vis-frame'); fr.style.height = height + 'px';
-    const timer = setTimeout(() => reject(new Error('the artboard took too long to load (fonts or images)')), 25000);
-    fr.onload = async () => {
-      try {
-        const doc = fr.contentDocument;
-        doc.body.style.margin = '0';
-        if (doc.fonts && doc.fonts.ready) { try { await doc.fonts.ready; } catch (_) { /* ignore */ } }
-        await Promise.all([...doc.images].map(im => im.complete ? null : new Promise(res => { im.onload = im.onerror = res; })));
-        await new Promise(res => setTimeout(res, 250));
-        const canvas = await html2canvas(doc.body, { useCORS: true, allowTaint: false, width: 1080, height, windowWidth: 1080, windowHeight: height, scale: 1, backgroundColor: '#faf6ef', logging: false });
-        clearTimeout(timer); resolve(canvas);
-      } catch (e) { clearTimeout(timer); reject(e); }
-    };
-    fr.srcdoc = html;
-  });
-}
-$('vis-make').onclick = () => makeVisual(false);
-$('vis-redo').onclick = () => makeVisual(true);
-$('vis-download').onclick = () => {
-  if (!vis.blob) return;
-  const a = document.createElement('a'); a.href = URL.createObjectURL(vis.blob); a.download = `${city}-${(vis.out && vis.out.headline || 'visual').toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40)}.png`; a.click();
-};
-$('vis-save').onclick = async () => {
-  if (!vis.blob) return;
-  $('vis-msg').textContent = 'Saving...';
-  try {
-    const file = new File([vis.blob], 'visual.png', { type: 'image/png' });
-    const url = await uploadFile('assets', file, 'made');
-    const brief = $('vis-brief').value.trim(); const r = vis.out || {};
-    const a = vis.assetId ? assets.find(x => x.id === vis.assetId) : null;
-    if (a) {
-      const patch = { url, thumb_url: null, kind: 'image', html: vis.html, brief, caption: a.caption || r.caption || null, updated_at: new Date().toISOString() };
-      const { error } = await sb.from('marketing_assets').update(patch).eq('id', a.id); if (error) throw new Error(error.message);
-      Object.assign(a, patch); if (selAsset === a.id) openAsset(a.id);
-    } else {
-      const sort = assets.length ? Math.max(...assets.map(x => x.sort || 0)) + 1 : 0;
-      const fc = (brief.match(/\b[AIV][FD]\d\b/) || [null])[0];
-      const { data, error } = await sb.from('marketing_assets').insert({ city, kind: 'image', url, status: 'concept', sort, html: vis.html, brief, caption: r.caption || null, format_code: fc }).select().single();
-      if (error) throw new Error(error.message);
-      assets.push(data); vis.assetId = data.id;
-    }
-    renderGrid(); $('vis-msg').textContent = 'Saved to the grid.';
-  } catch (e) { $('vis-msg').textContent = 'Save failed: ' + e.message; }
-};
-
-const ANGLES = [ { code: 'AD1', name: 'Which Amsterdam family are you' }, { code: 'AD2', name: 'Family Food Map' }, { code: 'AD3', name: 'Parent Battery Check' }, { code: 'AD4', name: 'Fridge Rescue' }, { code: 'AD5', name: 'Birthday Panic' } ];
-/* launch ideas: 12 organic concepts (built by ideas-src/build.py) plus the 5 paid angle story ads from the campaign visuals (ideas/ad*.jpg) */
-const LAUNCH_IDEAS = [
- {
-  "file": "af6-launch.png",
-  "format_code": "AF6",
-  "kind": "reel",
-  "planned_date": "2026-09-07",
-  "title": "Launch clip: one happy app",
-  "caption": "Everything for family life in Amsterdam, in one happy app. What to do this weekend, where to eat with the kids, which club, who babysits. 1,112 food spots, 1,265 playgrounds, 310 schools, 1,844 clubs, all curated by parents, in English and Dutch, no ads. Free in the App Store and Google Play. Comment PLAN and we send you the link. AF6",
-  "first_comment": "Alles voor het gezinsleven in Amsterdam, in een app. Wat doen we dit weekend, waar eten we met de kids, welke club, wie past op. Gratis in de App Store en Google Play. Reageer PLAN en we sturen je de link.",
-  "feedback": "Screen recording, 15 to 20 seconds, a hand holding the phone. Shot 1 home screen and the Dailies card, shot 2 Family Food Spots map zoom into Zuid, shot 3 Top 100 and a save tap. On screen text in three lines as on the cover. Original audio or a cleared track. Cover = this image. Posted the launch day, boosted Sunday if it wins."
- },
- {
-  "file": "af1-events-week.png",
-  "format_code": "AF1",
-  "kind": "image",
-  "planned_date": "2026-09-07",
-  "title": "This week in Amsterdam (events story)",
-  "caption": "This week in Amsterdam, picked from the Event Agenda. Tap for times, prices and the map. AF1",
-  "first_comment": "Deze week in Amsterdam, uit de Event Agenda. Tik voor tijden, prijzen en de kaart.",
-  "feedback": "Story, 3 to 5 frames. Frame 1 = this overview, then one frame per event with a link sticker to the event in the app. Fill the four rows from ams_events for the coming week (the app's Event Agenda page shows the same list). Same layout every Monday, only the rows change."
- },
- {
-  "file": "af5-rainy-wednesday.png",
-  "format_code": "AF5",
-  "kind": "image",
-  "planned_date": "2026-09-09",
-  "title": "Rainy Wednesday, sorted (theme post)",
-  "caption": "Rainy Wednesday, sorted. Three places where the coffee is good and the kids are busy: Kinderkookkafé in West (they cook, you sit), Noorderlicht in Noord (space to run, sand to dig), and a third one you tell us in the comments. All 1,112 food spots have a play area filter in the app. AF5",
-  "first_comment": "Regenachtige woensdag, geregeld. Drie plekken met goede koffie en drukke kinderen. Alle 1.112 eetplekken hebben een speelhoekfilter in de app.",
-  "feedback": "Multi-image post, 3 to 4 images: this cover, then one photo per place with the name on the image (your photos or the venue's with permission). Tag the venues and invite one as collaborator. KPI is saves, so the last slide says: save this for the next rainy day."
- },
- {
-  "file": "af2-new-babysitters.png",
-  "format_code": "AF2",
-  "kind": "image",
-  "planned_date": "2026-09-10",
-  "title": "New in the app: babysitters (services story)",
-  "caption": "New in the app this week: the Babysitter Finder. Trusted sitters, contacted direct, no agency, no commission. Plus 12 after school clubs added in Oost. AF2",
-  "first_comment": "Nieuw in de app deze week: de Babysitter Finder. Betrouwbare oppassers, direct contact, geen bureau, geen commissie.",
-  "feedback": "Story, 2 to 3 frames: this frame, then a screenshot of one sitter profile (name hidden) with a link sticker, then the after school list for Oost. Tag the new clubs so they reshare (that becomes AF8). Every Thursday, same frame, new items."
- },
- {
-  "file": "af4-playground-hideout.png",
-  "format_code": "AF4",
-  "kind": "reel",
-  "planned_date": "2026-09-11",
-  "title": "Places reel: 1,265 playgrounds, this one has a hideout",
-  "caption": "1,265 playgrounds in the app. This one has a hideout, a zipline and a coffee cart within shouting distance. Name, ages and the parking tip are in the app under playgrounds, filter by stadsdeel. Which one should we film next? AF4",
-  "first_comment": "1.265 speeltuinen in de app. Deze heeft een hut, een kabelbaan en koffie op roepafstand. Welke moeten we hierna filmen?",
-  "feedback": "Reel, 15 to 25 seconds, phone footage. Shot 1 arriving (bike, gate), shot 2 kids on the thing (zipline or hideout), shot 3 the detail parents miss (the coffee cart, the toilet, the shade). Text on screen: place name, age range, one tip. Pick a Top 100 playground, geotag it, invite the venue or park account as collaborator if it has one."
- },
- {
-  "file": "af3-mom-manager-01.png",
-  "format_code": "AF3",
-  "kind": "image",
-  "planned_date": "2026-09-13",
-  "title": "Mom-Manager 01 (collab carousel cover)",
-  "caption": "Meet [name], who runs Zuid like a company. Two kids, one calendar, zero agencies. Her week, her tricks, and the three places she would never give up. Swipe. Posted together with @[her handle]. AF3",
-  "first_comment": "Dit is [naam], die Zuid runt als een bedrijf. Twee kinderen, een agenda, nul bureaus. Haar week, haar trucs en de drie plekken die ze nooit opgeeft.",
-  "feedback": "Carousel, 7 slides: this cover with her portrait, slide 2 her week in one image, slides 3 to 5 her three places (one per slide, from the app), slide 6 her best trick as a quote, slide 7 the ask: who should we feature next. Invite her as collaborator, post Sunday 19:00, she reshares to stories. First candidate from the Accounts tab, status agreed."
- },
- {
-  "file": "af5-under-3s-free.png",
-  "format_code": "AF5",
-  "kind": "image",
-  "planned_date": "2026-09-16",
-  "title": "Under 3s, free afternoons (theme post)",
-  "caption": "Under 3s, free afternoons. Four places that cost nothing and end in a nap: the Saturday park (any of the 1,265), the library story hour, the petting farm in your stadsdeel, and the market where the cheese man hands out samples. All in the app, filter free and ages 0 to 3. Save it for the next long afternoon. AF5",
-  "first_comment": "Onder de 3, gratis middagen. Vier plekken die niets kosten en eindigen in een dutje. Allemaal in de app, filter gratis en 0 tot 3 jaar.",
-  "feedback": "Multi-image, 4 to 5 images: cover plus one per place with the name on the image. Real photos from your own afternoons work best here, the polaroid look is the brand. Tag the farm and the library, both reshare."
- },
- {
-  "file": "af4-saturday-park.png",
-  "format_code": "AF4",
-  "kind": "reel",
-  "planned_date": "2026-09-18",
-  "title": "Places reel: Saturday = park day",
-  "caption": "Saturday = park day. Amsterdamse Bos edition: the goat farm, the pancake house, the climbing forest, the pedal boats. One entry in the app, four things to do, parking and pram tips included. Comment PLAN and we send you the link. AF4",
-  "first_comment": "Zaterdag = parkdag. Amsterdamse Bos editie: de geitenboerderij, het pannenkoekenhuis, het klimbos, de waterfietsen. Reageer PLAN en we sturen je de link.",
-  "feedback": "Reel, 20 to 25 seconds, four quick scenes (5 s each) with the name of each spot on screen, then the app entry as the last frame. Geotag Amsterdamse Bos. Comment to DM trick: reply to every PLAN comment with the smart link."
- },
- {
-  "file": "af6-dinner-sorted.png",
-  "format_code": "AF6",
-  "kind": "reel",
-  "planned_date": "2026-09-22",
-  "title": "Feature clip: Dinner Sorted, this fridge has nothing in it",
-  "caption": "This fridge has nothing in it. Half a cucumber, three eggs, a yoghurt and hope. Snap it, three recipes appear, kids approved, dinner in 20 minutes. Dinner Sorted lives in the app, Little Chef for when they choose, Fridge Rescue for when you cannot. Insider, 1 euro a week, nobody paid to be recommended. Comment FRIDGE and we send you the link. AF6",
-  "first_comment": "Deze koelkast is leeg. Een halve komkommer, drie eieren, een yoghurt en hoop. Maak een foto, drie recepten, eten in 20 minuten. Eten Geregeld zit in de app. Reageer FRIDGE en we sturen je de link.",
-  "feedback": "The organic twin of the paid Fridge Rescue angle, one gesture: open the fridge at 17:45, snap, three recipes, cut to a kid eating. 10 to 15 seconds, phone shot, real fridge, real kid. On screen line as on the cover. Never say AI, say Dinner Sorted. Same reel doubles as the AD4 creative with the price line added. Second AF6 of the month."
- },
- {
-  "file": "af7-testimonial-01.png",
-  "format_code": "AF7",
-  "kind": "reel",
-  "planned_date": "2026-09-25",
-  "title": "Real parent testimonial 01",
-  "caption": "One question, one parent, twenty seconds: what did the app do for you this month? [Her answer in her words.] Not scripted, we just pressed record. What would you say? AF7",
-  "first_comment": "Een vraag, een ouder, twintig seconden: wat heeft de app deze maand voor je gedaan. Niet geregisseerd, we drukten op opnemen.",
-  "feedback": "Reel, 20 seconds, phone, natural light, subtitles burned in. Ask one question and let her talk. No app screens in the video, her face and her words carry it. Cover = this frame with her real quote. Ask a question in the caption so people answer in the comments (KPI comments)."
- },
- {
-  "file": "af8-partner-badge.png",
-  "format_code": "AF8",
-  "kind": "image",
-  "planned_date": "2026-09-26",
-  "title": "Partner badge wave (badge design pending)",
-  "caption": "Proud to be in the Amsterdam Families app. [Partner posts this; we reshare to stories the same day and thank them by DM.] AF8",
-  "first_comment": "Trots om in de Amsterdam Families app te staan.",
-  "feedback": "Not a post you make, a frame partners post. The badge design is pending (must be something a venue is proud to post, not a 'find us' label). This placeholder shows the layout: their photo, the badge, their category. Send with the partner wave mail from the Campaigns tab. You reshare every one."
- },
- {
-  "file": "af5-birthday-no-panic.png",
-  "format_code": "AF5",
-  "kind": "image",
-  "planned_date": "2026-09-30",
-  "title": "Birthday party without the panic (theme post)",
-  "caption": "Birthday party without the panic. 225 entries in the Birthday Directory: 59 entertainers, 166 party venues, filter by age, stadsdeel and budget. Three combos that always work: the pancake boat, the climbing hall plus pizza, the magician at home. Save it for the next 'mama, my party'. AF5",
-  "first_comment": "Kinderfeestje zonder paniek. 225 adressen in de Birthday Directory: 59 entertainers, 166 feestlocaties, filter op leeftijd, stadsdeel en budget.",
-  "feedback": "Multi-image, 4 images: cover, three combos with a photo each (venue photos with permission or your own). Tag the venues, invite one as collaborator. Good candidate for the giveaway later: one venue gifts a party slot."
- },
- {
-  "file": "ad1-family-quiz.jpg",
-  "format_code": "AD1",
-  "kind": "image",
-  "planned_date": "2026-09-21",
-  "title": "Ad: Which Amsterdam family are you?",
-  "caption": "Every Amsterdam family has a type. Ours is Rainy Day Rebels. What is yours? Take the 60 second test, get 20 weekend plans that fit your actual family. Free quiz, the full result lives in the app, Insider 0.99 a week.",
-  "first_comment": "Elk Amsterdams gezin heeft een type. Wij zijn Rainy Day Rebels. Welk gezin zijn jullie? Doe de test van 60 seconden.",
-  "feedback": "Story ad 1080x1920 from the campaign visuals. Points to amsterdamfamilies.com/quiz, never to the store. Four creatives per angle: this one, a phone shot of a family biking in the rain, the result card, a founder face version. Review every 7 days."
- },
- {
-  "file": "ad2-food-map.jpg",
-  "format_code": "AD2",
-  "kind": "image",
-  "planned_date": "2026-10-19",
-  "title": "Ad: Our Family Food Map",
-  "caption": "Where do we all actually enjoy lunch? Not just the kids. Not just you. All of us. Six questions, fifteen places where nobody ends up under the table. Written by parents, not by the restaurant.",
-  "first_comment": "Waar lunchen we nou echt allemaal lekker? Zes vragen, vijftien plekken waar niemand onder de tafel belandt.",
-  "feedback": "Story ad from the campaign visuals. Second quiz, week 6 to 8. Reward: 15 matching spots on the map with parent notes, refreshed each season for members."
- },
- {
-  "file": "ad3-battery-check.jpg",
-  "format_code": "AD3",
-  "kind": "image",
-  "planned_date": "2026-10-26",
-  "title": "Ad: Parent Battery Check",
-  "caption": "Your weekend brain is at 12 percent. Plug in. How many tabs are open in your head right now? Seven questions, one battery percentage, one recharge plan.",
-  "first_comment": "Je weekendbrein zit op 12 procent. Hoeveel tabbladen staan er open in je hoofd? Zeven vragen, een percentage, een oplaadplan.",
-  "feedback": "Story ad from the campaign visuals. The funny one. Result card built to be posted: my battery is at 23 percent, what is yours. Can replace AD2 as the second quiz if the family type wins fast."
- },
- {
-  "file": "ad4-fridge-rescue.jpg",
-  "format_code": "AD4",
-  "kind": "image",
-  "planned_date": "2026-09-23",
-  "title": "Ad: Fridge Rescue",
-  "caption": "Show me your fridge and I will tell you what your kids eat tonight. Half a cucumber, three eggs, a yoghurt. Snap it. Dinner in 20 minutes. Fridge Rescue is part of Dinner Sorted in the app, 0.99 a week.",
-  "first_comment": "Laat je koelkast zien en ik zeg wat je kinderen vanavond eten. Een foto, eten in 20 minuten.",
-  "feedback": "Story ad from the campaign visuals. Not a quiz, a 10 to 15 second reel: the sad fridge at 17:45, snap, three recipes, kid eating. Film four fridges (Sunday evening, back from holiday, grandparents were here, delivery did not come). The organic twin is the AF6 Dinner Sorted concept."
- },
- {
-  "file": "ad5-birthday-panic.jpg",
-  "format_code": "AD5",
-  "kind": "image",
-  "planned_date": "2026-09-28",
-  "title": "Ad: Birthday Panic",
-  "caption": "Oh no. Their birthday is in three weeks. Twelve kids, one afternoon, zero tears (yours). 225 ways to save a birthday, none of them paid to be on the list. From panic to plan before the school run ends.",
-  "first_comment": "O nee. Over drie weken is het feestje. Twaalf kinderen, een middag, nul tranen (die van jou). 225 manieren om een feestje te redden.",
-  "feedback": "Story ad from the campaign visuals plus search: kinderfeestje Amsterdam, birthday party venue Amsterdam kids, goochelaar kinderfeestje Amsterdam on Apple Ads and Google. Seasonal pushes January, May, September. KPI: cost per Insider from search vs Meta (bar 3x cheaper)."
- }
+const SWATCHES = ['#7BC47F','#E07070','#B597C1','#7FA9CC','#E0C890'];
+const TILES = [
+  {n:1, page:'family-food-spots', kind:'photo', label:'Family Food Spots', dTitle:'Spots', dImg:'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600', tint:'rgba(200,150,140,.75)'},
+  {n:2, page:'schools-directory', kind:'photo', label:'Schools', dTitle:'Schools', dImg:'https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=600', tint:'rgba(145,165,185,.78)'},
+  {n:3, page:'after-school-activities', kind:'photo', label:'After School', dTitle:'After School', dImg:'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=600', tint:'rgba(175,155,190,.78)'},
+  {n:4, page:'birthdays', kind:'photo', label:'Birthdays', dTitle:'Birthdays', dImg:'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=600', tint:'rgba(190,150,165,.75)'},
+  {n:5, page:'babysitters', kind:'tool', label:'Babysitter', dTitle:'Babysitter', dPill:'Help Finder', dImg:'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300', tint:'rgba(175,155,190,.78)'},
+  {n:6, page:'find-the-baby', kind:'tool', label:'Babydoku', dTitle:'Babydoku', dPill:'New logic game', dImg:'https://images.unsplash.com/photo-1519689680058-324335c77eba?w=300', tint:'rgba(175,155,190,.78)'},
+  {n:7, page:'playdates', kind:'tool', label:'Playdates', dTitle:'Playdates', dPill:'Connects Kids', dImg:'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=300', tint:'rgba(190,175,145,.78)'},
+  {n:8, page:'memory-game', kind:'tool', label:'Memory', dTitle:'Memory', dPill:'Brain Game', dImg:'https://images.unsplash.com/photo-1587654780291-39c9404d746b?w=300', tint:'rgba(145,165,185,.78)'},
+  {n:9, page:'chores-tracker', kind:'tool', label:'Chores', dTitle:'Chores', dPill:'Fun Tracker', dImg:'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=300', tint:'rgba(190,150,165,.75)'},
+  {n:10, page:'groceries-list', kind:'tool', label:'Groceries', dTitle:'Groceries?', dPill:'Your Savior', dImg:'https://images.unsplash.com/photo-1542838132-92c53300491e?w=300', tint:'rgba(145,165,148,.78)'},
+  {n:11, page:'foodieyai', kind:'wide', label:'Ask the Fridge (banner)', dTitle:'Ask the Fridge', dPill:'+ Little Chef', dImg:'https://res.cloudinary.com/dhgfmuuo9/image/upload/f_auto,q_auto,w_800,h_300,c_fill,g_auto/v1789680986/enmzmbtc5ep6ueli51fn.png', tint:'rgba(200,150,140,.75)'},
+  {n:12, page:'maps-hub', kind:'map', label:'All Maps', dTitle:'All Maps', dImg:'https://images.unsplash.com/photo-1569336415962-a4bd9f69cd83?w=400', tint:'rgba(175,155,190,.78)'},
+  {n:13, page:'playgrounds-beaches', kind:'map', label:'Playgrounds', dTitle:'Playgrounds', dImg:'https://images.unsplash.com/photo-1566140967404-b8b3932483f5?w=400', tint:'rgba(145,165,148,.78)'}
 ];
-$('as-ideas').onclick = async () => {
-  if (city !== 'amsterdam') { alert('The launch ideas are written for Amsterdam (AF codes). Switch to Amsterdam to load them.'); return; }
-  const base = new URL('ideas/', location.href).href;
-  const have = new Set(assets.map(a => a.url));
-  const rows = LAUNCH_IDEAS.filter(i => !have.has(base + i.file));
-  if (!rows.length) { $('as-msg').textContent = 'All launch ideas are already in the grid.'; return; }
-  if (!confirm(`Add ${rows.length} launch concepts to the grid? Each has a caption draft, a first comment in Dutch and filming notes in the feedback field. You edit or delete them like any concept.`)) return;
-  let sort = assets.length ? Math.max(...assets.map(a => a.sort || 0)) + 1 : 0;
-  const ins = rows.map(i => ({ city, kind: i.kind, url: base + i.file, thumb_url: null, status: 'concept', format_code: i.format_code, planned_date: i.planned_date,
-    caption: i.caption + '\n\nFirst comment (NL): ' + i.first_comment, feedback: i.title + '. ' + i.feedback, sort: sort++ }));
-  const { error } = await sb.from('marketing_assets').insert(ins);
-  if (error) { $('as-msg').textContent = 'Could not add: ' + error.message; return; }
-  $('as-msg').textContent = `${ins.length} launch concepts added.`; loadAssets();
-};
+/* note: the Food Map card shares the family-food-spots page, so nr 1 styles both. */
 
-/* ---------- chat ---------- */
-let chat = [], pending = [];   // pending = [{url, asset_id}]
-async function loadChat() {
-  const { data, error } = await sb.from('marketing_chat').select('*').eq('city', city).order('created_at', { ascending: false }).limit(60);
-  if (error) { $('ch-log').innerHTML = '<p class="msg">Run marketing-schema-v2.sql first.</p>'; return; }
-  chat = (data || []).reverse(); renderChat();
+let draft = { tiles:{}, badges:{}, slides:{interval:6, slides:[]} };
+let session = null;
+
+/* ---------------- login ---------------- */
+async function sendCode(){
+  const email = document.getElementById('email').value.trim().toLowerCase();
+  if (!email) return;
+  const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
+  document.getElementById('loginmsg').textContent = error ? error.message : 'Code sent, check your mail.';
+  if (!error) { document.getElementById('step1').classList.add('hidden'); document.getElementById('step2').classList.remove('hidden'); }
 }
-function renderChat() {
-  if (!chat.length) { $('ch-log').innerHTML = '<p class="msg">Nothing yet. Attach an image or a reel and ask what to do with it, or ask a question about the numbers.</p>'; return; }
-  $('ch-log').innerHTML = chat.map(m => `<div class="bub ${m.role}">${m.images && m.images.length ? `<div class="imgs">${m.images.map(u => `<a href="${esc(u)}" target="_blank" rel="noopener"><img src="${esc(u)}" alt=""></a>`).join('')}</div>` : ''}${esc(m.content)}<span class="when">${fmtWhen(m.created_at)}${m.model ? ' · ' + esc(m.model) : ''}</span></div>`).join('');
-  $('ch-log').scrollTop = $('ch-log').scrollHeight;
+async function verifyCode(){
+  const email = document.getElementById('email').value.trim().toLowerCase();
+  const token = document.getElementById('code').value.trim();
+  let r = await sb.auth.verifyOtp({ email, token, type:'email' });
+  if (r.error) r = await sb.auth.verifyOtp({ email, token, type:'magiclink' });
+  if (r.error) { document.getElementById('loginmsg').textContent = r.error.message; return; }
+  boot();
 }
-function renderAtt() {
-  $('ch-att').innerHTML = pending.map((p, i) => `<div><img src="${esc(p.url)}" alt=""><button data-i="${i}" title="remove">x</button></div>`).join('');
-  $('ch-att').querySelectorAll('button').forEach(b => b.onclick = () => { pending.splice(parseInt(b.dataset.i, 10), 1); renderAtt(); });
+async function logout(){ await sb.auth.signOut(); location.reload(); }
+
+async function boot(){
+  const { data } = await sb.auth.getSession();
+  if (!data || !data.session) return;
+  session = data.session;
+  document.getElementById('login').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  await loadAll();
+  pdLoadSources(); pdList();
 }
-$('ch-clip').onclick = () => $('ch-file').click();
-$('ch-file').onchange = async () => { await attachFiles([...$('ch-file').files]); $('ch-file').value = ''; };
-async function attachFiles(files) {
-  for (const f of files) {
-    try {
-      if (f.type.startsWith('video/')) {
-        $('ch-send').textContent = 'Frames...';
-        const fr = await videoFrames(f, 3);
-        for (const x of fr) pending.push({ url: await uploadFile('chat', x) });
-      } else if (f.type.startsWith('image/')) pending.push({ url: await uploadFile('chat', f) });
-    } catch (e) { alert('Attach failed: ' + e.message); }
-  }
-  $('ch-send').textContent = 'Send'; renderAtt();
+
+/* ---------------- load ---------------- */
+async function cbGet(key){
+  const r = await fetch(CB_URL + '/rest/v1/app_config?config_key=eq.' + key + '&select=config_value', { headers:{ apikey: CB_ANON } });
+  if (!r.ok) return null;
+  const d = await r.json();
+  if (!d[0]) return null;
+  return typeof d[0].config_value === 'string' ? JSON.parse(d[0].config_value) : d[0].config_value;
 }
-const chatEl = document.querySelector('.chat');
-chatEl.ondragover = e => { e.preventDefault(); };
-chatEl.ondrop = e => { e.preventDefault(); if (e.dataTransfer.files.length) attachFiles([...e.dataTransfer.files]); };
-$('ch-text').onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('ch-send').click(); } };
-$('ch-send').onclick = async () => {
-  const text = $('ch-text').value.trim();
-  if (!text && !pending.length) return;
-  const images = pending.map(p => p.url), asset_id = (pending.find(p => p.asset_id) || {}).asset_id || null;
-  chat.push({ role: 'user', content: text, images, created_at: new Date().toISOString() }); renderChat();
-  $('ch-text').value = ''; pending = []; renderAtt();
-  $('ch-send').disabled = true; $('ch-send').textContent = 'Thinking...';
-  $('ch-log').insertAdjacentHTML('beforeend', '<div class="typing" id="ch-typing"><i></i><i></i><i></i> Claude is looking at this, 10 to 30 seconds</div>'); $('ch-log').scrollTop = $('ch-log').scrollHeight;
+async function loadAll(){
+  draft.tiles  = (await cbGet('ams_home_tiles'))  || {};
+  draft.badges = (await cbGet('ams_home_badges')) || {};
+  draft.slides = (await cbGet('ams_home_slides')) || { interval:6, slides:[] };
+  if (!Array.isArray(draft.slides.slides)) draft.slides.slides = [];
+  document.getElementById('slideInterval').value = draft.slides.interval != null ? draft.slides.interval : 6;
+  renderEditors(); renderPhone();
+  setMsg('');
+}
+
+/* ---------------- save ---------------- */
+function setMsg(t, err){ const m = document.getElementById('saveMsg'); m.textContent = t; m.className = 'msg' + (err ? ' err' : ''); }
+async function cmsSave(key, value){
+  const r = await fetch(FN_SAVE, { method:'POST', headers:{ 'Content-Type':'application/json', apikey: SUPABASE_ANON, Authorization:'Bearer ' + session.access_token }, body: JSON.stringify({ key, value }) });
+  const d = await r.json().catch(()=>({}));
+  if (!r.ok) throw new Error(d.error || ('save failed ' + r.status));
+}
+async function saveAll(){
+  const b = document.getElementById('saveBtn'); b.disabled = true; setMsg('Saving...');
   try {
-    const r = await callFn({ action: 'chat', city, message: text, images, asset_id });
-    if (r.error) throw new Error(r.error);
-    chat.push({ role: 'assistant', content: r.reply, model: r.model, created_at: new Date().toISOString() });
-  } catch (e) { chat.push({ role: 'assistant', content: 'That did not work: ' + e.message, created_at: new Date().toISOString() }); }
-  renderChat(); $('ch-send').disabled = false; $('ch-send').textContent = 'Send';
-};
-$('ch-clear').onclick = async () => {
-  if (!confirm('Clear the chat history for ' + CITIES[city] + '? Claude forgets the conversation so far.')) return;
-  await sb.from('marketing_chat').delete().eq('city', city); chat = []; renderChat();
-};
-
-/* ---------- accounts ---------- */
-let accounts = [], acFilter = 'all', acList = '', acEditing = null; const acSel = new Set();
-const ST = ['to contact', 'contacted', 'agreed', 'posted'];
-const stClass = s => 's-' + (s === 'to contact' ? 'to' : s);
-async function loadAccounts() {
-  const { data, error } = await sb.from('marketing_accounts').select('*').eq('city', city).order('name');
-  if (error) { $('accounts').innerHTML = `<tr><td class="msg">Run marketing-schema-v2.sql first (${esc(error.message)})</td></tr>`; return; }
-  accounts = (data || []).sort((a, b) => (ST.indexOf(a.status) - ST.indexOf(b.status)) || ((b.followers || 0) - (a.followers || 0)) || String(a.name || a.handle || '').localeCompare(String(b.name || b.handle || '')));
-  renderAccounts();
-}
-function renderAccounts() {
-  const counts = { all: accounts.length }; ST.forEach(s => counts[s] = accounts.filter(a => a.status === s).length);
-  $('ac-filters').innerHTML = ['all', ...ST].map(s => `<button data-s="${s}" class="${acFilter === s ? 'on' : ''}">${s} <span class="muted">${counts[s]}</span></button>`).join('') + `<span class="msg" style="margin-left:auto">${accounts.filter(a => a.last_checked).length ? 'followers checked ' + fmtDate(accounts.map(a => a.last_checked).filter(Boolean).sort().pop()) : 'followers not checked yet'}</span>`;
-  $('ac-filters').querySelectorAll('button').forEach(b => b.onclick = () => { acFilter = b.dataset.s; renderAccounts(); });
-  const allLists = [...new Set(accounts.flatMap(a => a.lists || []))].sort();
-  $('ac-lists').innerHTML = allLists.length ? '<span class="msg">lists:</span>' + allLists.map(l => `<button data-l="${esc(l)}" class="${acList === l ? 'on' : ''}">${esc(l)} <span class="muted">${accounts.filter(a => (a.lists || []).includes(l)).length}</span></button>`).join('') : '<span class="msg">No lists yet. Tick accounts, type a list name, press Add to list.</span>';
-  $('ac-lists').querySelectorAll('button').forEach(b => b.onclick = () => { acList = acList === b.dataset.l ? '' : b.dataset.l; renderAccounts(); });
-  const rows = accounts.filter(a => (acFilter === 'all' || a.status === acFilter) && (!acList || (a.lists || []).includes(acList)));
-  let html = `<tr><th><input type="checkbox" id="ac-all" ${rows.length && rows.every(a => acSel.has(a.id)) ? 'checked' : ''}></th><th>Account</th><th>Type</th><th>Status</th><th>Followers</th><th>Contact</th><th>Lists</th><th>Notes</th></tr>`;
-  if (!rows.length) html += '<tr><td colspan="8" class="muted">No accounts here yet. Press Add account.</td></tr>';
-  for (const a of rows) {
-    const d = (a.followers != null && a.followers_prev != null) ? a.followers - a.followers_prev : null;
-    const contact = [a.web ? `<a href="${esc(a.web)}" target="_blank" rel="noopener" class="linkish">web</a>` : '', a.email ? `<a href="mailto:${esc(a.email)}" class="linkish">${esc(a.email)}</a>` : '', a.phone ? esc(a.phone) : ''].filter(Boolean).join(' &middot; ');
-    html += `<tr class="clickable" data-id="${a.id}"><td><input type="checkbox" class="ac-chk" data-id="${a.id}" ${acSel.has(a.id) ? 'checked' : ''}></td><td><b>${esc(a.name || a.handle)}</b>${a.handle ? `<br><a href="https://instagram.com/${esc(a.handle.replace(/^@/, ''))}" target="_blank" rel="noopener" class="linkish">@${esc(a.handle.replace(/^@/, ''))}</a>` : ''}</td><td>${esc(a.type)}</td><td><span class="status ${stClass(a.status)}">${esc(a.status)}</span></td><td>${a.followers != null ? '<b>' + fmtN(a.followers) + '</b>' : '<span class="muted">–</span>'}${d != null && d !== 0 ? `<span class="delta ${d > 0 ? 'up' : 'down'}" style="background:none;padding:0">${d > 0 ? '+' : ''}${d}</span>` : ''}</td><td>${contact || '<span class="muted">–</span>'}</td><td>${(a.lists || []).map(l => `<span class="status s-to">${esc(l)}</span>`).join(' ')}</td><td class="muted">${esc(a.notes || '')}</td></tr>`;
-  }
-  $('accounts').innerHTML = html;
-  $('accounts').querySelectorAll('tr.clickable').forEach(tr => tr.onclick = e => { if (e.target.closest('a') || e.target.closest('input')) return; openAccount(tr.dataset.id); });
-  $('accounts').querySelectorAll('.ac-chk').forEach(c => c.onchange = () => { if (c.checked) acSel.add(c.dataset.id); else acSel.delete(c.dataset.id); updateSelBar(); });
-  const all = $('ac-all'); if (all) all.onchange = () => { rows.forEach(a => all.checked ? acSel.add(a.id) : acSel.delete(a.id)); renderAccounts(); };
-  updateSelBar();
-}
-function updateSelBar() { $('ac-selcount').textContent = acSel.size ? acSel.size + ' selected' : 'none selected, export takes the visible rows'; }
-function csvCell(v) { v = v == null ? '' : String(v); return /[",;\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
-$('ac-export').onclick = () => {
-  const rows = acSel.size ? accounts.filter(a => acSel.has(a.id)) : accounts.filter(a => (acFilter === 'all' || a.status === acFilter) && (!acList || (a.lists || []).includes(acList)));
-  if (!rows.length) { alert('Nothing to export.'); return; }
-  const cols = ['name', 'handle', 'type', 'status', 'web', 'email', 'phone', 'followers', 'followers_prev', 'last_checked', 'lists', 'notes'];
-  const csv = [cols.join(',')].concat(rows.map(a => cols.map(c => csvCell(c === 'lists' ? (a.lists || []).join('|') : a[c])).join(','))).join('\n');
-  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
-  const u = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = u; link.download = `accounts-${city}-${acList || acFilter}-${iso(new Date())}.csv`; document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(u);
-};
-$('ac-addlist').onclick = async () => {
-  const name = $('ac-listname').value.trim(); if (!name) { $('ac-listname').focus(); return; }
-  if (!acSel.size) { alert('Tick the accounts first.'); return; }
-  for (const id of acSel) { const a = accounts.find(x => x.id === id); if (!a) continue; const lists = [...new Set([...(a.lists || []), name])]; const { error } = await sb.from('marketing_accounts').update({ lists, updated_at: new Date().toISOString() }).eq('id', id); if (error) { alert(error.message); return; } a.lists = lists; }
-  $('ac-listname').value = ''; renderAccounts();
-};
-$('ac-removelist').onclick = async () => {
-  const name = acList || $('ac-listname').value.trim(); if (!name) { alert('Pick a list (click it) or type its name.'); return; }
-  if (!acSel.size) { alert('Tick the accounts first.'); return; }
-  for (const id of acSel) { const a = accounts.find(x => x.id === id); if (!a) continue; const lists = (a.lists || []).filter(l => l !== name); const { error } = await sb.from('marketing_accounts').update({ lists, updated_at: new Date().toISOString() }).eq('id', id); if (error) { alert(error.message); return; } a.lists = lists; }
-  renderAccounts();
-};
-const AF = { name: 'ac-name', handle: 'ac-handle', type: 'ac-type', status: 'ac-status', web: 'ac-web', email: 'ac-email', phone: 'ac-phone', notes: 'ac-notes', lists: 'ac-listsfield' };
-function openAccount(id) {
-  acEditing = id; const a = id ? accounts.find(x => x.id === id) : null;
-  Object.entries(AF).forEach(([k, el]) => $(el).value = a ? (k === 'lists' ? (a.lists || []).join(', ') : (a[k] || (k === 'type' ? 'influencer' : k === 'status' ? 'to contact' : ''))) : (k === 'type' ? 'influencer' : k === 'status' ? 'to contact' : ''));
-  $('ac-delete').classList.toggle('hidden', !a); $('ac-msg').textContent = a && a.last_checked ? 'followers checked ' + fmtWhen(a.last_checked) : '';
-  $('acform').classList.remove('hidden'); $('ac-name').focus();
-}
-$('ac-new').onclick = () => openAccount(null);
-$('ac-cancel').onclick = () => { $('acform').classList.add('hidden'); acEditing = null; };
-$('ac-save').onclick = async () => {
-  const row = { city, updated_at: new Date().toISOString() };
-  Object.entries(AF).forEach(([k, el]) => row[k] = k === 'lists' ? $(el).value.split(',').map(x => x.trim()).filter(Boolean) : ($(el).value.trim() || null));
-  if (row.handle) row.handle = row.handle.replace(/^@/, '').replace(/^https?:\/\/(www\.)?instagram\.com\//i, '').replace(/[\/?].*$/, '');
-  if (!row.name && !row.handle) { $('ac-msg').textContent = 'A name or a handle, at least.'; return; }
-  const wasNew = !acEditing, handleChanged = acEditing ? (accounts.find(x => x.id === acEditing) || {}).handle !== row.handle : true;
-  const q = acEditing ? sb.from('marketing_accounts').update(row).eq('id', acEditing).select().single() : sb.from('marketing_accounts').insert(row).select().single();
-  const { data, error } = await q;
-  if (error) { $('ac-msg').textContent = 'Save failed: ' + error.message; return; }
-  $('acform').classList.add('hidden'); acEditing = null; await loadAccounts();
-  if (data && row.handle && (wasNew || handleChanged)) {   // fetch followers for this one handle right away
-    $('ac-msg').textContent = 'Checking followers of @' + row.handle + '...';
-    try { const r = await callFn({ action: 'followers', city, ids: [data.id] }); if (r.error) throw new Error(r.error); if (!r.updated) throw new Error(r.error_detail || 'profile not found'); await loadAccounts(); }
-    catch (e) { alert('Followers for @' + row.handle + ' not fetched: ' + e.message); }
-  }
-};
-$('ac-delete').onclick = async () => {
-  if (!acEditing || !confirm('Delete this account?')) return;
-  await sb.from('marketing_accounts').delete().eq('id', acEditing);
-  $('acform').classList.add('hidden'); acEditing = null; loadAccounts();
-};
-$('ac-refresh').onclick = async () => {
-  const n = accounts.filter(a => a.handle).length;
-  if (!n) { alert('No handles to check yet.'); return; }
-  $('ac-refresh').disabled = true; $('ac-refresh').textContent = `Checking ${n}...`;
-  try {
-    const r = await callFn({ action: 'followers', city });
-    if (r.error) throw new Error(r.error);
-    await loadAccounts();
-    alert(`${r.updated} updated` + (r.failed && r.failed.length ? `, not found: ${r.failed.join(', ')}` : '') + (r.error_detail ? `. Apify said: ${r.error_detail}` : '') + '.');
-  } catch (e) { alert('Follower check failed: ' + e.message); }
-  $('ac-refresh').disabled = false; $('ac-refresh').textContent = 'Refresh followers';
-};
-
-/* accounts: bulk CSV import */
-$('ac-import').onclick = () => { $('ac-drop').classList.toggle('hidden'); };
-const acDrop = $('ac-drop');
-acDrop.onclick = e => { if (e.target === acDrop || e.target.tagName === 'B') $('ac-csv').click(); };
-acDrop.ondragover = e => { e.preventDefault(); acDrop.classList.add('hover'); };
-acDrop.ondragleave = () => acDrop.classList.remove('hover');
-acDrop.ondrop = e => { e.preventDefault(); acDrop.classList.remove('hover'); if (e.dataTransfer.files[0]) importAccounts(e.dataTransfer.files[0]); };
-$('ac-csv').onchange = () => { if ($('ac-csv').files[0]) importAccounts($('ac-csv').files[0]); $('ac-csv').value = ''; };
-const cleanHandle = h => String(h || '').trim().replace(/^@/, '').replace(/^https?:\/\/(www\.)?instagram\.com\//i, '').replace(/[\/?].*$/, '').toLowerCase() || null;
-async function importAccounts(file) {
-  const rows = parseCsv(await file.text());
-  if (rows.length < 2) { $('ac-imsg').textContent = 'Could not read that file.'; return; }
-  const headers = rows[0].map(h => h.trim().toLowerCase());
-  const col = {
-    name: findCol(headers, [/^name$/, /^naam$/, /^nombre$/, /business/, /account/, /^title$/]),
-    handle: findCol(headers, [/^handle$/, /instagram/, /^ig$/, /^username$/, /^user$/]),
-    web: findCol(headers, [/^web/, /^url$/, /site/]),
-    email: findCol(headers, [/mail/]),
-    phone: findCol(headers, [/phone/, /tel/, /whatsapp/, /movil/, /mobile/]),
-    type: findCol(headers, [/^type$/, /^category$/, /^categor/, /^soort$/]),
-    status: findCol(headers, [/^status$/, /^estado$/]),
-    notes: findCol(headers, [/note/, /comment/, /opmerking/, /descr/]),
-    followers: findCol(headers, [/follower/, /volgers/, /seguidores/]),
-  };
-  if (col.name < 0 && col.handle < 0) { $('ac-imsg').textContent = 'No name or handle column found. Headers seen: ' + headers.slice(0, 12).join(', '); return; }
-  const TYPES = ['influencer', 'famous parent', 'partner', 'press', 'other'];
-  const get = (r, k) => col[k] >= 0 ? String(r[col[k]] || '').trim() : '';
-  const byHandle = {}; accounts.forEach(a => { if (a.handle) byHandle[a.handle.toLowerCase()] = a; });
-  const inserts = [], updates = []; let skipped = 0; const seen = new Set();
-  for (const r of rows.slice(1)) {
-    const name = get(r, 'name') || null, handle = cleanHandle(get(r, 'handle'));
-    if (!name && !handle) { skipped++; continue; }
-    if (handle && seen.has(handle)) { skipped++; continue; } if (handle) seen.add(handle);
-    const t = get(r, 'type').toLowerCase(), st = get(r, 'status').toLowerCase();
-    const row = { city, name, handle, web: get(r, 'web') || null, email: get(r, 'email').toLowerCase() || null, phone: get(r, 'phone') || null, notes: get(r, 'notes') || null,
-      type: TYPES.find(x => t.includes(x.split(' ')[0])) || (/(mom|mum|dad|parent|ouder|madre|padre)/.test(t) ? 'famous parent' : /(venue|business|shop|club|school|restaurant|partner|bedrijf|empresa)/.test(t) ? 'partner' : /(press|media|magazine|blog)/.test(t) ? 'press' : 'influencer'),
-      status: ST.find(x => st.startsWith(x.split(' ')[0])) || 'to contact', updated_at: new Date().toISOString() };
-    const f = get(r, 'followers').replace(/[^\d]/g, ''); if (f) row.followers = parseInt(f, 10);
-    const ex = handle ? byHandle[handle] : null;
-    if (ex) {
-      const patch = { id: ex.id }; let changed = false;
-      for (const k of ['name', 'web', 'email', 'phone', 'notes', 'followers']) if (row[k] != null && row[k] !== ex[k]) { patch[k] = row[k]; changed = true; }
-      if (col.type >= 0 && t && row.type !== ex.type) { patch.type = row.type; changed = true; }
-      if (col.status >= 0 && st && row.status !== ex.status) { patch.status = row.status; changed = true; }
-      if (changed) updates.push(patch);
-    } else inserts.push(row);
-  }
-  $('ac-imsg').textContent = `Importing ${inserts.length} new, ${updates.length} updates...`;
-  let err = null;
-  if (inserts.length) { const r = await sb.from('marketing_accounts').insert(inserts); err = r.error; }
-  for (const u of updates) { if (err) break; const { id, ...patch } = u; patch.updated_at = new Date().toISOString(); const r = await sb.from('marketing_accounts').update(patch).eq('id', id); err = r.error; }
-  $('ac-imsg').textContent = err ? 'Import failed: ' + err.message : `Done: ${inserts.length} added, ${updates.length} updated${skipped ? ', ' + skipped + ' rows skipped (empty or duplicate handle)' : ''}.`;
-  loadAccounts();
+    await cmsSave('ams_home_tiles',  draft.tiles);
+    await cmsSave('ams_home_badges', draft.badges);
+    await cmsSave('ams_home_slides', draft.slides);
+    setMsg('Saved! Every phone picks this up on its next Home open.');
+  } catch(e){ setMsg(e.message, true); }
+  b.disabled = false;
 }
 
-/* ---------- formats page ---------- */
-let fmeta = [], fxCode = null;
-async function loadFormatsPage() {
-  const { data, error } = await sb.from('marketing_formats').select('*').order('sort');
-  fmeta = (!error && data && data.length) ? data : FORMATS.map(f => ({ code: 'F' + f.n, sort: f.n, name: f.name, sub: f.sub, lane: f.lane, surface: f.surface, cadence: f.cadence, kpi: f.kpi, metric: f.metric, explanation: '' }));
-  renderFormatsPage(error ? 'Run marketing-schema-v2.sql to edit texts and store examples.' : '');
+/* ---------------- editors ---------------- */
+function tileVal(page, field){ return (draft.tiles[page] && draft.tiles[page][field]) || ''; }
+function setTile(page, field, v){
+  if (!draft.tiles[page]) draft.tiles[page] = {};
+  if (v === '') delete draft.tiles[page][field]; else draft.tiles[page][field] = v;
+  if (!Object.keys(draft.tiles[page]).length) delete draft.tiles[page];
+  renderPhone();
 }
-function renderFormatsPage(note) {
-  $('fcards').innerHTML = fmeta.map(f => `<div class="card" data-code="${f.code}">
-      <div class="ex" data-code="${f.code}" title="upload an example">${f.example_url ? `<img src="${esc(f.example_url)}" alt="">` : ''}<span>${f.example_url ? 'change example' : 'add a real example'}</span></div>
-      <div class="bd">
-        <h3><span class="muted">${prefix()}${f.code}</span> ${esc(f.name)} <span class="lane ${f.lane}">${esc(f.lane)}</span></h3>
-        <div class="meta">${esc(f.surface)} &middot; ${esc(f.cadence)} &middot; KPI <b>${esc(f.kpi)}</b>${f.sub ? ' &middot; ' + esc(f.sub) : ''}</div>
-        <p class="ftext">${esc(f.explanation || 'No explanation yet. Press Edit.')}</p>
-        ${f.example_note ? `<p class="muted" style="font-size:13px;margin-top:6px">${esc(f.example_note)}</p>` : ''}
-        <div class="edit"><span class="linkish fedit">Edit</span></div>
-      </div></div>`).join('') + (note ? `<p class="msg">${esc(note)}</p>` : '');
-  $('fcards').querySelectorAll('.ex').forEach(el => el.onclick = () => { fxCode = el.dataset.code; $('fx-file').click(); });
-  $('fcards').querySelectorAll('.fedit').forEach(el => el.onclick = () => editFormat(el.closest('.card')));
+function badgeOf(page){ return draft.badges[page] || null; }
+function setBadge(page, text_en, text_nl, color){
+  if (!text_en) delete draft.badges[page];
+  else draft.badges[page] = { text_en, text_nl: text_nl || text_en, color: color || SWATCHES[0] };
+  renderEditors(); renderPhone();
 }
-function editFormat(card) {
-  const f = fmeta.find(x => x.code === card.dataset.code);
-  card.querySelector('.bd').innerHTML = `<h3><span class="muted">${prefix()}${f.code}</span> ${esc(f.name)}</h3>
-    <label class="f" style="display:block;font-size:11.5px;font-weight:800;text-transform:uppercase;color:#8a7f97;margin-top:8px">Explanation</label><textarea class="fe-exp">${esc(f.explanation || '')}</textarea>
-    <label class="f" style="display:block;font-size:11.5px;font-weight:800;text-transform:uppercase;color:#8a7f97;margin-top:8px">Note under the example</label><textarea class="fe-note" style="min-height:44px">${esc(f.example_note || '')}</textarea>
-    <div class="edit"><button class="btn fe-save">Save</button><button class="btn ghost fe-cancel">Cancel</button></div>`;
-  card.querySelector('.fe-cancel').onclick = () => renderFormatsPage('');
-  card.querySelector('.fe-save').onclick = async () => {
-    const patch = { explanation: card.querySelector('.fe-exp').value.trim() || null, example_note: card.querySelector('.fe-note').value.trim() || null, updated_at: new Date().toISOString() };
-    const { error } = await sb.from('marketing_formats').update(patch).eq('code', f.code);
-    if (error) { alert('Save failed: ' + error.message); return; }
-    Object.assign(f, patch); renderFormatsPage('');
-  };
-}
-$('fx-file').onchange = async () => {
-  const file = $('fx-file').files[0]; $('fx-file').value = '';
-  if (!file || !fxCode) return;
-  try {
-    const url = await uploadFile('formats', file, fxCode);
-    const { error } = await sb.from('marketing_formats').update({ example_url: url, updated_at: new Date().toISOString() }).eq('code', fxCode);
-    if (error) throw new Error(error.message);
-    const f = fmeta.find(x => x.code === fxCode); if (f) f.example_url = url; renderFormatsPage('');
-  } catch (e) { alert('Upload failed: ' + e.message); }
-};
 
-/* ---------- campaigns ---------- */
-let camps = [], campStatus = {};
-async function loadCampaigns() {
-  const [c, s] = await Promise.all([
-    sb.from('marketing_campaigns').select('*').order('sort'),
-    sb.from('marketing_campaign_status').select('*').eq('city', city),
-  ]);
-  if (c.error) { $('ccards').innerHTML = `<p class="msg">Run marketing-schema-v2.sql first (${esc(c.error.message)})</p>`; return; }
-  camps = c.data || []; campStatus = {}; (s.data || []).forEach(r => campStatus[r.campaign_id] = r);
-  renderCampaigns();
-}
-function renderCampaigns() {
-  const order = { running: 0, planned: 1, idea: 2, done: 3 };
-  const GROUPS = [['paid', 'Paid angles', 'every ad to the web quiz, never to the store'], ['organic', 'Organic growth', 'Instagram, around the 8 formats'], ['retention', 'Supply and retention', 'what makes members stay']];
-  const card = c => { const st = campStatus[c.id] || {}; const s = st.status || 'idea'; return `<div class="camp ${s} ${c.kind || 'organic'}" data-id="${c.id}">
-      <h3>${esc(c.name)}<select class="cs">${['idea', 'planned', 'running', 'done'].map(o => `<option ${o === s ? 'selected' : ''}>${o}</option>`).join('')}</select></h3>
-      <p>${esc(c.what)}</p>
-      <ol>${String(c.steps || '').split('\n').filter(Boolean).map(x => `<li>${esc(x)}</li>`).join('')}</ol>
-      <div class="kv"><b>Involve</b><span>${esc(c.involve)}</span><b>KPI</b><span>${esc(c.kpi)}</span><b>When</b><span>${esc(c.timing)}</span></div>
-      <input type="text" class="cn" placeholder="notes for ${esc(CITIES[city])}: who, when, result" value="${esc(st.notes || '')}">
-    </div>`; };
-  $('ccards').innerHTML = GROUPS.map(([g, title, sub]) => {
-    const list = camps.filter(c => (c.kind || 'organic') === g).sort((a, b) => (order[(campStatus[a.id] || {}).status || 'idea'] - order[(campStatus[b.id] || {}).status || 'idea']) || (a.sort - b.sort));
-    return list.length ? `<div class="cgroup">${title}<small>${sub}</small></div><div class="cards">${list.map(card).join('')}</div>` : '';
+function renderEditors(){
+  const host = document.getElementById('tilesEd');
+  host.innerHTML = TILES.map(t => {
+    const b = badgeOf(t.page);
+    const img = tileVal(t.page,'img') || t.dImg;
+    const badgeBtns = ['','New','Hot'].map(x => {
+      const on = (!b && x==='') || (b && b.text_en === x);
+      return '<button class="bo' + (on?' on':'') + '" onclick="pickBadge(\'' + t.page + '\',\'' + x + '\')">' + (x===''?'none':x) + '</button>';
+    }).join('') + '<button class="bo' + (b && ['New','Hot'].indexOf(b.text_en)===-1 ? ' on':'') + '" onclick="pickBadge(\'' + t.page + '\',\'custom\')">custom</button>';
+    const sw = SWATCHES.map(c => '<div class="sw' + (b && b.color===c?' on':'') + '" style="background:' + c + '" onclick="pickBadgeColor(\'' + t.page + '\',\'' + c + '\')"></div>').join('');
+    const pillRow = (t.kind==='tool'||t.kind==='wide') ?
+      '<div class="fld"><label>Pill EN</label><input value="' + esc(tileVal(t.page,'pill_en')) + '" placeholder="' + esc(t.dPill||'') + '" oninput="setTile(\'' + t.page + '\',\'pill_en\',this.value)"></div>' +
+      '<div class="fld"><label>Pill NL</label><input value="' + esc(tileVal(t.page,'pill_nl')) + '" placeholder="' + esc(t.dPill||'') + '" oninput="setTile(\'' + t.page + '\',\'pill_nl\',this.value)"></div>' : '';
+    const customRow = (b && ['New','Hot'].indexOf(b.text_en)===-1) ?
+      '<div class="row"><div class="fld"><label>Corner label EN</label><input value="' + esc(b.text_en) + '" oninput="setBadgeText(\'' + t.page + '\',\'en\',this.value)"></div>' +
+      '<div class="fld"><label>Corner label NL</label><input value="' + esc(b.text_nl||'') + '" oninput="setBadgeText(\'' + t.page + '\',\'nl\',this.value)"></div></div>' : '';
+    return '<div class="card"><h3><span class="nr">' + t.n + '</span>' + t.label + ' <small>' + t.kind + '</small></h3>' +
+      '<div class="row"><div class="fld" style="flex:3;"><label>Image link</label><input value="' + esc(tileVal(t.page,'img')) + '" placeholder="' + esc(t.dImg) + '" oninput="setTile(\'' + t.page + '\',\'img\',this.value)"></div>' +
+      '<div class="imgprev" style="background-image:url(\'' + esc(img) + '\')"></div></div>' +
+      '<div class="row"><div class="fld"><label>Title EN</label><input value="' + esc(tileVal(t.page,'title_en')) + '" placeholder="' + esc(t.dTitle) + '" oninput="setTile(\'' + t.page + '\',\'title_en\',this.value)"></div>' +
+      '<div class="fld"><label>Title NL</label><input value="' + esc(tileVal(t.page,'title_nl')) + '" placeholder="' + esc(t.dTitle) + '" oninput="setTile(\'' + t.page + '\',\'title_nl\',this.value)"></div>' + pillRow + '</div>' +
+      '<div class="row" style="align-items:center;"><div class="fld" style="flex:0 0 auto;"><label>Corner label</label><div class="badgeopts">' + badgeBtns + '</div></div>' +
+      '<div class="fld" style="flex:0 0 auto;"><label>Colour</label><div class="swatches">' + sw + '</div></div></div>' + customRow +
+      '</div>';
   }).join('');
-  $('ccards').querySelectorAll('.camp').forEach(el => {
-    const save = async () => {
-      const row = { city, campaign_id: el.dataset.id, status: el.querySelector('.cs').value, notes: el.querySelector('.cn').value.trim() || null, updated_at: new Date().toISOString() };
-      const { error } = await sb.from('marketing_campaign_status').upsert(row, { onConflict: 'city,campaign_id' });
-      if (error) alert('Save failed: ' + error.message); else { campStatus[row.campaign_id] = row; renderCampaigns(); }
-    };
-    el.querySelector('.cs').onchange = save;
-    el.querySelector('.cn').onblur = () => { const st = campStatus[el.dataset.id] || {}; if ((el.querySelector('.cn').value.trim() || null) !== (st.notes || null)) save(); };
-    el.querySelector('.cn').onkeydown = e => { if (e.key === 'Enter') e.target.blur(); };
-  });
+  renderSlidesEd();
 }
+function pickBadge(page, x){
+  if (x === '') { setBadge(page, ''); return; }
+  if (x === 'custom') { setBadge(page, 'Label', 'Label', (badgeOf(page)||{}).color); return; }
+  const nl = x === 'New' ? 'Nieuw' : x;
+  setBadge(page, x, nl, (badgeOf(page)||{}).color || (x==='Hot'?'#E07070':'#7BC47F'));
+}
+function pickBadgeColor(page, c){ const b = badgeOf(page); if (!b) return; b.color = c; renderEditors(); renderPhone(); }
+function setBadgeText(page, l, v){ const b = badgeOf(page); if (!b) return; if (l==='en') b.text_en = v; else b.text_nl = v; renderPhone(); }
+
+function renderSlidesEd(){
+  const host = document.getElementById('slidesEd');
+  host.innerHTML = draft.slides.slides.map((s, i) =>
+    '<div class="card"><h3><span class="nr">S' + (i+1) + '</span>Slide ' + (i+1) +
+    ' <small style="margin-left:auto;"><button class="bo" onclick="delSlide(' + i + ')">remove</button></small></h3>' +
+    '<div class="row"><div class="fld"><label>Eyebrow EN</label><input value="' + esc(s.eyebrow_en||'') + '" oninput="sset(' + i + ',\'eyebrow_en\',this.value)"></div>' +
+    '<div class="fld"><label>Eyebrow NL</label><input value="' + esc(s.eyebrow_nl||'') + '" oninput="sset(' + i + ',\'eyebrow_nl\',this.value)"></div></div>' +
+    '<div class="row"><div class="fld"><label>Title EN</label><input value="' + esc(s.title_en||'') + '" oninput="sset(' + i + ',\'title_en\',this.value)"></div>' +
+    '<div class="fld"><label>Title NL</label><input value="' + esc(s.title_nl||'') + '" oninput="sset(' + i + ',\'title_nl\',this.value)"></div></div>' +
+    '<div class="row"><div class="fld"><label>Line EN</label><input value="' + esc(s.line_en||'') + '" oninput="sset(' + i + ',\'line_en\',this.value)"></div>' +
+    '<div class="fld"><label>Line NL</label><input value="' + esc(s.line_nl||'') + '" oninput="sset(' + i + ',\'line_nl\',this.value)"></div></div>' +
+    '<div class="row"><div class="fld"><label>Button EN</label><input value="' + esc(s.btn_en||'') + '" oninput="sset(' + i + ',\'btn_en\',this.value)"></div>' +
+    '<div class="fld"><label>Button NL</label><input value="' + esc(s.btn_nl||'') + '" oninput="sset(' + i + ',\'btn_nl\',this.value)"></div>' +
+    '<div class="fld"><label>Opens page</label><input value="' + esc(s.href||'') + '" placeholder="foodieyai.html" oninput="sset(' + i + ',\'href\',this.value)"></div></div>' +
+    '<div class="row"><div class="fld" style="flex:2;"><label>Photo link (empty = colour only)</label><input value="' + esc(s.img||'') + '" oninput="sset(' + i + ',\'img\',this.value)"></div>' +
+    '<div class="fld"><label>Tint colour</label><input value="' + esc(s.overlay||'#C9584A') + '" oninput="sset(' + i + ',\'overlay\',this.value)"></div>' +
+    '<div class="fld"><label>Tint strength (0-1)</label><input value="' + (s.overlay_opacity!=null?s.overlay_opacity:0.78) + '" oninput="sset(' + i + ',\'overlay_opacity\',parseFloat(this.value)||0.78)"></div></div>' +
+    '<div class="row"><div class="fld"><label>Show from</label><input type="date" value="' + esc(s.start||'') + '" oninput="sset(' + i + ',\'start\',this.value)"></div>' +
+    '<div class="fld"><label>Until</label><input type="date" value="' + esc(s.end||'') + '" oninput="sset(' + i + ',\'end\',this.value)"></div></div>' +
+    '</div>').join('') || '<p class="muted">No campaign slides yet. The Dailies slide is always there; slides you add rotate after it.</p>';
+}
+function sset(i, f, v){ draft.slides.slides[i][f] = v; renderPhone(); }
+function addSlide(){ draft.slides.slides.push({ overlay:'#C9584A', overlay_opacity:0.78, eyebrow_en:'New', eyebrow_nl:'Nieuw', title_en:'', title_nl:'', line_en:'', line_nl:'', btn_en:'', btn_nl:'', href:'', start:'', end:'' }); renderEditors(); renderPhone(); }
+function delSlide(i){ draft.slides.slides.splice(i,1); renderEditors(); renderPhone(); }
+
+/* ---------------- preview ---------------- */
+function mix(hex, r2,g2,b2, t){ const h=(hex||'#C9584A').replace('#',''); const r=parseInt(h.substr(0,2),16),g=parseInt(h.substr(2,2),16),b=parseInt(h.substr(4,2),16);
+  return [Math.round(r*(1-t)+r2*t), Math.round(g*(1-t)+g2*t), Math.round(b*(1-t)+b2*t)]; }
+function pastelOverlay(hex, op){ op = op || 0.82;
+  const a=mix(hex,190,170,205,0.55), b=mix(hex,205,185,170,0.6), c=mix(hex,175,165,155,0.6);
+  return 'linear-gradient(135deg, rgba(' + a + ',' + Math.min(1,op+0.06) + ') 0%, rgba(' + b + ',' + op + ') 50%, rgba(' + c + ',' + Math.min(1,op+0.06) + ') 100%)'; }
+
+function pTile(t){
+  const img = tileVal(t.page,'img') || t.dImg;
+  const title = tileVal(t.page,'title_en') || t.dTitle;
+  const pill = (t.kind==='tool'||t.kind==='wide') ? (tileVal(t.page,'pill_en') || t.dPill || '') : '';
+  const b = badgeOf(t.page);
+  return '<div class="p-tile' + (t.kind==='wide'?' wide':'') + '" style="background-image:url(\'' + esc(img) + '\')">' +
+    '<div class="ov" style="background:' + t.tint + '"></div>' +
+    '<span class="nr">' + t.n + '</span>' +
+    (pill ? '<span class="pl">' + esc(pill) + '</span>' : '') +
+    '<span class="tt">' + esc(title) + '</span>' +
+    (b ? '<span class="bd" style="background:' + (b.color||SWATCHES[0]) + '">' + esc(b.text_en) + '</span>' : '') +
+    '</div>';
+}
+function renderPhone(){
+  const ph = document.getElementById('phone');
+  const slides = draft.slides.slides.map((s, i) =>
+    '<div class="p-slide" style="background-image:url(\'' + esc(s.img||'') + '\')">' +
+    '<div class="ov" style="background:' + pastelOverlay(s.overlay, s.overlay_opacity) + '"></div>' +
+    '<div class="cc"><div class="eb">' + esc(s.eyebrow_en||'') + '</div><div class="tt">' + esc(s.title_en||'Slide ' + (i+1)) + '</div>' +
+    '<div class="ln">' + esc(s.line_en||'') + '</div>' + (s.btn_en ? '<span class="bt">' + esc(s.btn_en) + '</span>' : '') + '</div></div>').join('');
+  ph.innerHTML =
+    '<div class="p-sec">Get Inspired</div>' +
+    '<div class="p-slide" style="background:linear-gradient(135deg,#cbb3d6,#e6c9bc);"><div class="cc"><div class="tt">Dailies</div><div class="ln">always the first slide</div></div></div>' +
+    slides +
+    '<div class="p-sec">Family Needs</div>' +
+    '<div class="p-grid">' + TILES.filter(t=>t.kind==='photo').map(pTile).join('') + '</div>' +
+    '<div class="p-sec">Family Tools &amp; Games</div>' +
+    '<div class="p-grid3">' + TILES.filter(t=>t.kind==='tool').map(pTile).join('') + '</div>' +
+    TILES.filter(t=>t.kind==='wide').map(pTile).join('') +
+    '<div class="p-sec">Explore Maps</div>' +
+    '<div class="p-grid3">' + TILES.filter(t=>t.kind==='map').map(pTile).join('') +
+      '<div class="p-tile"><div class="ov" style="background:rgba(200,150,140,.75)"></div><span class="tt">Food Map</span></div>' +
+    '</div>' +
+    '<div class="p-note">Preview shows the English texts. The Food Map card follows button 1.</div>';
+}
+
+/* ---------------- playdates ---------------- */
+let pdSources = [];
+async function pdLoadSources(){
+  const sel = document.getElementById('pdSource');
+  try {
+    const ev = await fetch(CB_URL + '/rest/v1/ams_events?is_active=eq.true&start_date=gte.' + new Date().toISOString() + '&select=id,name,start_date,venue,neighbourhood&order=start_date&limit=150', { headers:{ apikey: CB_ANON } }).then(r=>r.json());
+    const tp = await fetch(CB_URL + '/rest/v1/ams_top100_plans?select=id,title_en,neighbourhood,address&order=plan_number&limit=120', { headers:{ apikey: CB_ANON } }).then(r=>r.json());
+    pdSources = [];
+    (ev||[]).forEach(e => pdSources.push({ id:'ev-'+e.id, label:'Event: ' + e.name + ' (' + (e.start_date||'').slice(0,10) + ')', title:e.name, area:e.neighbourhood||'', loc:e.venue||'', when:e.start_date, type:'ams_event', srcId:String(e.id) }));
+    (tp||[]).forEach(p => pdSources.push({ id:'tp-'+p.id, label:'Top 100: ' + p.title_en, title:p.title_en, area:p.neighbourhood||'', loc:p.address||'', when:'', type:'ams_top100', srcId:String(p.id) }));
+    sel.innerHTML = '<option value="">Start empty...</option>' + pdSources.map(s => '<option value="' + s.id + '">' + esc(s.label) + '</option>').join('');
+  } catch(e){}
+}
+function pdPrefill(){
+  const s = pdSources.find(x => x.id === document.getElementById('pdSource').value);
+  if (!s) return;
+  document.getElementById('pdTitle').value = s.title;
+  document.getElementById('pdArea').value = s.area;
+  document.getElementById('pdLoc').value = s.loc;
+  if (s.when) document.getElementById('pdWhen').value = s.when.slice(0,16);
+}
+async function pdCreate(){
+  const m = document.getElementById('pdMsg');
+  const src = pdSources.find(x => x.id === document.getElementById('pdSource').value);
+  const row = {
+    creator_id: session.user.id,
+    creator_name: document.getElementById('pdName').value.trim() || 'Amsterdam Families',
+    title: document.getElementById('pdTitle').value.trim(),
+    activity: 'meetup',
+    plan_date: document.getElementById('pdWhen').value ? new Date(document.getElementById('pdWhen').value).toISOString() : null,
+    area: document.getElementById('pdArea').value.trim(),
+    location_text: document.getElementById('pdLoc').value.trim(),
+    kids_ages: document.getElementById('pdAges').value.trim(),
+    max_spots: parseInt(document.getElementById('pdSpots').value) || 4,
+    visibility: 'public',
+    description: document.getElementById('pdDesc').value.trim(),
+    source_type: src ? src.type : null,
+    source_id: src ? src.srcId : null
+  };
+  if (!row.title || !row.plan_date) { m.textContent = 'Title and date are needed.'; m.className='msg err'; return; }
+  const { error } = await sb.from('playdates').insert(row);
+  m.textContent = error ? error.message : 'Playdate is live in the app.';
+  m.className = 'msg' + (error ? ' err' : '');
+  if (!error) { document.getElementById('pdTitle').value=''; document.getElementById('pdDesc').value=''; pdList(); }
+}
+async function pdList(){
+  const host = document.getElementById('pdList');
+  const { data } = await sb.from('playdates').select('id,title,plan_date,area,creator_name,creator_id').gte('plan_date', new Date().toISOString()).order('plan_date').limit(40);
+  host.innerHTML = (data||[]).map(p =>
+    '<div class="pd-item"><b>' + esc(p.title) + '</b><span class="when">' + (p.plan_date||'').slice(0,16).replace('T',' ') + ' · ' + esc(p.area||'') + ' · ' + esc(p.creator_name||'') + '</span>' +
+    (p.creator_id === session.user.id ? '<button onclick="pdDel(\'' + p.id + '\')">remove</button>' : '') + '</div>').join('') || '<p class="muted">No upcoming playdates.</p>';
+}
+async function pdDel(id){ await sb.from('playdates').delete().eq('id', id); pdList(); }
+
+/* ---------------- utils ---------------- */
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 
 boot();
 </script>
