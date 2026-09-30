@@ -41,6 +41,7 @@
   .p-tile.wide{aspect-ratio:auto;height:64px;grid-column:1/-1;}
   .p-tile .ov{position:absolute;inset:0;}
   .p-tile .tt{position:absolute;left:8px;bottom:7px;color:#fff;font-weight:800;font-size:12px;text-shadow:0 1px 4px rgba(0,0,0,.35);max-width:85%;}
+  .p-tile .sm{position:absolute;left:8px;bottom:24px;color:#fff;font-size:8.5px;font-weight:600;opacity:.92;text-shadow:0 1px 4px rgba(0,0,0,.35);}
   .p-tile .pl{position:absolute;left:8px;bottom:24px;color:#fff;font-size:8px;font-weight:700;background:rgba(255,255,255,.25);padding:2px 6px;border-radius:6px;}
   .p-tile .bd{position:absolute;top:6px;right:6px;font-size:8.5px;font-weight:800;color:#fff;padding:2px 7px;border-radius:8px;}
   .p-tile .nr{position:absolute;top:6px;left:6px;width:18px;height:18px;border-radius:50%;background:#2f2a38;color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;}
@@ -118,7 +119,7 @@
         </div>
 
         <h2 style="margin-top:30px;">Home buttons</h2>
-        <p class="muted" style="margin-bottom:10px;">The numbers match the phone preview on the left. Leave a field empty to keep the app's own default. Corner label is the little flag in the top corner (New, Hot). Images: paste any link, your Cloudinary links work great.</p>
+        <p class="muted" style="margin-bottom:10px;">The numbers match the phone preview on the left. Leave a field empty to keep the app's own default. Small line is the little text above the title on the four photo buttons (needs app v1.1 or newer). Corner label is the little flag in the top corner (New, Hot). Images: paste any link, your Cloudinary links work great.</p>
         <div id="tilesEd"></div>
 
         <div class="savebar">
@@ -172,10 +173,10 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
 const SWATCHES = ['#7BC47F','#E07070','#B597C1','#7FA9CC','#E0C890'];
 const TILES = [
-  {n:1, page:'family-food-spots', kind:'photo', label:'Family Food Spots', dTitle:'Spots', dImg:'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600', tint:'rgba(200,150,140,.75)'},
-  {n:2, page:'schools-directory', kind:'photo', label:'Schools', dTitle:'Schools', dImg:'https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=600', tint:'rgba(145,165,185,.78)'},
-  {n:3, page:'after-school-activities', kind:'photo', label:'After School', dTitle:'After School', dImg:'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=600', tint:'rgba(175,155,190,.78)'},
-  {n:4, page:'birthdays', kind:'photo', label:'Birthdays', dTitle:'Birthdays', dImg:'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=600', tint:'rgba(190,150,165,.75)'},
+  {n:1, page:'family-food-spots', kind:'photo', label:'Family Food Spots', dLabel:'Family Friendly', dTitle:'Spots', dImg:'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600', tint:'rgba(200,150,140,.75)'},
+  {n:2, page:'schools-directory', kind:'photo', label:'Schools', dLabel:'All Public & Private', dTitle:'Schools', dImg:'https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=600', tint:'rgba(145,165,185,.78)'},
+  {n:3, page:'after-school-activities', kind:'photo', label:'After School', dLabel:'Kids Clubs', dTitle:'After School', dImg:'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=600', tint:'rgba(175,155,190,.78)'},
+  {n:4, page:'birthdays', kind:'photo', label:'Birthdays', dLabel:'All things', dTitle:'Birthdays', dImg:'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=600', tint:'rgba(190,150,165,.75)'},
   {n:5, page:'babysitters', kind:'tool', label:'Babysitter', dTitle:'Babysitter', dPill:'Help Finder', dImg:'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300', tint:'rgba(175,155,190,.78)'},
   {n:6, page:'find-the-baby', kind:'tool', label:'Babydoku', dTitle:'Babydoku', dPill:'New logic game', dImg:'https://images.unsplash.com/photo-1519689680058-324335c77eba?w=300', tint:'rgba(175,155,190,.78)'},
   {n:7, page:'playdates', kind:'tool', label:'Playdates', dTitle:'Playdates', dPill:'Connects Kids', dImg:'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=300', tint:'rgba(190,175,145,.78)'},
@@ -240,9 +241,13 @@ async function loadAll(){
 /* ---------------- save ---------------- */
 function setMsg(t, err){ const m = document.getElementById('saveMsg'); m.textContent = t; m.className = 'msg' + (err ? ' err' : ''); }
 async function cmsSave(key, value){
+  // Always use a fresh token: the one from login expires after an hour.
+  const s = await sb.auth.getSession();
+  if (!s.data || !s.data.session) throw new Error('Your login expired. Reload the page and log in again.');
+  session = s.data.session;
   const r = await fetch(FN_SAVE, { method:'POST', headers:{ 'Content-Type':'application/json', apikey: SUPABASE_ANON, Authorization:'Bearer ' + session.access_token }, body: JSON.stringify({ key, value }) });
   const d = await r.json().catch(()=>({}));
-  if (!r.ok) throw new Error(d.error || ('save failed ' + r.status));
+  if (!r.ok) throw new Error((d.error || d.message || d.msg || 'save failed') + ' (' + r.status + ')');
 }
 async function saveAll(){
   const b = document.getElementById('saveBtn'); b.disabled = true; setMsg('Saving...');
@@ -280,6 +285,9 @@ function renderEditors(){
       return '<button class="bo' + (on?' on':'') + '" onclick="pickBadge(\'' + t.page + '\',\'' + x + '\')">' + (x===''?'none':x) + '</button>';
     }).join('') + '<button class="bo' + (b && ['New','Hot'].indexOf(b.text_en)===-1 ? ' on':'') + '" onclick="pickBadge(\'' + t.page + '\',\'custom\')">custom</button>';
     const sw = SWATCHES.map(c => '<div class="sw' + (b && b.color===c?' on':'') + '" style="background:' + c + '" onclick="pickBadgeColor(\'' + t.page + '\',\'' + c + '\')"></div>').join('');
+    const labelRow = (t.kind==='photo') ?
+      '<div class="fld"><label>Small line EN</label><input value="' + esc(tileVal(t.page,'label_en')) + '" placeholder="' + esc(t.dLabel||'') + '" oninput="setTile(\'' + t.page + '\',\'label_en\',this.value)"></div>' +
+      '<div class="fld"><label>Small line NL</label><input value="' + esc(tileVal(t.page,'label_nl')) + '" placeholder="' + esc(t.dLabel||'') + '" oninput="setTile(\'' + t.page + '\',\'label_nl\',this.value)"></div>' : '';
     const pillRow = (t.kind==='tool'||t.kind==='wide') ?
       '<div class="fld"><label>Pill EN</label><input value="' + esc(tileVal(t.page,'pill_en')) + '" placeholder="' + esc(t.dPill||'') + '" oninput="setTile(\'' + t.page + '\',\'pill_en\',this.value)"></div>' +
       '<div class="fld"><label>Pill NL</label><input value="' + esc(tileVal(t.page,'pill_nl')) + '" placeholder="' + esc(t.dPill||'') + '" oninput="setTile(\'' + t.page + '\',\'pill_nl\',this.value)"></div>' : '';
@@ -291,6 +299,7 @@ function renderEditors(){
       '<div class="imgprev" style="background-image:url(\'' + esc(img) + '\')"></div></div>' +
       '<div class="row"><div class="fld"><label>Title EN</label><input value="' + esc(tileVal(t.page,'title_en')) + '" placeholder="' + esc(t.dTitle) + '" oninput="setTile(\'' + t.page + '\',\'title_en\',this.value)"></div>' +
       '<div class="fld"><label>Title NL</label><input value="' + esc(tileVal(t.page,'title_nl')) + '" placeholder="' + esc(t.dTitle) + '" oninput="setTile(\'' + t.page + '\',\'title_nl\',this.value)"></div>' + pillRow + '</div>' +
+      (labelRow ? '<div class="row">' + labelRow + '</div>' : '') +
       '<div class="row" style="align-items:center;"><div class="fld" style="flex:0 0 auto;"><label>Corner label</label><div class="badgeopts">' + badgeBtns + '</div></div>' +
       '<div class="fld" style="flex:0 0 auto;"><label>Colour</label><div class="swatches">' + sw + '</div></div></div>' + customRow +
       '</div>';
@@ -342,11 +351,13 @@ function pTile(t){
   const img = tileVal(t.page,'img') || t.dImg;
   const title = tileVal(t.page,'title_en') || t.dTitle;
   const pill = (t.kind==='tool'||t.kind==='wide') ? (tileVal(t.page,'pill_en') || t.dPill || '') : '';
+  const small = (t.kind==='photo') ? (tileVal(t.page,'label_en') || t.dLabel || '') : '';
   const b = badgeOf(t.page);
   return '<div class="p-tile' + (t.kind==='wide'?' wide':'') + '" style="background-image:url(\'' + esc(img) + '\')">' +
     '<div class="ov" style="background:' + t.tint + '"></div>' +
     '<span class="nr">' + t.n + '</span>' +
     (pill ? '<span class="pl">' + esc(pill) + '</span>' : '') +
+    (small ? '<span class="sm">' + esc(small) + '</span>' : '') +
     '<span class="tt">' + esc(title) + '</span>' +
     (b ? '<span class="bd" style="background:' + (b.color||SWATCHES[0]) + '">' + esc(b.text_en) + '</span>' : '') +
     '</div>';
