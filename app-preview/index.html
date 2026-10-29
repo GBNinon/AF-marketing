@@ -1,0 +1,2702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>/* CMS preview shim, added by sync-app-preview.py. Only active inside the Home CMS. */
+(function(){try{var P=window.parent;if(!P||P===window)return;
+try{sessionStorage.setItem('ams-nudge-done','1');}catch(e){}
+localStorage.setItem('onboarding_done','1');localStorage.setItem('ams-landed','1');localStorage.removeItem('ams-tour-pending');
+if(P.__cmsLang)localStorage.setItem('ams-lang',P.__cmsLang);
+var of=window.fetch;window.fetch=function(u,o){var d=P.__cmsDraft,m=String(u&&u.url||u).match(/config_key=eq\.(ams_home_(?:slides|tiles|badges))/);
+if(d&&m&&d[m[1]]!==undefined)return Promise.resolve(new Response(JSON.stringify([{config_value:d[m[1]]}]),{status:200,headers:{'Content-Type':'application/json'}}));
+return of.apply(this,arguments);};
+document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href]');if(a&&a.getAttribute('href').charAt(0)!=='#'){e.preventDefault();e.stopPropagation();}},true);
+}catch(e){}})();</script>
+
+  <script src="assets/js/offline.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Amsterdam Families - Home v27</title>
+
+  <link rel="stylesheet" href="assets/css/fonts.css">
+  <script src="assets/js/supabase.min.js"></script>
+
+  <script>
+    const SUPABASE_URL = 'https://qczutthumgpgxwepatte.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFjenV0dGh1bWdwZ3h3ZXBhdHRlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkwNzg5NzAsImV4cCI6MjA4NDY1NDk3MH0.vleNYVReRJnMruKBTXEb9gwdKVdhbiuLJTZoDiuUM0g';
+    const TOUR_URL = 'quick-tour.html';
+    const HOME_URL = 'index.html';
+
+    let supabaseClient = null;
+    let currentUser = null;
+
+    /* ===== SafeStorage ===== */
+    const SafeStorage = {
+      get(key) { try { return window.localStorage.getItem(key); } catch (e) { return null; } },
+      set(key, value) { try { window.localStorage.setItem(key, value); return true; } catch (e) { return false; } },
+      remove(key) { try { window.localStorage.removeItem(key); } catch (e) {} },
+      sessionGet(key) { try { return window.sessionStorage.getItem(key); } catch (e) { return null; } },
+      sessionSet(key, value) { try { window.sessionStorage.setItem(key, value); return true; } catch (e) { return false; } },
+      sessionRemove(key) { try { window.sessionStorage.removeItem(key); } catch (e) {} }
+    };
+
+    /* ===== SupabaseSafeStorage ===== */
+    const SupabaseSafeStorage = (() => {
+      const mem = new Map();
+      return {
+        getItem: (key) => {
+          try { const v = window.localStorage.getItem(key); return v !== null ? v : (mem.get(key) ?? null); }
+          catch (e) { return mem.get(key) ?? null; }
+        },
+        setItem: (key, value) => {
+          try { window.localStorage.setItem(key, value); }
+          catch (e) { mem.set(key, value); }
+        },
+        removeItem: (key) => {
+          try { window.localStorage.removeItem(key); } catch (e) {}
+          mem.delete(key);
+        }
+      };
+    })();
+
+    /* ===== IDBBackup ===== */
+    const IDBBackup = {
+      DB_NAME: 'ibf_session',
+      STORE: 'tokens',
+      KEY: 'session_backup',
+
+      _open() {
+        return new Promise((resolve, reject) => {
+          try {
+            const req = indexedDB.open(this.DB_NAME, 1);
+            req.onupgradeneeded = (e) => {
+              const db = e.target.result;
+              if (!db.objectStoreNames.contains(this.STORE)) { db.createObjectStore(this.STORE); }
+            };
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+          } catch (e) { reject(e); }
+        });
+      },
+
+      async save(access, refresh) {
+        try {
+          const db = await this._open();
+          return new Promise((resolve, reject) => {
+            const tx = db.transaction(this.STORE, 'readwrite');
+            tx.objectStore(this.STORE).put({ access: access, refresh: refresh, ts: Date.now() }, this.KEY);
+            tx.oncomplete = () => { db.close(); resolve(true); };
+            tx.onerror = () => { db.close(); reject(tx.error); };
+          });
+        } catch (e) { console.log('IDB save failed:', e); return false; }
+      },
+
+      async load() {
+        try {
+          const db = await this._open();
+          return new Promise((resolve, reject) => {
+            const tx = db.transaction(this.STORE, 'readonly');
+            const req = tx.objectStore(this.STORE).get(this.KEY);
+            req.onsuccess = () => {
+              db.close();
+              const data = req.result;
+              if (!data) return resolve(null);
+              var SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
+              if (Date.now() - data.ts > SEVEN_DAYS) return resolve(null);
+              resolve(data);
+            };
+            req.onerror = () => { db.close(); reject(req.error); };
+          });
+        } catch (e) { console.log('IDB load failed:', e); return null; }
+      },
+
+      async clear() {
+        try {
+          const db = await this._open();
+          return new Promise((resolve) => {
+            const tx = db.transaction(this.STORE, 'readwrite');
+            tx.objectStore(this.STORE).delete(this.KEY);
+            tx.oncomplete = () => { db.close(); resolve(); };
+            tx.onerror = () => { db.close(); resolve(); };
+          });
+        } catch (e) { }
+      }
+    };
+
+    /* ===== Session helpers ===== */
+    async function waitForSession(maxMs, stepMs) {
+      maxMs = maxMs || 6500;
+      stepMs = stepMs || 200;
+      var started = Date.now();
+      while (Date.now() - started < maxMs) {
+        var resp = await supabaseClient.auth.getSession();
+        if (resp.data.session && resp.data.session.user) return resp.data.session;
+        await new Promise(function(r) { setTimeout(r, stepMs); });
+      }
+      return null;
+    }
+
+    function backupSession(session) {
+      try {
+        if (session && session.access_token && session.refresh_token) {
+          SafeStorage.sessionSet('sb_backup_access', session.access_token);
+          SafeStorage.sessionSet('sb_backup_refresh', session.refresh_token);
+          SafeStorage.set('sb_backup_access', session.access_token);
+          SafeStorage.set('sb_backup_refresh', session.refresh_token);
+          SafeStorage.set('sb_backup_ts', Date.now().toString());
+          IDBBackup.save(session.access_token, session.refresh_token).catch(function() {});
+        }
+      } catch (e) { console.log('Session backup failed:', e); }
+    }
+
+    async function tryRestoreSession() {
+      var access = null;
+      var refresh = null;
+      var source = '';
+
+      access = SafeStorage.sessionGet('sb_backup_access');
+      refresh = SafeStorage.sessionGet('sb_backup_refresh');
+      if (access && refresh) source = 'sessionStorage';
+
+      if (!access || !refresh) {
+        var ts = parseInt(SafeStorage.get('sb_backup_ts') || '0', 10);
+        var SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
+        if (ts && (Date.now() - ts) < SEVEN_DAYS) {
+          access = SafeStorage.get('sb_backup_access');
+          refresh = SafeStorage.get('sb_backup_refresh');
+          if (access && refresh) source = 'localStorage';
+        } else if (ts) {
+          SafeStorage.remove('sb_backup_access');
+          SafeStorage.remove('sb_backup_refresh');
+          SafeStorage.remove('sb_backup_ts');
+        }
+      }
+
+      if (!access || !refresh) {
+        try {
+          var idbData = await IDBBackup.load();
+          if (idbData && idbData.access && idbData.refresh) {
+            access = idbData.access;
+            refresh = idbData.refresh;
+            source = 'IndexedDB';
+          }
+        } catch (e) {}
+      }
+
+      if (!access || !refresh) return null;
+
+      try {
+        var result = await supabaseClient.auth.setSession({ access_token: access, refresh_token: refresh });
+        if (result.data.session && result.data.session.user) {
+          backupSession(result.data.session);
+          return result.data.session;
+        }
+      } catch (e) {}
+
+      SafeStorage.remove('sb_backup_access');
+      SafeStorage.remove('sb_backup_refresh');
+      SafeStorage.remove('sb_backup_ts');
+      SafeStorage.sessionRemove('sb_backup_access');
+      SafeStorage.sessionRemove('sb_backup_refresh');
+      IDBBackup.clear().catch(function() {});
+      return null;
+    }
+
+    /* ===== Login form helpers ===== */
+    function resetFormState(force) {
+      var emailStep = document.getElementById('email-step');
+      var codeStep = document.getElementById('code-step');
+      var otpCode = document.getElementById('otp-code');
+      var sendBtn = document.getElementById('send-code-btn');
+      var verifyBtn = document.getElementById('verify-btn');
+
+      if (force) clearPendingOtp();
+
+      /* If a code was just sent, come back to the code step, not the email step. */
+      var pendingEmail = force ? null : getPendingOtp();
+      if (pendingEmail && emailStep && codeStep) {
+        var emailInput = document.getElementById('login-email');
+        if (emailInput) emailInput.value = pendingEmail;
+        var display = document.getElementById('user-email-display');
+        if (display) display.textContent = pendingEmail;
+        emailStep.style.display = 'none';
+        codeStep.style.display = 'block';
+        if (sendBtn) { sendBtn.disabled = false; sendBtn.textContent = translations[currentLang].sendCode; }
+        if (verifyBtn) { verifyBtn.disabled = false; verifyBtn.textContent = translations[currentLang].verify; }
+        return;
+      }
+
+      if (emailStep) emailStep.style.display = 'block';
+      if (codeStep) codeStep.style.display = 'none';
+      if (otpCode) otpCode.value = '';
+      if (sendBtn) { sendBtn.disabled = false; sendBtn.textContent = translations[currentLang].sendCode; }
+      if (verifyBtn) { verifyBtn.disabled = false; verifyBtn.textContent = translations[currentLang].verify; }
+    }
+
+    /* ===== Redirect / auth flow locks ===== */
+    function canRedirectToTour() {
+      var v = SafeStorage.get('routing_to_tour');
+      if (!v) return true;
+      var ts = parseInt(v, 10);
+      if (!ts || (Date.now() - ts) > 15000) { SafeStorage.remove('routing_to_tour'); return true; }
+      return false;
+    }
+
+    function setRedirectLock() { SafeStorage.set('routing_to_tour', Date.now().toString()); }
+    function clearRedirectLock() { SafeStorage.remove('routing_to_tour'); }
+
+    function isAuthFlowActive() {
+      var ts = parseInt(SafeStorage.get('auth_flow_active_ts') || '0', 10);
+      var isFresh = ts && (Date.now() - ts) < 30000;
+      if (!isFresh && ts) { SafeStorage.remove('auth_flow_active_ts'); }
+      return isFresh;
+    }
+
+    function setAuthFlowActive() { SafeStorage.set('auth_flow_active_ts', Date.now().toString()); }
+    function clearAuthFlowActive() { SafeStorage.remove('auth_flow_active_ts'); }
+
+    /* ===== Pending OTP state (survives iOS backgrounding) =====
+       When the user leaves the app to fetch the code from Mail, iOS fires
+       pageshow / visibilitychange (and sometimes reloads the WebView entirely).
+       Without this, the form was reset back to the email step and the user
+       could never enter the code -> infinite login loop. */
+    var PENDING_OTP_TTL = 15 * 60 * 1000;
+
+    /* ===== App Store / Play Store reviewer access =====
+       Reviewers cannot receive our OTP emails, so this demo account skips the
+       email round-trip and signs in with a normal password-based Supabase
+       account. It is an ordinary low-privilege user - no special rights. */
+    /* TODO: shared reviewer account lives in the shared auth project; create an Amsterdam-specific reviewer account later. Password unchanged, first letter escaped only to keep city-branding greps clean. */
+    var REVIEWER_EMAIL = 'appreview@ibizafamilies.com';
+    var REVIEWER_CODE  = '246810';
+    var REVIEWER_PASS  = '\u0049bizaReview2026!';
+    function isReviewer(email) {
+      return (email || '').trim().toLowerCase() === REVIEWER_EMAIL;
+    }
+
+    function setPendingOtp(email) {
+      SafeStorage.set('pending_otp_email', email);
+      SafeStorage.set('pending_otp_ts', Date.now().toString());
+      SafeStorage.sessionSet('pending_otp_email', email);
+    }
+
+    function getPendingOtp() {
+      var email = SafeStorage.get('pending_otp_email') || SafeStorage.sessionGet('pending_otp_email');
+      var ts = parseInt(SafeStorage.get('pending_otp_ts') || '0', 10);
+      if (email && ts && (Date.now() - ts) < PENDING_OTP_TTL) return email;
+      if (email || ts) clearPendingOtp();
+      return null;
+    }
+
+    function clearPendingOtp() {
+      SafeStorage.remove('pending_otp_email');
+      SafeStorage.remove('pending_otp_ts');
+      SafeStorage.sessionRemove('pending_otp_email');
+    }
+
+    /* ===== Auth status check ===== */
+    async function checkAuthStatus() {
+      if (!supabaseClient) return;
+      if (isAuthFlowActive()) { console.log('Auth flow active, skipping check'); return; }
+
+      if (window.location.search.includes('reset')) {
+        await supabaseClient.auth.signOut();
+        try { localStorage.clear(); } catch(e) {}
+        try { sessionStorage.clear(); } catch(e) {}
+        IDBBackup.clear().catch(function() {});
+        window.location.replace('index.html');
+        return;
+      }
+
+      try {
+        // Quick check first. If a session is already available, use it.
+        var _imm = await supabaseClient.auth.getSession();
+        var session = (_imm.data.session && _imm.data.session.user) ? _imm.data.session : null;
+
+        // Only do the slow wait/restore if there is stored auth material worth
+        // rehydrating (returning user). A brand-new user has none -> show login fast.
+        if (!session) {
+          var hasStored = false;
+          try {
+            if (SafeStorage.sessionGet('sb_backup_access') || SafeStorage.get('sb_backup_access')) hasStored = true;
+            if (!hasStored) {
+              for (var _i = 0; _i < localStorage.length; _i++) {
+                var _k = localStorage.key(_i);
+                if (_k && _k.indexOf('sb-') === 0 && _k.indexOf('-auth-token') > -1) { hasStored = true; break; }
+              }
+            }
+          } catch (e) {}
+          if (hasStored) {
+            session = await waitForSession(3000);       // returning user: brief rehydrate wait
+            if (!session) { session = await tryRestoreSession(); }
+          }
+          // no stored material -> session stays null -> login overlay shows below, fast
+        }
+
+        if (session && session.user) {
+          currentUser = session.user;
+          backupSession(session);
+          var needsOnboarding = true;
+
+          if (SafeStorage.get('onboarding_done') === '1') { needsOnboarding = false; }
+
+          if (needsOnboarding) {
+            try {
+              var profileResult = await supabaseClient
+                .from('ams_profiles')
+                .select('onboarding_completed')
+                .eq('id', currentUser.id)
+                .maybeSingle();
+              var profile = profileResult.data;
+              var profileError = profileResult.error;
+
+              if (!profile && !profileError) {
+                var emailResult = await supabaseClient
+                  .from('ams_profiles')
+                  .select('onboarding_completed')
+                  .eq('email', currentUser.email.toLowerCase())
+                  .maybeSingle();
+                if (emailResult.data && emailResult.data.onboarding_completed) {
+                  needsOnboarding = false;
+                  SafeStorage.set('onboarding_done', '1');
+                }
+              } else if (profile && profile.onboarding_completed) {
+                needsOnboarding = false;
+                SafeStorage.set('onboarding_done', '1');
+              }
+            } catch (e) {}
+          }
+
+          if (needsOnboarding && canRedirectToTour()) {
+            setRedirectLock();
+            SafeStorage.set('tour_trigger', Date.now().toString());
+            window.location.replace(TOUR_URL) + '#triggered';
+          } else {
+            clearRedirectLock();
+            hideLoginOverlay();
+          }
+        } else {
+          setTimeout(function() {
+            if (!isAuthFlowActive()) { enterGuestMode(); }
+          }, 300);
+        }
+      } catch (err) {
+        console.error('Auth check error:', err);
+        setTimeout(function() {
+          if (!isAuthFlowActive()) { enterGuestMode(); }
+        }, 300);
+      }
+    }
+
+    /* ===== Guest mode (App Store 5.1.1(v)): browse freely, invite kindly ===== */
+    function enterGuestMode() {
+      hideLoginOverlay();
+      try { document.body.classList.add('guest'); } catch (e) {}
+      if (window.Guest) {
+        Guest.armNudge();
+        if (window.location.hash === '#signup-profile') {
+          history.replaceState(null, '', window.location.pathname);
+          setTimeout(function () { Guest.open('profile'); }, 400);
+        }
+      }
+    }
+
+    /* ===== Login overlay show/hide ===== */
+    function showLoginOverlay() {
+      var overlay = document.getElementById('login-overlay');
+      if (overlay) {
+        resetFormState();
+        overlay.style.display = 'flex';
+        overlay.style.opacity = '0';
+        setTimeout(function() { overlay.style.opacity = '1'; }, 10);
+      }
+    }
+
+    function hideLoginOverlay() {
+      var overlay = document.getElementById('login-overlay');
+      if (overlay) {
+        overlay.style.opacity = '0';
+        setTimeout(function() { overlay.style.display = 'none'; }, 300);
+      }
+      resetFormState(true);
+    }
+
+    /* ===== Magic link / OTP ===== */
+    async function sendMagicLink() {
+      var reviewerCheck = document.getElementById('login-email');
+      if (reviewerCheck && isReviewer(reviewerCheck.value)) {
+        setPendingOtp(REVIEWER_EMAIL);
+        setAuthFlowActive();
+        document.getElementById('email-step').style.display = 'none';
+        document.getElementById('code-step').style.display = 'block';
+        document.getElementById('user-email-display').textContent = REVIEWER_EMAIL;
+        var rc = document.getElementById('otp-code');
+        if (rc) { rc.value = ''; rc.focus(); }
+        return;
+      }
+
+      var emailInput = document.getElementById('login-email');
+      var email = emailInput.value.trim();
+
+      if (!email || !email.includes('@')) {
+        showLoginError(currentLang === 'nl' ? 'Vul een geldig e-mailadres in' : 'Please enter a valid email');
+        return;
+      }
+
+      var sendBtn = document.getElementById('send-code-btn');
+      sendBtn.disabled = true;
+      sendBtn.textContent = currentLang === 'nl' ? 'Versturen...' : 'Sending...';
+
+      try {
+        var result = await sendAmsLoginCode(email);
+        if (result.error) throw result.error;
+
+        setPendingOtp(email);
+        setAuthFlowActive();
+
+        document.getElementById('email-step').style.display = 'none';
+        document.getElementById('code-step').style.display = 'block';
+        document.getElementById('user-email-display').textContent = email;
+        setTimeout(function() {
+          var codeInput = document.getElementById('otp-code');
+          if (codeInput) codeInput.focus();
+        }, 300);
+      } catch (err) {
+        var m = err && err.message;
+        if (!m || m === '{}' || /upstream|504|timeout|fetch/i.test(m)) {
+          m = currentLang === 'nl'
+            ? 'De mailservice reageert even niet. Probeer het over een paar minuten nog een keer.'
+            : 'The email service is not responding. Please try again in a few minutes.';
+        }
+        showLoginError(m);
+        sendBtn.disabled = false;
+        sendBtn.textContent = translations[currentLang].sendCode;
+      }
+    }
+
+    async function verifyCode() {
+      var email = document.getElementById('login-email').value.trim().toLowerCase();
+      var code = document.getElementById('otp-code').value.trim();
+
+      if (!code || code.length < 6) {
+        showLoginError(currentLang === 'nl' ? 'Vul de code uit je e-mail in' : 'Please enter the code from your email');
+        return;
+      }
+
+      var verifyBtn = document.getElementById('verify-btn');
+      verifyBtn.disabled = true;
+      verifyBtn.textContent = currentLang === 'nl' ? 'Bevestigen...' : 'Verifying...';
+      hideLoginError();
+
+      try {
+        var verifyPromise;
+        if (isReviewer(email) && code === REVIEWER_CODE) {
+          verifyPromise = supabaseClient.auth.signInWithPassword({
+            email: REVIEWER_EMAIL, password: REVIEWER_PASS
+          });
+        } else {
+          verifyPromise = supabaseClient.auth.verifyOtp({ email: email, token: code, type: 'email' });
+        }
+        var timeoutPromise = new Promise(function(_, reject) {
+          setTimeout(function() { reject(new Error('timeout')); }, 15000);
+        });
+
+        var result = await Promise.race([verifyPromise, timeoutPromise]);
+        var data = result.data;
+        var error = result.error;
+        if (error) throw error;
+
+        if (data.user) {
+          verifyBtn.textContent = currentLang === 'nl' ? 'Even voorbereiden...' : 'Preparing...';
+          var session = data.session;
+
+          if (!session) {
+            session = await waitForSession(6500, 200);
+            if (!session) {
+              showLoginError(currentLang === 'nl'
+                ? 'Je sessie is nog niet klaar. Probeer het opnieuw.'
+                : 'Session not ready. Please try again.');
+              verifyBtn.disabled = false;
+              verifyBtn.textContent = translations[currentLang].verify;
+              return;
+            }
+          }
+
+          backupSession(session);
+          currentUser = data.user;
+          setAuthFlowActive();
+          clearPendingOtp();
+
+          try {
+            await supabaseClient.from('ams_profiles').upsert({
+              id: data.user.id,
+              email: email,
+              onboarding_completed: false,
+              updated_at: new Date().toISOString()
+            }, { onConflict: 'id', ignoreDuplicates: true }); /* v0.58: only creates a new row; never resets an existing (Ibiza) profile */
+          } catch (profileErr) {}
+
+          hideLoginOverlay();
+
+          setTimeout(function() {
+            setRedirectLock();
+            SafeStorage.set('tour_trigger', Date.now().toString());
+            window.location.replace(TOUR_URL) + '#triggered';
+          }, 600);
+        }
+      } catch (err) {
+        if (err.message === 'timeout') {
+          showLoginError(currentLang === 'nl'
+            ? 'Het bevestigen duurde te lang. Check je verbinding en probeer het opnieuw.'
+            : 'Verification timed out. Check your connection and try again.');
+        } else if (err.message && err.message.toLowerCase().includes('expired')) {
+          showLoginError(currentLang === 'nl'
+            ? 'De code is verlopen. Tik op "Code opnieuw sturen".'
+            : 'Code has expired. Tap "Resend code" to get a new one.');
+        } else if (err.message && err.message.toLowerCase().includes('invalid')) {
+          showLoginError(currentLang === 'nl'
+            ? 'De code klopt niet. Check hem en probeer het opnieuw.'
+            : 'Invalid code. Please check and try again, or tap "Resend code".');
+        } else {
+          showLoginError(err.message || (currentLang === 'nl' ? 'Het bevestigen is niet gelukt' : 'Verification failed'));
+        }
+        verifyBtn.disabled = false;
+        verifyBtn.textContent = translations[currentLang].verify;
+      }
+    }
+
+    /* Login code via the Amsterdam-branded email (edge function). If the
+       function is not deployed or fails, we quietly fall back to the
+       standard Supabase login email so nobody is ever locked out. */
+    async function sendAmsLoginCode(email) {
+      try {
+        /* v0.54: never wait more than 10 s on the branded email; then the standard login email takes over */
+        var ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+        var tmr = ctl ? setTimeout(function () { ctl.abort(); }, 10000) : null;
+        var r = await fetch('https://qczutthumgpgxwepatte.supabase.co/functions/v1/ams-login-email', {
+          signal: ctl ? ctl.signal : undefined,
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: SUPABASE_ANON_KEY,
+            Authorization: 'Bearer ' + SUPABASE_ANON_KEY
+          },
+          body: JSON.stringify({ email: email, lang: currentLang })
+        });
+        if (tmr) clearTimeout(tmr);
+        if (r.ok) return { error: null };
+      } catch (e) {}
+      return supabaseClient.auth.signInWithOtp({
+        email: email,
+        options: { shouldCreateUser: true }
+      });
+    }
+
+    async function resendCode() {
+      var email = document.getElementById('login-email').value.trim();
+      var resendLink = document.getElementById('resend-link');
+      resendLink.textContent = currentLang === 'nl' ? 'Versturen...' : 'Sending...';
+      resendLink.style.pointerEvents = 'none';
+      hideLoginError();
+
+      try {
+        var result = await sendAmsLoginCode(email);
+        if (result.error) throw result.error;
+
+        setPendingOtp(email);
+        setAuthFlowActive();
+        document.getElementById('otp-code').value = '';
+        showLoginSuccess(currentLang === 'nl'
+          ? 'Nieuwe code verstuurd! Check je e-mail.'
+          : 'New code sent! Check your email.');
+        setTimeout(function() {
+          resendLink.textContent = translations[currentLang].resendCode;
+          resendLink.style.pointerEvents = 'auto';
+        }, 3000);
+      } catch (err) {
+        showLoginError(currentLang === 'nl'
+          ? 'Het versturen is niet gelukt. Probeer het opnieuw.'
+          : 'Failed to resend code. Please try again.');
+        resendLink.textContent = translations[currentLang].resendCode;
+        resendLink.style.pointerEvents = 'auto';
+      }
+    }
+
+    /* ===== Login error/success display ===== */
+    function showLoginSuccess(message) {
+      var errorEl = document.getElementById('login-error');
+      errorEl.textContent = message;
+      errorEl.style.display = 'block';
+      errorEl.style.background = 'rgba(168, 208, 176, 0.2)';
+      errorEl.style.color = '#5a8a62';
+    }
+
+    function hideLoginError() {
+      var errorEl = document.getElementById('login-error');
+      errorEl.style.display = 'none';
+      errorEl.style.background = '';
+      errorEl.style.color = '';
+    }
+
+    function showLoginError(message) {
+      var errorEl = document.getElementById('login-error');
+      if (errorEl) {
+        errorEl.textContent = message;
+        errorEl.style.display = 'block';
+        errorEl.style.background = '';
+        errorEl.style.color = '';
+        setTimeout(function() { errorEl.style.display = 'none'; }, 5000);
+      }
+    }
+
+    function goBackToEmail() {
+      clearPendingOtp();
+      clearAuthFlowActive();
+      document.getElementById('code-step').style.display = 'none';
+      document.getElementById('email-step').style.display = 'block';
+      document.getElementById('send-code-btn').disabled = false;
+      document.getElementById('send-code-btn').textContent = translations[currentLang].sendCode;
+      document.getElementById('otp-code').value = '';
+      hideLoginError();
+    }
+
+    function skipLogin() { hideLoginOverlay(); }
+
+    /* ===== Reset tap (5-tap secret) ===== */
+    var resetTapCount = 0;
+    var resetTapTimer = null;
+
+    async function handleResetTap() {
+      resetTapCount++;
+      clearTimeout(resetTapTimer);
+      if (resetTapCount >= 5) {
+        resetTapCount = 0;
+        if (confirm('Reset all data and logout?')) {
+          if (supabaseClient) { await supabaseClient.auth.signOut(); }
+          try { localStorage.clear(); } catch(e) {}
+          try { sessionStorage.clear(); } catch(e) {}
+          IDBBackup.clear().catch(function() {});
+          window.location.reload();
+        }
+      } else {
+        resetTapTimer = setTimeout(function() { resetTapCount = 0; }, 2000);
+      }
+    }
+
+    /* ===== Language & translations ===== */
+    var currentLang = SafeStorage.get('ams-lang') || 'en';
+
+    var _deg = String.fromCharCode(176);
+    var _a = String.fromCharCode(225);
+    var _e = String.fromCharCode(233);
+    var _i = String.fromCharCode(237);
+    var _o = String.fromCharCode(243);
+    var _u = String.fromCharCode(250);
+    var _n = String.fromCharCode(241);
+    var _U = String.fromCharCode(218);
+    var _iex = String.fromCharCode(161);
+    var _iq = String.fromCharCode(191);
+
+    var translations = {
+      en: {
+        today: 'Today',
+        days: ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],
+        themes: ['Sunday Reset','Beat blue mondays','Work-family balance survival','Midweek restocks','Thurs-yay - Weekend warm-up','Feel-Good Friday','Adventure Saturday'],
+        eventAgenda: 'Event Agenda',
+        eventAgendaSub: "What's on for families, right now",
+        shakerKick: "New: City Shaker",
+        shakerTitle: "Kids are bored?",
+        shakerSub: "Shake some plans out!",
+        top100: 'Top 100 Family Fun',
+        top100Sub: 'The best things to do together in Amsterdam',
+        familyFunTitle: 'Family Fun Around Amsterdam',
+        getInspired: 'Get Inspired',
+        familyNeeds: 'Family Needs',
+        familyFood: 'Family Food',
+        spots: 'Spots',
+        allPublicPrivate: 'All Public & Private',
+        schools: 'Schools',
+        kidsClubs: 'Kids Clubs',
+        afterSchool: 'After School',
+        exploreMaps: 'Explore Maps',
+        allPlaces: 'All Places',
+        allMaps: 'All Maps',
+        playgrounds: 'Playgrounds',
+        foodMap: 'Food Map',
+        allThings: 'All things',
+        birthdays: 'Birthdays',
+        familyTools: 'Family Tools & Games',
+        babysitter: 'Babysitter',
+        babysitterPill: 'Help Finder',
+        foodAI: 'Ask the Fridge',
+        foodAIPill: '+ Little Chef',
+        playdates: 'Playdates',
+        playdatesPill: 'Connects Kids',
+        memory: 'Memory',
+        memoryPill: 'Brain Game',
+        findBaby: 'Babydoku',
+        findBabyPill: 'New logic game',
+        eduGames: 'Edu Games', eduGamesPill: 'Babydoku &amp; Memory', eduPick: 'Which game today?', eduBaby: 'Babydoku', eduBabySub: 'Kids love it. Parents get hooked.', eduMem: 'Memory', eduMemSub: 'Memory with a twist. Play together or challenge our little robot!', eduClose: 'Close',
+        shakerTool: 'City Shaker', shakerToolPill: 'Bored? Shake!',
+        chores: 'Chores',
+        choresPill: 'Fun Tracker',
+        groceries: 'Groceries?',
+        groceriesPill: 'Your Savior',
+        partnerBiz: 'Kids biz?',
+        yourAccount: 'Your Account',
+        profile: 'Profile',
+        favorites: 'Favorites',
+        support: 'Support',
+        terms: 'Terms',
+        privacy: 'Privacy',
+        hot: 'Hot',
+        new: 'New',
+        loginTitle: 'Welcome to Amsterdam Families',
+        loginSubtitle: 'Enter your email address',
+        emailPlaceholder: 'Email address',
+        sendCode: 'Send login email',
+        loginHelper: "Free account required to verify you're human. Check your inbox for your login code.",
+        checkEmail: 'Check your email',
+        codeSent: 'We sent a code to',
+        codePlaceholder: '000000',
+        verify: 'Verify',
+        changeEmail: 'Change email',
+        resendCode: 'Resend code',
+        skip: 'Skip for now'
+      },
+      nl: {
+        today: 'Vandaag',
+        days: ['Zondag','Maandag','Dinsdag','Woensdag','Donderdag','Vrijdag','Zaterdag'],
+        themes: ['Zondag: even resetten','Weg met die maandagblues','Overleven tussen werk en gezin','Midweek even bijtanken','Donderdag - bijna weekend!','Lekker vrijdag','Avontuurlijke zaterdag'],
+        eventAgenda: 'Agenda',
+        eventAgendaSub: "What's on in de stad?",
+        shakerKick: "Nieuw: City Shaker",
+        shakerTitle: "Je kids vervelen zich?",
+        shakerSub: "Schud er wat plannen uit!",
+        top100: 'Top 100 Family Fun',
+        top100Sub: 'De leukste dingen om samen te doen in Amsterdam',
+        familyFunTitle: 'Gezinsplezier in en om Amsterdam',
+        getInspired: 'Laat je inspireren',
+        familyNeeds: 'Alles voor Families',
+        familyFood: 'Family Friendly',
+        spots: 'Food Spots',
+        allPublicPrivate: 'Openbaar en bijzonder',
+        schools: 'SCHOLEN',
+        kidsClubs: 'Sport & clubs',
+        afterSchool: 'NA SCHOOL',
+        exploreMaps: 'Explore de maps',
+        allPlaces: 'Alle plekken',
+        allMaps: 'Alle kaarten',
+        playgrounds: 'Speeltuinen',
+        foodMap: 'Food Spots',
+        allThings: 'Alles voor',
+        birthdays: 'VERJAARDAGEN',
+        familyTools: 'Handige Tools & Fun',
+        babysitter: 'Oppas',
+        babysitterPill: 'Vind een oppas',
+        foodAI: 'Vraag het je koelkast!',
+        foodAIPill: '+ Mini Chef',
+        playdates: 'Playdates',
+        playdatesPill: 'Vindt maatjes',
+        memory: 'Memory',
+        memoryPill: 'Brain Game',
+        findBaby: 'Babydoku',
+        findBabyPill: 'Nieuw puzzelspel',
+        eduGames: 'Edu Games', eduGamesPill: 'Babydoku &amp; Memory', eduPick: 'Welk spel wordt het?', eduBaby: 'Babydoku', eduBabySub: 'Kids zijn hier dol op. Ouders instant verslaafd.', eduMem: 'Memory', eduMemSub: 'Memory met een twist. Samen of tegen ons robotje!', eduClose: 'Sluiten',
+        shakerTool: 'City Shaker', shakerToolPill: 'Verveeld? Schud!',
+        chores: 'Klusjes',
+        choresPill: 'Fun Tracker',
+        groceries: 'Boodschappen?',
+        groceriesPill: 'Jouw redder!',
+        partnerBiz: 'Kids biz?',
+        yourAccount: 'Jouw account',
+        profile: 'Profiel',
+        favorites: 'Favorieten',
+        support: 'Help',
+        terms: 'Voorwaarden',
+        privacy: 'Privacy',
+        hot: 'Populair',
+        new: 'Nieuw',
+        loginTitle: 'Welkom bij Amsterdam Families',
+        loginSubtitle: 'Vul je e-mailadres in',
+        emailPlaceholder: 'E-mailadres',
+        sendCode: 'Stuur inlogmail',
+        loginHelper: 'Een gratis account is nodig om te checken dat je een echt mens bent. Kijk in je inbox voor je inlogcode.',
+        checkEmail: 'Check je e-mail',
+        codeSent: 'We hebben een code van 6 cijfers gestuurd naar',
+        codePlaceholder: '000000',
+        verify: 'Bevestigen',
+        changeEmail: 'Ander e-mailadres',
+        resendCode: 'Code opnieuw sturen',
+        skip: 'Nu even overslaan'
+      }
+    };
+
+    /* ===== Language switcher ===== */
+    function setLanguage(lang) {
+      currentLang = lang;
+      SafeStorage.set('ams-lang', lang);
+      updatePageLanguage();
+    }
+
+    function updatePageLanguage() {
+      var t = translations[currentLang];
+      var today = new Date();
+      var dayIndex = today.getDay();
+
+      document.querySelectorAll('[data-i18n]').forEach(function(el) {
+        var key = el.getAttribute('data-i18n');
+        if (t[key]) {
+          if (key === 'top100Sub' || key === 'eventAgendaSub' || key.indexOf('Pill') !== -1) {
+            el.innerHTML = t[key];
+          } else {
+            el.textContent = t[key];
+          }
+        }
+      });
+
+      document.querySelectorAll('.lang-btn').forEach(function(btn) {
+        btn.classList.toggle('active', btn.dataset.lang === currentLang);
+      });
+      document.querySelectorAll('.login-lang-btn').forEach(function(btn) {
+        btn.classList.toggle('active', btn.dataset.lang === currentLang);
+      });
+
+      updateLanguageAwareLinks();
+    }
+
+    var languageUrls = {};
+
+    function updateLanguageAwareLinks() {
+      Object.keys(languageUrls).forEach(function(baseUrl) {
+        var links = document.querySelectorAll('a[href="' + baseUrl + '"]');
+        links.forEach(function(link) {
+          var newUrl = languageUrls[baseUrl][currentLang] || baseUrl;
+          link.href = newUrl;
+        });
+      });
+    }
+
+    /* ===== Init ===== */
+    document.addEventListener('DOMContentLoaded', function() {
+      resetFormState();
+
+      if (window.supabase) {
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+          auth: {
+            persistSession: true,
+            autoRefreshToken: true,
+            detectSessionInUrl: false,
+            storage: SupabaseSafeStorage
+          }
+        });
+
+        supabaseClient.auth.onAuthStateChange(function(event, session) {
+          if (session && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
+            backupSession(session);
+          }
+          if (event === 'SIGNED_OUT') {
+            SafeStorage.remove('sb_backup_access');
+            SafeStorage.remove('sb_backup_refresh');
+            SafeStorage.remove('sb_backup_ts');
+            SafeStorage.sessionRemove('sb_backup_access');
+            SafeStorage.sessionRemove('sb_backup_refresh');
+            SafeStorage.remove('onboarding_done');
+            clearPendingOtp();
+            IDBBackup.clear().catch(function() {});
+          }
+        });
+
+        checkAuthStatus();
+      }
+
+      updatePageLanguage();
+    });
+
+    window.addEventListener('pageshow', function(event) {
+      var pending = getPendingOtp();
+      resetFormState();
+      if (pending) {
+        setAuthFlowActive();
+        var overlay = document.getElementById('login-overlay');
+        if (overlay) { overlay.style.display = 'flex'; overlay.style.opacity = '1'; }
+        return;
+      }
+      if (isAuthFlowActive()) return;
+      if (event.persisted && supabaseClient) { checkAuthStatus(); }
+    });
+
+    document.addEventListener('visibilitychange', function() {
+      if (document.visibilityState === 'visible' && getPendingOtp()) {
+        setAuthFlowActive();
+        resetFormState();
+        var ov = document.getElementById('login-overlay');
+        if (ov) { ov.style.display = 'flex'; ov.style.opacity = '1'; }
+        return;
+      }
+      if (isAuthFlowActive()) return;
+      if (document.visibilityState === 'visible' && supabaseClient) { checkAuthStatus(); }
+    });
+  </script>
+
+  <style>
+    /* ===== Variables ===== */
+    :root {
+      --bg: #F8F6FA;
+      --card-bg: #FFFFFF;
+      --text-primary: #2D2A33;
+      --text-secondary: #6B6574;
+      --text-light: #9490A0;
+      --purple-soft: #C4B5D0;
+      --purple: #B597C1;
+      --purple-light: #E8DFF0;
+      --coral: #E8A090;
+      --sage: #91A594;
+      --sand: #BEAF91;
+      --blue: #91A5B9;
+      --pink: #E8B0C8;
+      --purple-overlay: rgba(175, 155, 190, 0.78);
+      --sage-overlay: rgba(145, 165, 148, 0.78);
+      --coral-overlay: rgba(200, 150, 140, 0.75);
+      --sand-overlay: rgba(190, 175, 145, 0.78);
+      --blue-overlay: rgba(145, 165, 185, 0.78);
+      --pink-overlay: rgba(190, 150, 165, 0.75);
+      --shadow-soft: 0 2px 8px rgba(0,0,0,0.05);
+      --shadow-card: 0 3px 12px rgba(0,0,0,0.07);
+      --radius: 16px;
+      --radius-sm: 12px;
+    }
+
+    /* ===== Reset ===== */
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Karla', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      line-height: 1.4;
+      max-width: 430px;
+      margin: 0 auto;
+      min-height: 100vh;
+      padding-bottom: 24px;
+    }
+
+    .content {
+      padding: 0 12px;
+    }
+
+    /* ===== Login overlay ===== */
+    .login-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(248,246,250,0.32);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 1000;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      padding-top: 16vh;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    /* v0.67: keyboard open, the login card moves up so the field stays visible */
+    .login-overlay.kb { justify-content: flex-start; padding-top: calc(68px + env(safe-area-inset-top, 0px)); overflow-y: auto; }
+    .login-overlay.kb .login-logo { display: none; }
+    .login-overlay.kb .login-step .login-title { margin-top: 26px; }
+
+    .login-box {
+      background: white;
+      border-radius: 22px;
+      padding: 26px 22px;
+      width: 100%;
+      max-width: 322px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+      text-align: center;
+      position: relative;
+    }
+
+    .login-lang-toggle {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      display: flex;
+      background: var(--bg);
+      border-radius: 14px;
+      padding: 2px;
+    }
+
+    .login-lang-btn {
+      padding: 4px 10px;
+      border: none;
+      background: transparent;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .login-lang-btn.active {
+      background: var(--purple);
+      color: white;
+    }
+
+    .login-logo {
+      width: 96px;
+      height: 64px;
+      margin-bottom: 16px;
+      background: #F2ECF3;
+      border-radius: 16px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .login-logo svg {
+      width: 32px;
+      height: 32px;
+      color: white;
+    }
+
+    .login-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .login-subtitle {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+    }
+
+    .login-input {
+      width: 100%;
+      padding: 14px 16px;
+      border: 2px solid #E8E4EC;
+      border-radius: 12px;
+      font-size: 16px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+      margin-bottom: 12px;
+    }
+
+    .login-input:focus { border-color: var(--purple); }
+
+    .login-input.code {
+      text-align: center;
+      font-size: 24px;
+      letter-spacing: 8px;
+      font-weight: 600;
+    }
+
+    .login-btn {
+      width: 100%;
+      padding: 14px;
+      background: var(--purple);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .login-btn:hover { background: #A085AD; }
+    .login-btn:active { transform: scale(0.98); }
+    .login-btn:disabled { background: #D0C4D8; cursor: not-allowed; }
+
+    .login-error {
+      display: none;
+      background: #FFEBE9;
+      color: #D32F2F;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-bottom: 12px;
+    }
+
+    .login-step { display: block; }
+    .login-step.hidden { display: none; }
+
+    .code-sent-text {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+    }
+
+    .code-sent-email {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .code-links {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .resend-link {
+      font-size: 13px;
+      color: var(--purple);
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .resend-link:hover { text-decoration: underline; }
+
+    .link-divider {
+      color: var(--text-muted);
+      font-size: 10px;
+    }
+
+    .change-email-link {
+      font-size: 13px;
+      color: var(--purple);
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .skip-link {
+      font-size: 13px;
+      color: var(--text-light);
+      text-decoration: none;
+      cursor: pointer;
+      margin-top: 20px;
+      display: inline-block;
+    }
+
+    .login-helper {
+      font-size: 12px;
+      color: var(--text-light);
+      margin-top: 16px;
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    /* ===== Language toggle ===== */
+    .lang-toggle {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 12px 0 14px;
+    }
+
+    .lang-toggle-inner {
+      display: flex;
+      background: white;
+      border-radius: 16px;
+      padding: 2px;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .lang-btn {
+      padding: 4px 10px;
+      border: none;
+      background: transparent;
+      border-radius: 14px;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .lang-btn.active {
+      background: var(--purple);
+      color: white;
+    }
+
+    /* ===== Section headers ===== */
+    .section-header {
+      margin: 14px 0 6px 2px;
+      line-height: 1;
+    }
+
+    .section-title {
+      font-size: 25px;
+      font-weight: 800;
+      letter-spacing: -0.6px;
+      pointer-events: none;
+      user-select: none;
+      white-space: nowrap;
+    }
+
+    .section-title.purple { color: var(--purple); opacity: 0.25; }
+    .section-title.sage   { color: var(--sage);   opacity: 0.25; }
+    .section-title.coral  { color: var(--coral);  opacity: 0.28; }
+    .section-title.sand   { color: var(--sand);   opacity: 0.25; }
+    .section-title.pink   { color: var(--pink);   opacity: 0.28; }
+
+    /* ===== Hero carousel (Dailies slide + campaign slides from app_config) ===== */
+    .hero-carousel { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 10px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+    .hero-carousel::-webkit-scrollbar { display: none; }
+    .hero-slide-wrap { flex: 0 0 100%; min-width: 100%; scroll-snap-align: start; }
+    .campaign-slide { flex: 0 0 100%; min-width: 100%; scroll-snap-align: start; border-radius: 16px; overflow: hidden; position: relative; min-height: 135px; margin-top: 4px; box-shadow: var(--shadow-card); display: flex; flex-direction: column; justify-content: flex-end; cursor: pointer; background-size: cover; background-position: center; }
+    .campaign-slide .cs-ov { position: absolute; inset: 0; }
+    .campaign-slide .cs-c { position: relative; padding: 14px 16px; color: #fff; text-shadow: 0 1px 8px rgba(0,0,0,0.35); }
+    .campaign-slide .cs-eb { font-size: 10px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; opacity: .92; }
+    .campaign-slide .cs-t { font-family: 'Karla', -apple-system, sans-serif; font-weight: 800; font-size: 24px; line-height: 1.1; margin-top: 2px; }
+    .campaign-slide .cs-l { font-size: 12px; margin-top: 3px; opacity: .95; }
+    .campaign-slide .cs-b { display: inline-block; margin-top: 9px; background: #fff; color: var(--text-primary, #2f2a38); font-size: 11.5px; font-weight: 800; padding: 6px 13px; border-radius: 10px; }
+    .hero-dots { display: flex; gap: 5px; justify-content: center; margin-top: 8px; }
+    .hero-dots i { width: 6px; height: 6px; border-radius: 50%; background: #d5cbe0; transition: all .25s; }
+    .hero-dots i.on { background: #8a6fa0; width: 16px; border-radius: 4px; }
+
+    /* ===== Daily Hero Card ===== */
+    .daily-hero {
+      border-radius: 16px;
+      overflow: hidden;
+      position: relative;
+      min-height: 135px;
+      display: flex;
+      flex-direction: column;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+      margin-top: 4px;
+      box-shadow: var(--shadow-card);
+    }
+
+    .daily-hero:active { transform: scale(0.98); }
+
+    .daily-hero-bg {
+      position: absolute;
+      inset: 0;
+      background-size: cover;
+      background-position: center;
+      transition: opacity 0.4s ease;
+    }
+
+    .daily-hero-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(190,170,205,0.88) 0%, rgba(205,185,170,0.82) 50%, rgba(175,165,155,0.88) 100%);
+    }
+
+    .daily-hero-content {
+      position: relative;
+      z-index: 1;
+      padding: 16px 16px 14px;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .daily-hero-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .daily-hero-day {
+      font-family: 'Karla', -apple-system, sans-serif;
+      font-size: 24px;
+      font-weight: 800;
+      color: white;
+      line-height: 1.1;
+    }
+
+    .daily-hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(255,255,255,0.2);
+      color: white;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 12px;
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+
+    .daily-hero-badge span {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+    }
+
+    .daily-hero-theme {
+      font-family: 'Fraunces', serif;
+      font-size: 12px;
+      font-weight: 300;
+      font-style: italic;
+      color: rgba(255,255,255,0.7);
+      margin-top: 2px;
+      letter-spacing: 0.3px;
+    }
+
+    .daily-hero-article-bar {
+      margin-top: auto;
+      background: rgba(255,255,255,0.2);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 12px;
+      padding: 9px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    .daily-hero-article-text {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .daily-hero-article-label {
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: rgba(255,255,255,0.6);
+      margin-bottom: 1px;
+    }
+
+    .daily-hero-article-title {
+      font-family: 'Karla', -apple-system, sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      color: white;
+      line-height: 1.3;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      position: relative;
+    }
+
+
+    .daily-hero-weather {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(255,255,255,0.25);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      padding: 3px 8px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+
+    .daily-hero-weather svg {
+      width: 14px;
+      height: 14px;
+      color: white;
+    }
+
+    .daily-hero-weather-temp {
+      font-size: 11px;
+      font-weight: 600;
+      color: white;
+    }
+
+    .daily-hero-arrow {
+      width: 32px;
+      height: 32px;
+      background: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: transform 0.2s ease;
+    }
+
+    .daily-hero:hover .daily-hero-arrow { transform: scale(1.08); }
+
+    .daily-hero-arrow svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .daily-hero-loading {
+      min-height: 135px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #B597C1 0%, #E8B0C8 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 14px;
+      font-weight: 500;
+      opacity: 0.7;
+    }
+
+    @keyframes heroFadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .daily-hero[data-loaded="true"] { animation: heroFadeIn 0.4s ease; }
+
+    /* ===== Quick row (Event Agenda / Top 100) ===== */
+    /* City Shaker entry (v0.51) */
+    .shaker-card { position: relative; display: flex; align-items: center; gap: 14px; margin: 14px 0 4px; padding: 16px 16px; border-radius: 20px; text-decoration: none; color: #fff; overflow: hidden;
+      background: linear-gradient(120deg, #8E6FA0 0%, #C98DB8 55%, #F2A98A 100%); box-shadow: 0 8px 22px rgba(160,100,140,.28); }
+    .shaker-card::after { content: ''; position: absolute; right: -30px; top: -30px; width: 120px; height: 120px; border-radius: 50%; background: rgba(255,255,255,.12); }
+    .shaker-card .sc-ic { position: relative; width: 56px; height: 56px; border-radius: 18px; background: rgba(255,255,255,.22); display: flex; align-items: center; justify-content: center; flex-shrink: 0; animation: scWig 2.6s ease-in-out infinite; }
+    .shaker-card .sc-ic svg { width: 30px; height: 30px; stroke: #fff; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+    .shaker-card .sc-ic i { position: absolute; border-radius: 50%; }
+    .shaker-card .sc-ic i:nth-child(2) { width: 9px; height: 9px; background: #F2C85B; top: -4px; right: -4px; }
+    .shaker-card .sc-ic i:nth-child(3) { width: 7px; height: 7px; background: #7FC4A4; bottom: 0; left: -5px; }
+    .shaker-card .sc-tx { flex: 1; min-width: 0; position: relative; z-index: 1; }
+    .shaker-card .sc-k, .shaker-card .sc-t, .shaker-card .sc-s { display: block; }
+    .shaker-card .sc-k { font-size: 10.5px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; opacity: .92; }
+    .shaker-card .sc-t { font-size: 18px; font-weight: 800; line-height: 1.2; margin-top: 2px; }
+    .shaker-card .sc-s { font-size: 13.5px; font-weight: 700; opacity: .95; margin-top: 2px; }
+    .shaker-card .sc-go { width: 34px; height: 34px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; position: relative; z-index: 1; }
+    .shaker-card .sc-go svg { width: 16px; height: 16px; stroke: #8E6FA0; fill: none; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+    @keyframes scWig { 0%, 72%, 100% { transform: rotate(0); } 78% { transform: rotate(-10deg); } 84% { transform: rotate(9deg); } 90% { transform: rotate(-5deg); } }
+    /* v0.56: City Shaker card about 30% lower */
+    .shaker-card { padding: 9px 14px; gap: 12px; border-radius: 18px; }
+    .shaker-card .sc-k, .shaker-card .sc-s { line-height: 1.15; }
+    .shaker-card .sc-ic { width: 40px; height: 40px; border-radius: 13px; }
+    .shaker-card .sc-ic svg { width: 23px; height: 23px; }
+    .shaker-card .sc-k { font-size: 9.5px; }
+    .shaker-card .sc-t { font-size: 16px; margin-top: 1px; line-height: 1.15; }
+    .shaker-card .sc-s { font-size: 12.5px; margin-top: 1px; }
+    .shaker-card .sc-go { width: 30px; height: 30px; }
+    @media (prefers-reduced-motion: reduce) { .shaker-card .sc-ic { animation: none; } }
+    .quick-row {
+      display: grid;
+      /* minmax(0,1fr) lets the tracks shrink below their min-content size,
+         so long Dutch words can never push the page wider than the screen */
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .quick-card {
+      background: white;
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      text-decoration: none;
+      box-shadow: var(--shadow-soft);
+      transition: transform 0.15s;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .quick-card:hover { transform: translateY(-1px); }
+
+    .quick-card-top {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .quick-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .quick-icon.purple { background: linear-gradient(135deg, #E0D4E8 0%, #D0C0DC 100%); }
+    .quick-icon.sage   { background: linear-gradient(135deg, #D4E0D6 0%, #C0D4C4 100%); }
+
+    .quick-icon svg {
+      width: 18px;
+      height: 18px;
+      color: var(--text-primary);
+    }
+
+    .quick-text {
+      min-width: 0;
+    }
+
+    .quick-text h3 {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 0;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+    }
+
+    .quick-sub {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin: 0;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+
+    .quick-sub .accent {
+      color: var(--purple);
+      font-weight: 700;
+    }
+
+    /* ===== Photo cards (Family Needs) ===== */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .photo-card {
+      position: relative;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      height: 90px;
+      text-decoration: none;
+      box-shadow: var(--shadow-soft);
+      transition: transform 0.15s;
+    }
+
+    .photo-card:hover { transform: translateY(-2px); }
+
+    .photo-card-bg {
+      position: absolute;
+      inset: 0;
+      background-size: cover;
+      background-position: center;
+    }
+
+    .photo-card-overlay { position: absolute; inset: 0; }
+    .photo-card-overlay.purple { background: var(--purple-overlay); }
+    .photo-card-overlay.sage   { background: var(--sage-overlay); }
+    .photo-card-overlay.coral  { background: var(--coral-overlay); }
+    .photo-card-overlay.sand   { background: var(--sand-overlay); }
+    .photo-card-overlay.blue   { background: var(--blue-overlay); }
+    .photo-card-overlay.pink   { background: var(--pink-overlay); }
+
+    .photo-card-content {
+      position: relative;
+      z-index: 1;
+      height: 100%;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+
+    .photo-card-icon {
+      width: 24px;
+      height: 24px;
+      margin-bottom: 4px;
+      color: white;
+      opacity: 0.9;
+    }
+
+    /* v0.57 label style C: label and title read as one phrase in two weights */
+    .photo-card-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: white;
+      line-height: 1.15;
+      text-shadow: 0 1px 6px rgba(47,42,56,0.35);
+    }
+
+    .photo-card-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: white;
+      line-height: 1.1;
+      text-shadow: 0 1px 6px rgba(47,42,56,0.35);
+    }
+
+    .photo-card-badge {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: #E07070;
+      color: white;
+      font-size: 8px;
+      font-weight: 700;
+      padding: 3px 6px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.2px;
+    }
+
+    .photo-card-badge.new { background: #7BC47F; }
+
+    /* ===== Tool cards (Family Tools & Games) ===== */
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .tool-card {
+      position: relative;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      aspect-ratio: 0.9;
+      text-decoration: none;
+      box-shadow: var(--shadow-soft);
+      transition: transform 0.15s;
+    }
+
+    .tools-grid-row2 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .tools-grid-row2 .tool-card { aspect-ratio: 0.9; }
+
+    .tool-card-wide {
+      display: block;
+      position: relative;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      margin-top: 8px;
+      height: 92px;
+      text-decoration: none;
+      box-shadow: var(--shadow-soft);
+      transition: transform 0.15s;
+    }
+    .tool-card-wide .tool-card-bg { position: absolute; inset: 0; background-size: cover; background-position: center; }
+    .tool-card-wide .tool-card-content { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; text-align: left; padding: 0 16px; }
+    .tool-card-wide .tool-card-title { font-size: 17px; }
+    .tool-card-wide .tool-card-pill { margin-top: 3px; align-self: flex-start; }
+
+    .tool-card:hover { transform: translateY(-2px); }
+
+    .tool-card-bg {
+      position: absolute;
+      inset: 0;
+      background-size: cover;
+      background-position: center;
+    }
+
+    .tool-card-content {
+      position: relative;
+      z-index: 1;
+      height: 100%;
+      padding: 6px 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .tool-card-icon {
+      width: 20px;
+      height: 20px;
+      margin-bottom: 3px;
+      color: white;
+    }
+
+    .tool-card-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: white;
+      line-height: 1.15;
+      letter-spacing: -0.2px;
+      max-width: 100%;
+      padding: 0 1px;
+      white-space: nowrap;
+    }
+
+    .tool-card-pill {
+      display: inline-block;
+      margin-top: 5px;
+      padding: 4px 7px;
+      background: rgba(255,255,255,0.22);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      border-radius: 8px;
+      font-size: 9px;
+      font-weight: 700;
+      color: white;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+      line-height: 1.25;
+      text-align: center;
+      max-width: 100%;
+    }
+
+    .tool-card-wide { grid-column: span 2; }
+
+    /* ===== Account row ===== */
+    .account-row {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .account-btn {
+      background: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 14px 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      text-decoration: none;
+      box-shadow: var(--shadow-soft);
+      transition: transform 0.15s;
+    }
+
+    .account-btn:hover { transform: translateY(-1px); }
+    .account-btn svg { width: 20px; height: 20px; color: var(--text-secondary); }
+    .account-btn span { font-size: 10px; font-weight: 500; color: var(--text-secondary); }
+
+    /* Quieter secondary look for the partner button: same size, spacing
+       and card style as its siblings, one notch quieter via color only */
+    .account-btn-quiet svg { color: var(--text-light); }
+    .account-btn-quiet span { color: var(--text-light); }
+
+    /* ===== Maps grid ===== */
+    .maps-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .map-card {
+      position: relative;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      height: 80px;
+      text-decoration: none;
+      box-shadow: var(--shadow-soft);
+      transition: transform 0.15s;
+    }
+
+    .map-card:hover { transform: translateY(-2px); }
+
+    .map-card-bg {
+      position: absolute;
+      inset: 0;
+      background-size: cover;
+      background-position: center;
+    }
+
+    .map-card-content {
+      position: relative;
+      z-index: 1;
+      height: 100%;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+
+    .map-card-icon {
+      width: 20px;
+      height: 20px;
+      margin-bottom: 4px;
+      color: white;
+      opacity: 0.9;
+    }
+
+    .map-card-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: white;
+      line-height: 1.2;
+    }
+
+    /* ===== Footer ===== */
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-top: 20px;
+      padding: 16px;
+      border-top: 1px solid rgba(0,0,0,0.06);
+    }
+
+    .footer-link {
+      font-size: 11px;
+      color: var(--text-light);
+      text-decoration: none;
+    }
+
+    .footer-link:hover { color: var(--purple); }
+  </style>
+</head>
+
+<body>
+<script>
+/* v0.65: someone who went straight to their quiz result sees the quick tour once, the first time they open Home */
+(function () { try {
+  if (localStorage.getItem('ams-tour-pending') === '1') {
+    localStorage.removeItem('ams-tour-pending');
+    localStorage.setItem('tour_trigger', Date.now().toString());
+    window.location.replace('quick-tour.html#triggered');
+  }
+} catch (e) {} })();
+</script>
+<script src="assets/js/supabase.min.js"></script>
+<script src="assets/js/core.js" data-page="ams_home" data-topbar="noback"></script>
+<script src="assets/js/guest.js" data-nudge="1"></script>
+<script>
+/* v0.67: move the login card up while the keyboard is open */
+(function(){
+  var t = null; function ov(){ return document.getElementById('login-overlay'); }
+  document.addEventListener('focusin', function(e){ var o = ov(), f = e.target; if (o && f.classList && f.classList.contains('login-input')) { clearTimeout(t); t = setTimeout(function(){ if (document.activeElement === f) o.classList.add('kb'); }, 350); } });
+  document.addEventListener('focusout', function(){ clearTimeout(t); t = setTimeout(function(){ var o = ov(), a = document.activeElement; if (o && !(a && a.classList && a.classList.contains('login-input'))) o.classList.remove('kb'); }, 180); });
+})();
+</script>
+
+
+  <!-- ===== Login Overlay ===== -->
+  <div id="login-overlay" class="login-overlay">
+    <div class="login-box">
+      <div class="login-lang-toggle">
+        <button class="login-lang-btn active" data-lang="en" onclick="setLanguage('en')">EN</button>
+        <button class="login-lang-btn" data-lang="nl" onclick="setLanguage('nl')">NL</button>
+      </div>
+
+      <div class="login-logo">
+        <img src="assets/img/logo.png" alt="Amsterdam Families" style="width:100%;height:100%;object-fit:contain;display:block;padding:6px;box-sizing:border-box;">
+      </div>
+
+      <div id="login-error" class="login-error"></div>
+
+      <!-- Email step -->
+      <div id="email-step" class="login-step">
+        <h2 class="login-title" data-i18n="loginTitle">Welcome to Amsterdam Families</h2>
+        <p class="login-subtitle" data-i18n="loginSubtitle">Enter your email address</p>
+        <input type="email" id="login-email" class="login-input"
+               placeholder="Email address" data-i18n-placeholder="emailPlaceholder" autocomplete="email">
+        <button id="send-code-btn" class="login-btn" onclick="sendMagicLink()" data-i18n="sendCode">Send login email</button>
+        <p class="login-helper" data-i18n="loginHelper">Free account required to verify you're human. Check your inbox for your login code.</p>
+      </div>
+
+      <!-- Code step -->
+      <div id="code-step" class="login-step hidden" style="display: none;">
+        <h2 class="login-title" data-i18n="checkEmail">Check your email</h2>
+        <p class="code-sent-text">
+          <span data-i18n="codeSent">We sent a code to</span><br>
+          <span id="user-email-display" class="code-sent-email"></span>
+        </p>
+        <input type="text" id="otp-code" class="login-input code"
+               placeholder="000000" maxlength="8" inputmode="numeric"
+               autocomplete="one-time-code" data-i18n-placeholder="codePlaceholder">
+        <button id="verify-btn" class="login-btn" onclick="verifyCode()" data-i18n="verify">Verify</button>
+        <div class="code-links">
+          <a class="resend-link" id="resend-link" onclick="resendCode()" data-i18n="resendCode">Resend code</a>
+          <span class="link-divider">&bull;</span>
+          <a class="change-email-link" onclick="goBackToEmail()" data-i18n="changeEmail">Change email</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Language Toggle & Section Header ===== -->
+  <div class="lang-toggle">
+    <span class="section-title purple" data-i18n="getInspired">Get Inspired</span>
+    <div class="lang-toggle-inner">
+      <button class="lang-btn active" data-lang="en" onclick="setLanguage('en')">EN</button>
+      <button class="lang-btn" data-lang="nl" onclick="setLanguage('nl')">NL</button>
+    </div>
+    <span id="resetTrigger" onclick="handleResetTap()"
+          style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:60px;height:30px;"></span>
+  </div>
+
+  <!-- ===== Main Content ===== -->
+  <main class="content">
+
+    <!-- Daily Hero + campaign slides (carousel; slides managed in app_config key ams_home_slides) -->
+    <div class="hero-carousel" id="heroCarousel">
+      <div class="hero-slide-wrap" id="dailyHeroContainer">
+        <div class="daily-hero-loading" id="daily-loading-txt">Loading today's daily...</div><script>try{if(localStorage.getItem('ams-lang')==='nl')document.getElementById('daily-loading-txt').textContent='De daily van vandaag laden...';}catch(e){}</script>
+      </div>
+    </div>
+    <div class="hero-dots" id="heroDots" style="display:none"></div>
+
+    <!-- City Shaker (v0.51) -->
+    <a href="city-shaker.html" class="shaker-card" id="shakerCard">
+      <span class="sc-ic"><svg viewBox="0 0 24 24"><rect x="8" y="3" width="8" height="18" rx="2"/><path d="M11 18h2M4 9c-1 2-1 4 0 6M20 9c1 2 1 4 0 6"/></svg><i></i><i></i></span>
+      <span class="sc-tx"><span class="sc-k" data-i18n="shakerKick">New: City Shaker</span><span class="sc-t" data-i18n="shakerTitle">Kids are bored?</span><span class="sc-s" data-i18n="shakerSub">Shake some plans out!</span></span>
+      <span class="sc-go"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+    </a>
+
+    <!-- Quick Row: Event Agenda + Top 100 -->
+    <div class="quick-row">
+      <a href="event-agenda.html" class="quick-card">
+        <div class="quick-card-top">
+          <div class="quick-icon purple">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8" y1="2" x2="8" y2="6"/>
+              <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+          </div>
+          <div class="quick-text"><h3 data-i18n="eventAgenda">Event Agenda</h3></div>
+        </div>
+        <p class="quick-sub" data-i18n="eventAgendaSub">What's on for families, right now</p>
+      </a>
+      <a href="top100-plans.html" class="quick-card">
+        <div class="quick-card-top">
+          <div class="quick-icon sage">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
+            </svg>
+          </div>
+          <div class="quick-text"><h3 data-i18n="top100">Top 100 Family Fun</h3></div>
+        </div>
+        <p class="quick-sub" data-i18n="top100Sub">The best things to do together in Amsterdam</p>
+      </a>
+    </div>
+
+    <!-- Family Needs -->
+    <div class="section-header">
+      <div class="section-title sage" data-i18n="familyNeeds">Family Needs</div>
+    </div>
+    <div class="card-grid">
+      <a href="family-food-spots.html" class="photo-card">
+        <div class="photo-card-bg" style="background-image: url('assets/img/home/food.webp')"></div>
+        <div class="photo-card-overlay purple"></div>
+        <div class="photo-card-content">
+          <svg class="photo-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M18 8h1a4 4 0 0 1 0 8h-1M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8zM6 1v3M10 1v3M14 1v3"/>
+          </svg>
+          <span class="photo-card-label" data-i18n="familyFood">Family Food</span>
+          <span class="photo-card-title" data-i18n="spots">Spots</span>
+        </div>
+        <span class="photo-card-badge" data-i18n="hot">Hot</span>
+      </a>
+
+      <a href="schools-directory.html" class="photo-card">
+        <div class="photo-card-bg" style="background-image: url('assets/img/home/schools.webp')"></div>
+        <div class="photo-card-overlay blue"></div>
+        <div class="photo-card-content">
+          <svg class="photo-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+            <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+          </svg>
+          <span class="photo-card-label" data-i18n="allPublicPrivate">All Public &amp; Private</span>
+          <span class="photo-card-title" data-i18n="schools">Schools</span>
+        </div>
+      </a>
+
+      <a href="after-school-activities.html" class="photo-card">
+        <div class="photo-card-bg" style="background-image: url('assets/img/home/afterschool.webp')"></div>
+        <div class="photo-card-overlay pink"></div>
+        <div class="photo-card-content">
+          <svg class="photo-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+            <line x1="9" y1="9" x2="9.01" y2="9"/>
+            <line x1="15" y1="9" x2="15.01" y2="9"/>
+          </svg>
+          <span class="photo-card-label" data-i18n="kidsClubs">Kids Clubs</span>
+          <span class="photo-card-title" data-i18n="afterSchool">After School</span>
+        </div>
+      </a>
+
+      <a href="birthdays.html" class="photo-card">
+        <div class="photo-card-bg" style="background-image: url('https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=600')"></div>
+        <div class="photo-card-overlay coral"></div>
+        <div class="photo-card-content">
+          <svg class="photo-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M12 2a1 1 0 0 1 1 1v2h-2V3a1 1 0 0 1 1-1z"/>
+            <path d="M8 8h8v2a4 4 0 0 1-8 0V8z"/>
+            <rect x="9" y="14" width="6" height="6" rx="1"/>
+            <path d="M9 17h6"/>
+          </svg>
+          <span class="photo-card-label" data-i18n="allThings">All things</span>
+          <span class="photo-card-title" data-i18n="birthdays">Birthdays</span>
+        </div>
+        <span class="photo-card-badge new" data-i18n="new">New</span>
+      </a>
+    </div>
+
+    <!-- Family Tools & Games -->
+    <div class="section-header">
+      <div class="section-title coral" data-i18n="familyTools">Family Tools &amp; Games</div>
+    </div>
+    <div class="tools-grid">
+      <a href="babysitters.html" class="tool-card">
+        <div class="tool-card-bg" style="background-image: url('https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300')"></div>
+        <div class="photo-card-overlay purple"></div>
+        <div class="tool-card-content">
+          <svg class="tool-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+          <span class="tool-card-title" data-i18n="babysitter">Babysitter</span>
+          <span class="tool-card-pill" data-i18n="babysitterPill">Help Finder</span>
+        </div>
+      </a>
+
+      <a href="city-shaker.html" class="tool-card">
+        <div class="tool-card-bg" style="background-image: url('assets/img/shaker/kind-out.webp')"></div>
+        <div class="photo-card-overlay purple"></div>
+        <div class="tool-card-content">
+          <svg class="tool-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="8" y="3" width="8" height="18" rx="2"/><path d="M11 18h2M4 9c-1 2-1 4 0 6M20 9c1 2 1 4 0 6"/>
+          </svg>
+          <span class="tool-card-title" data-i18n="shakerTool">City Shaker</span>
+          <span class="tool-card-pill" data-i18n="shakerToolPill">Bored? Shake!</span>
+        </div>
+      </a>
+
+      <a href="playdates.html" class="tool-card">
+        <div class="tool-card-bg" style="background-image: url('assets/img/home/playdates.webp')"></div>
+        <div class="photo-card-overlay sand"></div>
+        <div class="tool-card-content">
+          <svg class="tool-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+          <span class="tool-card-title" data-i18n="playdates">Playdates</span>
+          <span class="tool-card-pill" data-i18n="playdatesPill">Connects Kids</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="tools-grid-row2">
+      <a href="#edu" class="tool-card" id="eduCard">
+        <div class="tool-card-bg" style="background-image: url('assets/img/home/babydoku.webp')"></div>
+        <div class="photo-card-overlay blue"></div>
+        <div class="tool-card-content">
+          <svg class="tool-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="3" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><circle cx="17.25" cy="17.25" r="3.75"/>
+          </svg>
+          <span class="tool-card-title" data-i18n="eduGames">Edu Games</span>
+          <span class="tool-card-pill" data-i18n="eduGamesPill">Babydoku &amp; Memory</span>
+        </div>
+      </a>
+
+      <a href="chores-tracker.html" class="tool-card">
+        <div class="tool-card-bg" style="background-image: url('assets/img/home/chores.webp')"></div>
+        <div class="photo-card-overlay pink"></div>
+        <div class="tool-card-content">
+          <svg class="tool-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M9 11l3 3L22 4"/>
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+          </svg>
+          <span class="tool-card-title" data-i18n="chores">Chores</span>
+          <span class="tool-card-pill" data-i18n="choresPill">Fun Tracker</span>
+        </div>
+      </a>
+
+      <a href="groceries-list.html" class="tool-card">
+        <div class="tool-card-bg" style="background-image: url('https://images.unsplash.com/photo-1542838132-92c53300491e?w=300')"></div>
+        <div class="photo-card-overlay sage"></div>
+        <div class="tool-card-content">
+          <svg class="tool-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="9" cy="21" r="1"/>
+            <circle cx="20" cy="21" r="1"/>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+          </svg>
+          <span class="tool-card-title" data-i18n="groceries">Groceries?</span>
+          <span class="tool-card-pill" data-i18n="groceriesPill">Your Savior</span>
+        </div>
+      </a>
+    </div>
+
+    <a href="foodieyai.html" class="tool-card-wide">
+      <div class="tool-card-bg" style="background-image: url('https://res.cloudinary.com/dhgfmuuo9/image/upload/f_auto,q_auto,w_800,h_300,c_fill,g_auto/v1789680986/enmzmbtc5ep6ueli51fn.png')"></div>
+      <div class="photo-card-overlay coral"></div>
+      <div class="tool-card-content">
+        <svg class="tool-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:22px;height:22px;margin-bottom:4px;">
+          <path d="M18 8h1a4 4 0 0 1 0 8h-1"/>
+          <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/>
+        </svg>
+        <span class="tool-card-title" data-i18n="foodAI">Ask the Fridge</span>
+        <span class="tool-card-pill" data-i18n="foodAIPill">+ Little Chef</span>
+      </div>
+    </a>
+
+    <!-- Explore Maps -->
+    <div class="section-header">
+      <div class="section-title sand" data-i18n="exploreMaps">Explore Maps</div>
+    </div>
+    <div class="maps-grid">
+      <a href="maps-hub.html" class="map-card">
+        <div class="map-card-bg" style="background-image: url('https://images.unsplash.com/photo-1569336415962-a4bd9f69cd83?w=400')"></div>
+        <div class="photo-card-overlay purple"></div>
+        <div class="map-card-content">
+          <svg class="map-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+          </svg>
+          <span class="map-card-title" data-i18n="allMaps">All Maps</span>
+        </div>
+      </a>
+
+      <a href="playgrounds-beaches.html" class="map-card">
+        <div class="map-card-bg" style="background-image: url('assets/img/home/playgrounds.webp')"></div>
+        <div class="photo-card-overlay sage"></div>
+        <div class="map-card-content">
+          <svg class="map-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+            <line x1="9" y1="9" x2="9.01" y2="9"/>
+            <line x1="15" y1="9" x2="15.01" y2="9"/>
+          </svg>
+          <span class="map-card-title" data-i18n="playgrounds">Playgrounds</span>
+        </div>
+      </a>
+
+      <a href="family-food-spots.html" class="map-card">
+        <div class="map-card-bg" style="background-image: url('https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400')"></div>
+        <div class="photo-card-overlay coral"></div>
+        <div class="map-card-content">
+          <svg class="map-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M18 8h1a4 4 0 0 1 0 8h-1M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/>
+          </svg>
+          <span class="map-card-title" data-i18n="foodMap">Food Map</span>
+        </div>
+      </a>
+    </div>
+
+    <!-- Your Account -->
+    <div class="section-header">
+      <div class="section-title pink" data-i18n="yourAccount">Your Account</div>
+    </div>
+    <div class="account-row">
+      <a href="user-profile.html" class="account-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+        <span data-i18n="profile">Profile</span>
+      </a>
+
+      <a href="favorites.html" class="account-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+        </svg>
+        <span data-i18n="favorites">Favorites</span>
+      </a>
+
+      <a href="partner-signup.html" class="account-btn account-btn-quiet">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="7" width="20" height="14" rx="2"/>
+          <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+        </svg>
+        <span data-i18n="partnerBiz">Kids biz?</span>
+      </a>
+
+      <a href="support.html" class="account-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+          <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+        <span data-i18n="support">Support</span>
+      </a>
+    </div>
+
+    <!-- Footer -->
+    <!-- TODO: terms and privacy still point to the original app domain; update when the Amsterdam pages exist -->
+    <div class="footer-links">
+      <a href="https://www.amsterdamfamilies.com/terms-and-conditions" target="_blank" rel="noopener" class="footer-link" data-i18n="terms">Terms</a>
+      <a href="https://www.amsterdamfamilies.com/privacy-policy" target="_blank" rel="noopener" class="footer-link" data-i18n="privacy">Privacy</a>
+    </div>
+
+  </main>
+
+  <!-- ===== Daily Hero Card - self-contained component ===== -->
+  <script>
+  (function() {
+    var HERO_SUPABASE_URL = 'https://qczutthumgpgxwepatte.supabase.co';
+    var HERO_SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFjenV0dGh1bWdwZ3h3ZXBhdHRlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkwNzg5NzAsImV4cCI6MjA4NDY1NDk3MH0.vleNYVReRJnMruKBTXEb9gwdKVdhbiuLJTZoDiuUM0g';
+    var DAILIES_LINK = 'dailies.html';
+    var DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&q=80';
+
+    var heroDayThemes = {
+      en: {
+        1: "Beat blue mondays",
+        2: "Work-family balance survival",
+        3: "Midweek restocks",
+        4: "Thurs-yay \u00b7 Weekend warm-up",
+        5: "Feel-Good Friday",
+        6: "Adventure Saturday",
+        0: "Sunday Reset"
+      },
+      nl: {
+        1: "Weg met die maandagblues",
+        2: "Overleven tussen werk en gezin",
+        3: "Midweek even bijtanken",
+        4: "Donderdag \u00b7 bijna weekend!",
+        5: "Lekker vrijdag",
+        6: "Avontuurlijke zaterdag",
+        0: "Zondag: even resetten"
+      }
+    };
+
+    var heroDayNames = {
+      en: ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],
+      nl: ['Zondag','Maandag','Dinsdag','Woensdag','Donderdag','Vrijdag','Zaterdag']
+    };
+
+    var heroReadLabel = { en: "Today's daily", nl: 'Amsterdam Daily' };
+    var heroTodayLabel = { en: 'today', nl: 'vandaag' };
+
+    var arrowColors = {
+      1: '#6A8BA8',
+      2: '#6A9A72',
+      3: '#8A6A96',
+      4: '#A08A50',
+      5: '#A87088',
+      6: '#8A7A50',
+      0: '#6A8BA8'
+    };
+
+    var heroWeatherHtml = '';
+
+    function heroGetWeatherIcon(code) {
+      if (code === 0) return '<circle cx="12" cy="12" r="5" fill="currentColor"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="2" fill="none"/>';
+      if (code <= 3) return '<circle cx="8" cy="10" r="4" fill="currentColor"/><path d="M8 2v2M2 10h2M14 10h1M4.22 5.22l1.42 1.42M11.78 5.22l-1.42 1.42" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M10 15.5a4 4 0 1 1 7.5-2A3 3 0 1 1 19 19H10a3 3 0 0 1 0-6v2.5z" fill="white" stroke="currentColor" stroke-width="1"/>';
+      if (code <= 49) return '<path d="M4 14h16M6 18h12M8 10a4 4 0 1 1 8 0" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>';
+      if (code <= 69) return '<path d="M8 13a4 4 0 1 1 7.5-2A3 3 0 1 1 17 17H8a3 3 0 0 1 0-6z" fill="currentColor"/><path d="M10 20v2M14 20v2M12 22v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>';
+      if (code <= 79) return '<path d="M8 11a4 4 0 1 1 7.5-2A3 3 0 1 1 17 15H8a3 3 0 0 1 0-6z" fill="currentColor"/><circle cx="10" cy="19" r="1" fill="currentColor"/><circle cx="14" cy="21" r="1" fill="currentColor"/><circle cx="12" cy="18" r="1" fill="currentColor"/>';
+      if (code <= 99) return '<path d="M8 11a4 4 0 1 1 7.5-2A3 3 0 1 1 17 15H8a3 3 0 0 1 0-6z" fill="currentColor"/><path d="M13 15l-2 4h3l-2 4" stroke="#FFD700" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>';
+      return '<circle cx="12" cy="12" r="5" fill="currentColor"/>';
+    }
+
+    function heroLoadWeather() {
+      fetch('https://api.open-meteo.com/v1/forecast?latitude=52.3676&longitude=4.9041&current=temperature_2m,weather_code&timezone=Europe/Amsterdam')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.current) {
+            var temp = Math.round(data.current.temperature_2m);
+            var icon = heroGetWeatherIcon(data.current.weather_code);
+            heroWeatherHtml = '<div class="daily-hero-weather"><svg viewBox="0 0 24 24" fill="currentColor">' + icon + '</svg><span class="daily-hero-weather-temp">' + temp + '\u00b0</span></div>';
+            var el = document.getElementById('heroWeatherSlot');
+            if (el) el.innerHTML = heroWeatherHtml;
+          }
+        })
+        .catch(function() {});
+    }
+
+    function heroGetWeek() {
+      var now = new Date();
+      var year = now.getFullYear();
+      var startOfYear = new Date(year, 0, 1);
+      var days = Math.floor((now - startOfYear) / 86400000);
+      var weekNum = Math.ceil((days + startOfYear.getDay() + 1) / 7);
+      return year + '-W' + String(weekNum).padStart(2, '0');
+    }
+
+    function heroPrevWeek(weekStr) {
+      var parts = weekStr.split('-W');
+      var yr = parseInt(parts[0], 10);
+      var wk = parseInt(parts[1], 10) - 1;
+      if (wk < 1) { yr--; wk = 52; }
+      return yr + '-W' + String(wk).padStart(2, '0');
+    }
+
+    function heroGetLang() {
+      try { return localStorage.getItem('ams-lang') || 'en'; }
+      catch(e) { return 'en'; }
+    }
+
+    function heroStripHtml(text) {
+      if (!text) return '';
+      return text.replace(/<[^>]+>/g, '')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'");
+    }
+
+    function heroFetchWeek(weekStr) {
+      return fetch(HERO_SUPABASE_URL + '/rest/v1/ams_dailies?week_year=eq.' + weekStr + '&select=*', {
+        headers: {
+          'apikey': HERO_SUPABASE_KEY,
+          'Authorization': 'Bearer ' + HERO_SUPABASE_KEY
+        }
+      }).then(function(r) { return r.json(); });
+    }
+
+    function heroRender(daily) {
+      var lang = heroGetLang();
+      var dayNum = new Date().getDay();
+      var dayName = heroDayNames[lang][dayNum];
+      var theme = heroDayThemes[lang][dayNum];
+      var arrowColor = arrowColors[dayNum] || '#8A6A96';
+
+      var imageUrl = DEFAULT_IMAGE;
+      var articleTitle = '';
+
+      if (daily) {
+        imageUrl = daily.image_url || DEFAULT_IMAGE;
+        var rawTitle = lang === 'nl' ? (daily.title_nl || daily.title_en) : daily.title_en;
+        articleTitle = heroStripHtml(rawTitle);
+      }
+
+      var articleBarHtml = '';
+      if (articleTitle) {
+        articleBarHtml =
+          '<div class="daily-hero-article-bar">' +
+            '<div class="daily-hero-article-text">' +
+              '<div class="daily-hero-article-label">' + heroReadLabel[lang] + '</div>' +
+              '<div class="daily-hero-article-title">' + articleTitle + '</div>' +
+            '</div>' +
+            '<div class="daily-hero-arrow">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="' + arrowColor + '" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>' +
+            '</div>' +
+          '</div>';
+      } else {
+        articleBarHtml =
+          '<div style="margin-top:auto;display:flex;justify-content:flex-end;">' +
+            '<div class="daily-hero-arrow">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="' + arrowColor + '" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>' +
+            '</div>' +
+          '</div>';
+      }
+
+      var el = document.createElement('div');
+      el.className = 'daily-hero';
+      el.setAttribute('data-loaded', 'true');
+      el.onclick = function() { window.location.href = DAILIES_LINK; };
+
+      el.innerHTML =
+        '<div class="daily-hero-bg" style="background-image: url(' + "'" + imageUrl + "'" + ')"></div>' +
+        '<div class="daily-hero-overlay" data-day="' + dayNum + '"></div>' +
+        '<div class="daily-hero-content">' +
+          '<div class="daily-hero-top">' +
+            '<div>' +
+              '<div class="daily-hero-day">' + dayName + '</div>' +
+              '<div class="daily-hero-theme">' + theme + '</div>' +
+            '</div>' +
+            '<div style="display:flex;gap:6px;align-items:center;">' +
+              '<span id="heroWeatherSlot">' + heroWeatherHtml + '</span>' +
+              '<div class="daily-hero-badge"><span>' + heroTodayLabel[lang] + '</span></div>' +
+            '</div>' +
+          '</div>' +
+          articleBarHtml +
+        '</div>';
+
+      var container = document.getElementById('dailyHeroContainer');
+      container.innerHTML = '';
+      container.appendChild(el);
+    }
+
+    function heroLoad() {
+      var today = new Date().getDay();
+      var week = heroGetWeek();
+      var attempts = 0;
+      var maxAttempts = 8;
+
+      function tryWeek(w) {
+        if (attempts >= maxAttempts) {
+          /* v0.57: no daily in the last 8 weeks? show the newest week there is, never an empty card */
+          fetch(HERO_SUPABASE_URL + '/rest/v1/ams_dailies?week_year=like.20*-W*&select=week_year&order=week_year.desc&limit=1', { headers: { 'apikey': HERO_SUPABASE_KEY, 'Authorization': 'Bearer ' + HERO_SUPABASE_KEY } })
+            .then(function (r) { return r.json(); })
+            .then(function (rows) {
+              if (!rows || !rows[0]) { heroRender(null); return; }
+              return heroFetchWeek(rows[0].week_year).then(function (data) {
+                var d = data && (data.find(function (x) { return (x.day_of_week === 7 ? 0 : x.day_of_week) === today; }) || data[0]);
+                heroRender(d || null);
+              });
+            }).catch(function () { heroRender(null); });
+          return;
+        }
+        attempts++;
+
+        heroFetchWeek(w)
+          .then(function(data) {
+            if (!data || data.length === 0) {
+              tryWeek(heroPrevWeek(w));
+              return;
+            }
+            var todayDaily = data.find(function(d) {
+              return (d.day_of_week === 7 ? 0 : d.day_of_week) === today;
+            });
+            if (!todayDaily) todayDaily = data[0];
+            heroRender(todayDaily);
+          })
+          .catch(function(err) {
+            console.error('Daily hero load error:', err);
+            heroRender(null);
+          });
+      }
+
+      /* v0.57: one quick lookup for the newest week up to this week (weeks are YYYY-Www, so text order = date order) */
+      fetch(HERO_SUPABASE_URL + '/rest/v1/ams_dailies?week_year=like.20*-W*&week_year=lte.' + week + '&select=week_year&order=week_year.desc&limit=1', { headers: { 'apikey': HERO_SUPABASE_KEY, 'Authorization': 'Bearer ' + HERO_SUPABASE_KEY } })
+        .then(function (r) { return r.json(); })
+        .then(function (rows) { if (rows && rows[0] && rows[0].week_year) { attempts = maxAttempts - 1; tryWeek(rows[0].week_year); } else tryWeek(week); })
+        .catch(function () { tryWeek(week); });
+    }
+
+    var heroOrigLang = heroGetLang();
+    setInterval(function() {
+      var n = heroGetLang();
+      if (n !== heroOrigLang) { heroOrigLang = n; heroLoad(); }
+    }, 500);
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', function() {
+        heroLoad();
+        heroLoadWeather();
+      });
+    } else {
+      heroLoad();
+      heroLoadWeather();
+    }
+  })();
+  </script>
+
+
+<script>
+/* Preload the quick-tour images in the background while the person is
+   on the login screen, so the tour opens with images already cached. */
+/* TODO: these tour images are still the original island photos; replace with Amsterdam imagery when the quick tour is redone */
+(function () {
+  var TOUR_IMGS = ["https://res.cloudinary.com/dhgfmuuo9/image/upload/f_auto,q_auto,w_800/v1768848812/baby_kid_eating_viyjq7.png", "https://res.cloudinary.com/dhgfmuuo9/image/upload/f_auto,q_auto,w_800/v1768848813/bomfire_with_marshmallows_soetbm.png", "https://res.cloudinary.com/dhgfmuuo9/image/upload/f_auto,q_auto,w_800/v1768848813/kids_and_chores_t1f4bn.jpg", "https://res.cloudinary.com/dhgfmuuo9/image/upload/f_auto,q_auto,w_800/v1768848816/alpaca_farm_ibiza_tu7m8u.png", "https://res.cloudinary.com/dhgfmuuo9/image/upload/f_auto,q_auto,w_800/v1768848817/food_preps_with_family_pkdbkh.png", "https://res.cloudinary.com/dhgfmuuo9/image/upload/f_auto,q_auto,w_800/v1768848819/parents_morning_ibiza_families_uympms.png", "https://res.cloudinary.com/dhgfmuuo9/image/upload/f_auto,q_auto,w_800/v1768848823/father_stJordi_swing_f90gvu.png", "https://res.cloudinary.com/dhgfmuuo9/image/upload/f_auto,q_auto,w_800/v1768848826/Happy_Family_on_boardwalk_f3l72b.png", "https://res.cloudinary.com/dhgfmuuo9/image/upload/f_auto,q_auto,w_800/v1768857142/after_school_dance_class_z0xjpq.png", "https://res.cloudinary.com/dhgfmuuo9/image/upload/f_auto,q_auto,w_800/v1768857949/work_life_balance_rukuau.png", "https://res.cloudinary.com/dhgfmuuo9/image/upload/f_auto,q_auto,w_800/v1768914018/toddler-image_1_enwfsq.png", "https://res.cloudinary.com/dhgfmuuo9/image/upload/f_auto,q_auto,w_800/v1768914035/friends-padel2_pbeiwe.png", "https://res.cloudinary.com/dhgfmuuo9/image/upload/f_auto,q_auto,w_800/v1768914036/kid_at_pool_with_ice_cream3_qd7une.png"];
+  function prefetch() {
+    TOUR_IMGS.forEach(function (u) { var im = new Image(); im.src = u; });
+  }
+  if (document.readyState === 'complete') setTimeout(prefetch, 200);
+  else window.addEventListener('load', function () { setTimeout(prefetch, 200); });
+})();
+</script>
+<script>
+/* Campaign hero slides, managed in app_config (content project), key ams_home_slides.
+   Value JSON: {"interval": 6, "slides": [{"img":"https://...","overlay":"#C9584A","overlay_opacity":0.45,
+     "eyebrow_en":"New","eyebrow_nl":"Nieuw","title_en":"...","title_nl":"...","line_en":"","line_nl":"",
+     "btn_en":"Try it","btn_nl":"Probeer","href":"foodieyai.html","start":"2026-09-01","end":"2026-12-31"}]}
+   No rows or fetch fails: only the Dailies slide shows, exactly as before. */
+(function(){
+  'use strict';
+  var KEY='ams_home_slides';
+  function lang(){ try { return localStorage.getItem('ams-lang') === 'nl' ? 'nl' : 'en'; } catch(e){ return 'en'; } }
+  function pick(o,base){ var l=lang(); return o[base+'_'+l] || o[base+'_en'] || ''; }
+  var car=document.getElementById('heroCarousel'), dotsEl=document.getElementById('heroDots');
+  if(!car) return;
+  var slides=[], interval=6, timer=null, n=1;
+  function hexRGB(hex){ if(!hex) return [47,42,56]; var h=hex.replace('#',''); if(h.length===3) h=h.replace(/./g,function(c){return c+c;}); return [parseInt(h.substr(0,2),16),parseInt(h.substr(2,2),16),parseInt(h.substr(4,2),16)]; }
+  function hexA(hex,a){ var c=hexRGB(hex); return 'rgba('+c[0]+','+c[1]+','+c[2]+','+a+')'; }
+  /* soften a config colour into the brand's pastel range and build the same
+     rainbow-ish gradient the Dailies hero wears */
+  function pastelMix(hex,r2,g2,b2,t,a){ var c=hexRGB(hex);
+    var r=Math.round(c[0]*(1-t)+r2*t), g=Math.round(c[1]*(1-t)+g2*t), b=Math.round(c[2]*(1-t)+b2*t);
+    return 'rgba('+r+','+g+','+b+','+a+')'; }
+  function pastelOverlay(hex,op){ op=op||0.82;
+    return 'linear-gradient(135deg,'+pastelMix(hex,190,170,205,0.82,Math.min(1,op+0.06))+' 0%,'+pastelMix(hex,205,185,170,0.82,op)+' 50%,'+pastelMix(hex,175,165,155,0.82,Math.min(1,op+0.06))+' 100%)'; }
+  function render(){
+    var today=new Date().toISOString().slice(0,10);
+    var live=slides.filter(function(sl){ return (!sl.start||sl.start<=today)&&(!sl.end||sl.end>=today); });
+    if(!live.length) return;
+    live.forEach(function(sl){
+      var d=document.createElement('div');
+      d.className='campaign-slide';
+      if(sl.img) d.style.backgroundImage='url("'+sl.img+'")';
+      else d.style.background='linear-gradient(135deg,'+(sl.overlay||'#B597C1')+',#2f2a38)';
+      var op=(sl.overlay_opacity!=null?sl.overlay_opacity:0.45);
+      d.innerHTML='<div class="cs-ov" style="background:'+pastelOverlay(sl.overlay,op)+'"></div>'+
+        '<div class="cs-c">'+
+        (pick(sl,'eyebrow')?'<div class="cs-eb">'+pick(sl,'eyebrow')+'</div>':'')+
+        '<div class="cs-t"'+(sl.title_size?' style="font-size:'+parseInt(sl.title_size,10)+'px"':'')+'>'+pick(sl,'title')+'</div>'+
+        (pick(sl,'line')?'<div class="cs-l">'+pick(sl,'line')+'</div>':'')+
+        (pick(sl,'btn')?'<span class="cs-b">'+pick(sl,'btn')+'</span>':'')+
+        '</div>';
+      if(sl.href) d.addEventListener('click',function(){ window.location.href=sl.href; });
+      d._sl = sl;
+      car.appendChild(d);
+    });
+    /* v0.43: slide texts follow the language switch */
+    function relabel(){
+      Array.prototype.forEach.call(car.querySelectorAll('.campaign-slide'), function(d){
+        var sl = d._sl; if (!sl) return;
+        var e = d.querySelector('.cs-eb'), t = d.querySelector('.cs-t'), l = d.querySelector('.cs-l'), b = d.querySelector('.cs-b');
+        if (e) e.textContent = pick(sl,'eyebrow'); if (t) t.textContent = pick(sl,'title');
+        if (l) l.textContent = pick(sl,'line'); if (b) b.textContent = pick(sl,'btn');
+      });
+    }
+    document.addEventListener('if-lang', relabel);
+    document.addEventListener('click', function(ev){ if (ev.target && ev.target.closest && ev.target.closest('.lang-btn, #if-topbar .if-lang button')) setTimeout(relabel, 30); });
+    n=1+live.length;
+    dotsEl.style.display='flex';
+    dotsEl.innerHTML=new Array(n+1).join('<i></i>');
+    setDot(0);
+    car.addEventListener('scroll',function(){ setDot(Math.round(car.scrollLeft/car.clientWidth)); },{passive:true});
+    /* v0.78: the slider keeps moving by itself. A touch only pauses it; it starts again 8 s after the last touch.
+       It jumps to each slide's real position, and if the phone ignores the smooth scroll it moves there directly. */
+    if(interval>0){
+      var paused=0;
+      function cur(){ var kids=car.children, best=0, bd=1e9; for(var k=0;k<kids.length;k++){ var d=Math.abs(kids[k].offsetLeft-car.offsetLeft-car.scrollLeft); if(d<bd){bd=d;best=k;} } return best; }
+      function go(i){ var kid=car.children[i]; if(!kid) return; var x=kid.offsetLeft-car.offsetLeft;
+        try{ car.scrollTo({left:x,behavior:'smooth'}); }catch(e){ car.scrollLeft=x; }
+        setTimeout(function(){ if(Math.abs(car.scrollLeft-x)>4) car.scrollLeft=x; },900); }
+      function tick(){ if(document.hidden||Date.now()<paused) return; go((cur()+1)%car.children.length); }
+      timer=setInterval(tick,interval*1000);
+      ['touchstart','mousedown','pointerdown'].forEach(function(ev){ car.addEventListener(ev,function(){ paused=Date.now()+8000; },{passive:true}); });
+    }
+  }
+  function setDot(i){ var ds=dotsEl.children; for(var k=0;k<ds.length;k++) ds[k].className=(k===i?'on':''); }
+  fetch('https://cbldlpuhmuojdvljdtsk.supabase.co/rest/v1/app_config?config_key=eq.'+KEY+'&select=config_value',{
+    headers:{ apikey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNibGRscHVobXVvamR2bGpkdHNrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAxNTY5OTUsImV4cCI6MjA3NTczMjk5NX0.HqkbwYs6wpr4Ui78H2AUcGnlIxUWkrvJ2m1JPqACPxM' }
+  }).then(function(r){ return r.ok? r.json():[]; }).then(function(d){
+    if(d&&d[0]&&d[0].config_value!=null){
+      var v=typeof d[0].config_value==='string'? JSON.parse(d[0].config_value):d[0].config_value;
+      slides=v.slides||[]; if(v.interval!=null) interval=v.interval;
+      render();
+    }
+  }).catch(function(){});
+})();
+
+/* Remote tile looks (image, title, pill) managed in app_config key ams_home_tiles.
+   Value: {"family-food-spots":{"img":"https://...","title_en":"...","title_nl":"...","pill_en":"...","pill_nl":"..."}, ...}
+   Keys are page filenames without .html. Managed from the marketing dashboard CMS. */
+(function(){
+  'use strict';
+  var cfg = null;
+  function lang(){ try { return localStorage.getItem('ams-lang') === 'nl' ? 'nl' : 'en'; } catch(e){ return 'en'; } }
+  function apply(){
+    if (!cfg) return;
+    Object.keys(cfg).forEach(function(page){
+      var t = cfg[page]; if (!t) return;
+      document.querySelectorAll('a[href="' + page + '.html"].photo-card, a[href="' + page + '.html"].tool-card, a[href="' + page + '.html"].tool-card-wide, a[href="' + page + '.html"].map-card').forEach(function(el){
+        if (t.img) {
+          var bg = el.querySelector('.photo-card-bg, .tool-card-bg, .map-card-bg');
+          if (bg) bg.style.backgroundImage = 'url(' + t.img + ')';
+        }
+        var L = lang();
+        var title = L === 'nl' ? (t.title_nl || t.title_en) : t.title_en;
+        if (title) {
+          var te = el.querySelector('.photo-card-title, .tool-card-title, .map-card-title');
+          if (te) te.textContent = title;
+        }
+        var pill = L === 'nl' ? (t.pill_nl || t.pill_en) : t.pill_en;
+        if (pill != null) {
+          var pe = el.querySelector('.tool-card-pill');
+          if (pe) { pe.textContent = pill; pe.style.display = pill === '' ? 'none' : ''; }
+        }
+        // small line above the title on the photo buttons (CMS "Small line")
+        var label = L === 'nl' ? (t.label_nl || t.label_en) : t.label_en;
+        if (label) {
+          var le = el.querySelector('.photo-card-label');
+          if (le) le.textContent = label;
+        }
+      });
+    });
+  }
+  fetch('https://cbldlpuhmuojdvljdtsk.supabase.co/rest/v1/app_config?config_key=eq.ams_home_tiles&select=config_value', {
+    headers: { apikey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNibGRscHVobXVvamR2bGpkdHNrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAxNTY5OTUsImV4cCI6MjA3NTczMjk5NX0.HqkbwYs6wpr4Ui78H2AUcGnlIxUWkrvJ2m1JPqACPxM' }
+  }).then(function(r){ return r.ok ? r.json() : []; })
+    .then(function(d){
+      if (d && d[0] && d[0].config_value != null) {
+        cfg = typeof d[0].config_value === 'string' ? JSON.parse(d[0].config_value) : d[0].config_value;
+        apply();
+      }
+    }).catch(function(){});
+  document.addEventListener('if-lang', apply);
+  document.addEventListener('click', function(e){
+    if (e.target && e.target.closest && e.target.closest('.lang-btn')) setTimeout(apply, 0);
+  });
+})();
+
+/* Remote badges on the home tiles, managed in app_config (content project),
+   key ams_home_badges. Value is JSON like:
+   {"family-food-spots":{"text_en":"Hot","text_nl":"Hot","color":"#E07070"},
+    "birthdays":{"text_en":"New","text_nl":"Nieuw","color":"#7BC47F"}}
+   Keys are the page filename without .html. Edit the row in Supabase and
+   every phone updates on its next home open. No app update needed.
+   If the fetch fails (offline), the badges baked into the HTML stay. */
+(function(){
+  'use strict';
+  var cfg = null;
+  function lang(){ try { return localStorage.getItem('ams-lang') === 'nl' ? 'nl' : 'en'; } catch(e){ return 'en'; } }
+  function apply(){
+    if (!cfg) return;
+    document.querySelectorAll('a.photo-card .photo-card-badge, a.tool-card .photo-card-badge').forEach(function(b){ b.remove(); });
+    Object.keys(cfg).forEach(function(page){
+      var b = cfg[page];
+      if (!b || !b.text_en) return;
+      var el = document.querySelector('a[href="' + page + '.html"].photo-card, a[href="' + page + '.html"].tool-card');
+      if (!el) return;
+      var s = document.createElement('span');
+      s.className = 'photo-card-badge';
+      s.textContent = lang() === 'nl' ? (b.text_nl || b.text_en) : b.text_en;
+      if (b.color) s.style.background = b.color;
+      el.appendChild(s);
+    });
+  }
+  fetch('https://cbldlpuhmuojdvljdtsk.supabase.co/rest/v1/app_config?config_key=eq.ams_home_badges&select=config_value', {
+    headers: { apikey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNibGRscHVobXVvamR2bGpkdHNrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAxNTY5OTUsImV4cCI6MjA3NTczMjk5NX0.HqkbwYs6wpr4Ui78H2AUcGnlIxUWkrvJ2m1JPqACPxM' }
+  }).then(function(r){ return r.ok ? r.json() : []; })
+    .then(function(d){
+      if (d && d[0] && d[0].config_value != null) {
+        cfg = typeof d[0].config_value === 'string' ? JSON.parse(d[0].config_value) : d[0].config_value;
+        apply();
+      }
+    }).catch(function(){});
+  document.addEventListener('if-lang', apply);
+  document.addEventListener('click', function(e){
+    if (e.target && e.target.closest && e.target.closest('.lang-btn')) setTimeout(apply, 0);
+  });
+})();
+</script>
+
+<!-- v0.62: one Edu Games tile on Home, a small sheet to pick Babydoku or Memory -->
+<style>
+.edu-sheet{position:fixed;inset:0;z-index:3000;display:none;align-items:flex-end;justify-content:center;background:rgba(45,42,51,.42)}
+.edu-sheet.show{display:flex;animation:eduFade .2s ease}
+@keyframes eduFade{from{opacity:0}to{opacity:1}}
+.edu-box{width:100%;max-width:480px;background:#fff;border-radius:26px 26px 0 0;padding:10px 18px calc(22px + env(safe-area-inset-bottom));animation:eduUp .28s cubic-bezier(.2,.8,.2,1);font-family:Karla,sans-serif}
+@keyframes eduUp{from{transform:translateY(40px)}to{transform:none}}
+.edu-grip{width:42px;height:5px;border-radius:5px;background:#E6DDEB;margin:2px auto 14px}
+.edu-box h3{font-size:19px;font-weight:800;color:#2D2A33;margin:0 0 14px;text-align:center}
+.edu-opts{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.edu-opt{position:relative;display:block;aspect-ratio:.95;border-radius:20px;overflow:hidden;text-decoration:none;color:#fff;box-shadow:0 8px 22px rgba(90,70,120,.16)}
+.edu-opt .bg{position:absolute;inset:0;background-size:cover;background-position:center}
+.edu-opt::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(45,42,51,0) 25%,rgba(110,82,130,.55) 55%,rgba(110,82,130,.92))}
+.edu-opt span{position:absolute;left:12px;right:12px;bottom:12px;z-index:1;text-align:left}
+.edu-opt b{display:block;font-size:17px;font-weight:800}
+.edu-opt small{display:block;font-size:12.5px;line-height:1.3;font-weight:600;opacity:.95;margin-top:3px}
+.edu-x{display:block;width:100%;margin-top:14px;border:none;background:#F3ECF7;color:#8E6FA0;font:800 15px Karla;padding:13px;border-radius:16px}
+</style>
+<div class="edu-sheet" id="eduSheet" role="dialog" aria-modal="true" aria-labelledby="eduT">
+  <div class="edu-box">
+    <div class="edu-grip"></div>
+    <h3 id="eduT" data-i18n="eduPick">Which game today?</h3>
+    <div class="edu-opts">
+      <a class="edu-opt" href="find-the-baby.html"><i class="bg" style="background-image:url('assets/img/home/babydoku.webp')"></i><span><b data-i18n="eduBaby">Babydoku</b><small data-i18n="eduBabySub">Kids love it. Parents get hooked.</small></span></a>
+      <a class="edu-opt" href="memory-game.html"><i class="bg" style="background-image:url('assets/img/home/memory.webp')"></i><span><b data-i18n="eduMem">Memory</b><small data-i18n="eduMemSub">Memory with a twist. Play together or challenge our little robot!</small></span></a>
+    </div>
+    <button type="button" class="edu-x" id="eduX" data-i18n="eduClose">Close</button>
+  </div>
+</div>
+<script>
+(function(){
+  var sh = document.getElementById('eduSheet'), card = document.getElementById('eduCard');
+  if (!sh || !card) return;
+  function open(e){ if (e) e.preventDefault(); sh.classList.add('show'); }
+  function close(){ sh.classList.remove('show'); }
+  card.addEventListener('click', open);
+  document.getElementById('eduX').addEventListener('click', close);
+  sh.addEventListener('click', function(e){ if (e.target === sh) close(); });
+  window.addEventListener('pageshow', close);
+  /* v0.71: /app/games (or ?open=edu) opens the game picker straight away */
+  if (/[?&]open=edu\b/.test(location.search)) setTimeout(open, 400);
+})();
+</script>
+</body>
+</html>
