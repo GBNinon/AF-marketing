@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<!-- Families App campaign board v1 (29 Oct 2026): every campaign as a card with visual, status pipeline, health, requirements, assets, actions with owner and due date, channels, KPI, PR, notes. Cards view (side by side) and Pipeline view (columns per status, drag to move). Data in Supabase qcz table marketing_campaign_board, images in storage bucket marketing/<city>/campaigns. -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Campaign board</title>
+<link href="https://fonts.googleapis.com/css2?family=Karla:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  :root{--bg:#F8F6FA;--ink:#2f2a38;--mute:#8a7f97;--soft:#a79dbb;--line:#e9e2ef;--card:#fff;--lilac:#B597C1;--pink:#E8B0C8;--red:#d9534f;--amber:#e39b2d;--green:#3a9a6e;}
+  body{background:var(--bg);color:var(--ink);font-family:'Karla',-apple-system,sans-serif;padding:24px 20px 80px;}
+  .hidden{display:none !important;}
+  .wrap{max-width:1400px;margin:0 auto;}
+  button{font-family:inherit;}
+  :focus-visible{outline:2px solid var(--lilac);outline-offset:2px;border-radius:6px;}
+  .btn{background:linear-gradient(135deg,var(--lilac),var(--pink));color:#fff;font-weight:800;padding:10px 16px;border:none;border-radius:12px;font-size:14px;cursor:pointer;white-space:nowrap;}
+  .btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
+  .btn.small{padding:6px 11px;font-size:12.5px;border-radius:10px;}
+  .out{border:none;background:none;color:var(--soft);font-size:13px;cursor:pointer;text-decoration:underline;}
+  .msg{color:var(--mute);font-size:14px;}
+
+  /* login */
+  .login{max-width:380px;margin:80px auto;background:#fff;border:1px solid var(--line);border-radius:20px;padding:26px;text-align:center;}
+  .login input{width:100%;border:1.5px solid #e0d8ea;border-radius:12px;padding:12px 14px;font-size:16px;font-family:inherit;margin:14px 0 10px;}
+  .login .btn{width:100%;}
+
+  /* header */
+  header{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-bottom:18px;}
+  .brand{display:flex;align-items:center;gap:10px;margin-right:auto;min-width:0;}
+  .mark{width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,var(--lilac),var(--pink));color:#fff;font-weight:800;font-size:17px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 12px rgba(181,151,193,.35);}
+  h1{font-size:24px;font-weight:800;}
+  h1 em{font-style:normal;font-weight:400;}
+  .links{display:flex;gap:12px;align-items:center;}
+
+  /* summary */
+  .summary{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:16px;}
+  .stat{background:#fff;border:1px solid var(--line);border-radius:16px;padding:12px 14px;}
+  .stat .l{font-size:11.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--mute);}
+  .stat .v{font-size:24px;font-weight:800;margin-top:2px;}
+  .stat .s{font-size:12.5px;color:var(--soft);}
+  .stat.warn .v{color:var(--red);}
+  .pipe{display:flex;height:8px;border-radius:6px;overflow:hidden;background:#f1ecf5;margin-top:8px;}
+  .pipe span{display:block;height:100%;}
+
+  /* toolbar */
+  .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:16px;position:sticky;top:0;z-index:20;background:rgba(248,246,250,.94);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:8px 0;}
+  .seg{display:flex;gap:3px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:3px;}
+  .seg button{padding:7px 12px;border-radius:9px;font-weight:700;font-size:13px;color:#6f6680;border:none;background:none;cursor:pointer;white-space:nowrap;}
+  .seg button.on{background:var(--ink);color:#fff;}
+  #filter{max-width:100%;overflow-x:auto;scrollbar-width:none;}
+  #filter::-webkit-scrollbar{display:none;}
+  .search{flex:1;min-width:160px;border:1px solid var(--line);border-radius:12px;padding:9px 12px;font-family:inherit;font-size:14px;background:#fff;}
+  .toolbar .btn{margin-left:auto;}
+
+  /* cards view */
+  .row{display:flex;gap:16px;overflow-x:auto;padding:4px 2px 18px;scroll-snap-type:x proximity;align-items:flex-start;}
+  .row::-webkit-scrollbar{height:10px;} .row::-webkit-scrollbar-thumb{background:#ddd3e6;border-radius:6px;}
+  .card{flex:0 0 320px;scroll-snap-align:start;background:var(--card);border:1px solid var(--line);border-radius:22px;overflow:hidden;box-shadow:0 2px 10px rgba(47,42,56,.04);display:flex;flex-direction:column;}
+  .vis{position:relative;height:210px;background:linear-gradient(160deg,#fde3ec,#f3e9fb);padding:12px 12px 0;}
+  .vis .frame{height:100%;border-radius:16px 16px 0 0;overflow:hidden;background:#fff;position:relative;}
+  .vis img{width:100%;height:100%;object-fit:cover;object-position:center 30%;display:block;}
+  .ph{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#fff;text-align:center;padding:16px;}
+  .ph b{font-size:38px;font-weight:800;opacity:.9;letter-spacing:-1px;}
+  .ph small{font-size:12px;font-weight:700;opacity:.85;}
+  .badges{position:absolute;top:20px;left:20px;right:20px;display:flex;gap:6px;flex-wrap:wrap;}
+  .chip{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:800;padding:3px 8px;border-radius:20px;background:rgba(255,255,255,.92);color:var(--ink);}
+  .chip.launch{background:var(--ink);color:#fff;}
+  .chip.red{background:#fde6e5;color:#b23b37;} .chip.amber{background:#fdf0dc;color:#9a5d0a;} .chip.green{background:#e3f4ec;color:#22744f;}
+  .band{padding:13px 16px;color:#fff;}
+  .band h3{font-size:17px;font-weight:800;line-height:1.2;}
+  .band p{font-size:13px;opacity:.92;margin-top:2px;}
+  .body{padding:12px 16px 14px;display:flex;flex-direction:column;gap:11px;flex:1;}
+  .sel{width:100%;border:1px solid var(--line);border-radius:10px;padding:7px 9px;font-family:inherit;font-size:13.5px;font-weight:700;background:#fff;}
+  .steps{display:flex;gap:3px;margin-top:6px;}
+  .steps i{flex:1;height:5px;border-radius:3px;background:#efe9f4;}
+  .steps i.on{background:var(--lilac);}
+  .kv{display:grid;grid-template-columns:86px 1fr;gap:4px 8px;font-size:13px;}
+  .kv b{color:var(--mute);font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.4px;padding-top:1px;}
+  .desc{font-size:13.5px;line-height:1.45;color:#4a4256;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;}
+  .sec{border-top:1px solid #f1ecf5;padding-top:9px;}
+  .sec h4{font-size:11.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--mute);display:flex;justify-content:space-between;margin-bottom:5px;}
+  .sec h4 span{color:var(--soft);font-weight:700;}
+  .chk{display:flex;gap:8px;align-items:flex-start;font-size:13px;line-height:1.35;padding:2px 0;cursor:pointer;}
+  .chk input{margin-top:2px;accent-color:var(--lilac);flex-shrink:0;}
+  .chk.done span{color:var(--soft);text-decoration:line-through;}
+  .chk .meta{margin-left:auto;font-size:11.5px;color:var(--soft);white-space:nowrap;padding-left:6px;}
+  .chk .meta.late{color:var(--red);font-weight:800;}
+  .more{font-size:12px;color:var(--soft);}
+  .prog{height:6px;border-radius:4px;background:#f1ecf5;overflow:hidden;}
+  .prog span{display:block;height:100%;background:linear-gradient(90deg,var(--lilac),var(--pink));}
+  .chs{display:flex;flex-wrap:wrap;gap:4px;}
+  .chs span{font-size:11.5px;font-weight:700;background:#f4eff8;color:#6f6680;border-radius:8px;padding:2px 7px;}
+  .next{background:#faf7fc;border-radius:12px;padding:8px 10px;font-size:13px;}
+  .next b{font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--mute);display:block;}
+  .blocked{background:#fde6e5;color:#8f2f2b;border-radius:12px;padding:8px 10px;font-size:13px;font-weight:700;}
+  .foot{display:flex;gap:6px;margin-top:auto;padding-top:4px;}
+  .foot .btn{flex:1;}
+  .suggest{background:#e3f4ec;color:#22744f;border-radius:12px;padding:8px 10px;font-size:12.5px;font-weight:700;display:flex;align-items:center;gap:8px;}
+  .suggest button{margin-left:auto;}
+  .group-t{font-size:13px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--mute);margin:8px 0 8px;display:flex;gap:10px;align-items:baseline;}
+  .group-t small{font-weight:600;text-transform:none;letter-spacing:0;color:var(--soft);}
+
+  /* pipeline view */
+  .kan{display:flex;gap:12px;overflow-x:auto;padding-bottom:18px;align-items:flex-start;}
+  .col{flex:0 0 230px;background:#f1ecf5;border-radius:18px;padding:10px;min-height:120px;}
+  .col.over{background:#e9def2;outline:2px dashed var(--lilac);}
+  .col h5{font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#6f6680;display:flex;gap:6px;align-items:center;margin:2px 4px 8px;}
+  .col h5 i{width:9px;height:9px;border-radius:50%;}
+  .col h5 span{margin-left:auto;color:var(--soft);}
+  .mini{background:#fff;border-radius:14px;padding:9px 10px;margin-bottom:8px;cursor:grab;border-left:5px solid #ccc;box-shadow:0 1px 4px rgba(47,42,56,.05);}
+  .mini b{font-size:13.5px;display:block;}
+  .mini small{font-size:11.5px;color:var(--soft);display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;}
+  .mini .prog{margin-top:6px;}
+
+  /* drawer */
+  .scrim{position:fixed;inset:0;background:rgba(47,42,56,.35);z-index:50;}
+  .drawer{position:fixed;top:0;right:0;bottom:0;width:min(560px,100vw);background:#fff;z-index:51;overflow-y:auto;box-shadow:-10px 0 30px rgba(47,42,56,.12);}
+  .drawer .dh{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--line);padding:14px 18px;display:flex;gap:10px;align-items:center;z-index:2;}
+  .drawer .dh h3{font-size:17px;font-weight:800;margin-right:auto;}
+  .drawer .db{padding:16px 18px 40px;display:flex;flex-direction:column;gap:14px;}
+  .f label{display:block;font-size:11.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--mute);margin-bottom:4px;}
+  .f input[type=text],.f input[type=date],.f input[type=url],.f textarea,.f select{width:100%;border:1.5px solid #e6dfee;border-radius:10px;padding:9px 11px;font-family:inherit;font-size:14px;background:#fff;}
+  .f textarea{min-height:90px;resize:vertical;line-height:1.45;}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .list .it{display:grid;grid-template-columns:20px 1fr auto;gap:6px;align-items:center;margin-bottom:5px;}
+  .list .it.act{grid-template-columns:20px 1fr 90px 132px auto;}
+  .list .it input[type=text],.list .it input[type=date],.list .it select{border:1px solid #ece5f2;border-radius:8px;padding:6px 8px;font-family:inherit;font-size:13px;width:100%;min-width:0;}
+  .list .it input[type=checkbox]{accent-color:var(--lilac);}
+  .x{border:none;background:none;color:var(--soft);font-size:18px;cursor:pointer;line-height:1;padding:0 4px;}
+  .add{border:1px dashed #d9cfe4;background:none;border-radius:9px;padding:6px 10px;font-size:12.5px;font-weight:700;color:#6f6680;cursor:pointer;}
+  .imgrow{display:flex;gap:10px;align-items:center;}
+  .imgrow img{width:72px;height:72px;object-fit:cover;border-radius:12px;border:1px solid var(--line);}
+  .toggle{display:flex;gap:8px;align-items:center;font-size:14px;font-weight:700;}
+  .saved{font-size:12.5px;color:var(--green);font-weight:700;}
+  .danger{color:var(--red);}
+
+  @media (max-width:900px){.summary{grid-template-columns:repeat(2,minmax(0,1fr));}.summary .stat:last-child{grid-column:1 / -1;}}
+  @media (max-width:560px){
+    body{padding:16px 16px 60px;}
+    .card{flex-basis:86vw;}
+    .two{grid-template-columns:1fr;}
+    .list .it.act{grid-template-columns:20px 1fr auto;}
+    .list .it.act .ow,.list .it.act .du{grid-column:2 / 3;}
+    .toolbar .btn{margin-left:0;}
+  }
+</style>
+</head>
+<body>
+
+<div id="login" class="login hidden">
+  <h1 style="margin:0">Campaign board</h1>
+  <p class="msg" style="margin-top:8px">Log in with your email code.</p>
+  <div id="l-step1">
+    <input type="email" id="l-email" placeholder="email address">
+    <button class="btn" id="l-send">Send code</button>
+  </div>
+  <div id="l-step2" class="hidden">
+    <input type="text" id="l-code" inputmode="numeric" maxlength="10" autocomplete="one-time-code" placeholder="code from the email">
+    <button class="btn" id="l-verify">Log in</button>
+  </div>
+  <p class="msg" id="l-msg" style="margin-top:10px"></p>
+</div>
+
+<div id="app" class="wrap hidden">
+  <header>
+    <div class="brand"><span class="mark" aria-hidden="true">F</span><h1>Plans of <em>Campaigns</em></h1></div>
+    <div class="links"><a class="out" href="index.html">dashboard</a><a class="out" href="home-cms.html">home CMS</a><button class="out" id="logout">log out</button></div>
+  </header>
+
+  <div class="summary" id="summary"></div>
+
+  <div class="toolbar">
+    <div class="seg" id="view"><button data-v="cards" class="on">Cards</button><button data-v="pipeline">Pipeline</button></div>
+    <div class="seg" id="filter">
+      <button data-f="all" class="on">All</button><button data-f="launch">At launch</button><button data-f="ad">Ads</button><button data-f="organic">Organic</button><button data-f="attention">Needs attention</button>
+    </div>
+    <input class="search" id="q" type="search" placeholder="Search campaigns, actions, owners">
+    <button class="btn" id="new">+ New campaign</button>
+  </div>
+
+  <div id="board"></div>
+  <p class="msg" id="err"></p>
+</div>
+
+<div id="scrim" class="scrim hidden"></div>
+<aside id="drawer" class="drawer hidden" aria-label="Edit campaign"></aside>
+
+<script>
+const SUPABASE_URL = 'https://qczutthumgpgxwepatte.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFjenV0dGh1bWdwZ3h3ZXBhdHRlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkwNzg5NzAsImV4cCI6MjA4NDY1NDk3MH0.vleNYVReRJnMruKBTXEb9gwdKVdhbiuLJTZoDiuUM0g';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+const TABLE = 'marketing_campaign_board';
+const city = (() => { try { return localStorage.getItem('fm-city') || 'amsterdam'; } catch (e) { return 'amsterdam'; } })();
+
+/* Status pipeline. "path" statuses are the normal flow; paused and done sit outside it. */
+const STATUS = [
+  { k: 'idea',       t: 'Idea',          c: '#c9bfd6', path: 0 },
+  { k: 'brief',      t: 'Brief',         c: '#a98bc4', path: 1 },
+  { k: 'production', t: 'In production', c: '#e39b2d', path: 2 },
+  { k: 'review',     t: 'In review',     c: '#e8739a', path: 3 },
+  { k: 'approved',   t: 'Approved',      c: '#4f9fd1', path: 4 },
+  { k: 'scheduled',  t: 'Scheduled',     c: '#6a7fd6', path: 5 },
+  { k: 'live',       t: 'Live',          c: '#3a9a6e', path: 6 },
+  { k: 'paused',     t: 'Paused',        c: '#9a93a6', path: -1 },
+  { k: 'done',       t: 'Done',          c: '#2f2a38', path: -1 },
+];
+const S = Object.fromEntries(STATUS.map(s => [s.k, s]));
+const GATED = ['approved', 'scheduled', 'live']; // need all requirements done
+const OWNERS = ['Ciao', 'Claude', 'Partner', 'Freelancer'];
+
+let rows = [], view = 'cards', filter = 'all', q = '';
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const today = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; };
+const dayDiff = iso => Math.round((new Date(iso + 'T00:00:00') - today()) / 864e5);
+function isoWeek(iso) { const d = new Date(iso + 'T00:00:00Z'); const t = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())); const n = (t.getUTCDay() + 6) % 7; t.setUTCDate(t.getUTCDate() - n + 3); const f = new Date(Date.UTC(t.getUTCFullYear(), 0, 4)); return 1 + Math.round(((t - f) / 864e5 - 3 + ((f.getUTCDay() + 6) % 7)) / 7); }
+const fmtDate = iso => iso ? new Date(iso + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '';
+
+/* ---------- logic ---------- */
+function counts(r) {
+  const all = [...(r.requirements || []), ...(r.assets || []), ...(r.actions || [])];
+  const req = r.requirements || [];
+  return { done: all.filter(x => x.done).length, total: all.length, reqOpen: req.filter(x => !x.done).length, reqTotal: req.length };
+}
+function pct(r) { const c = counts(r); return c.total ? Math.round(100 * c.done / c.total) : 0; }
+function nextAction(r) {
+  const open = (r.actions || []).filter(a => !a.done && a.text);
+  open.sort((a, b) => (a.due || '9999') < (b.due || '9999') ? -1 : 1);
+  return open[0] || null;
+}
+function lateActions(r) { return (r.actions || []).filter(a => !a.done && a.due && dayDiff(a.due) < 0).length; }
+/* health: blocked > overdue > at risk > on track; finished states show nothing */
+function health(r) {
+  if (r.status === 'done') return { k: 'done', t: 'Done', cls: 'green' };
+  if (r.blocked_reason) return { k: 'blocked', t: 'Blocked', cls: 'red' };
+  if (r.status === 'paused') return { k: 'paused', t: 'Paused', cls: '' };
+  if (r.deadline && r.status !== 'live') {
+    const d = dayDiff(r.deadline);
+    if (d < 0) return { k: 'overdue', t: `Overdue ${-d}d`, cls: 'red' };
+    if (d <= 7 && pct(r) < 70) return { k: 'risk', t: 'At risk', cls: 'amber' };
+  }
+  if (lateActions(r)) return { k: 'risk', t: `${lateActions(r)} late action${lateActions(r) > 1 ? 's' : ''}`, cls: 'amber' };
+  if (r.status === 'live') return { k: 'live', t: 'Live', cls: 'green' };
+  return { k: 'ok', t: 'On track', cls: 'green' };
+}
+const needsAttention = r => ['blocked', 'overdue', 'risk'].includes(health(r).k);
+/* suggestion: what the next status should be, based on the checklist */
+function suggestion(r) {
+  const c = counts(r), st = r.status;
+  if (r.blocked_reason) return null;
+  if (st === 'production' && c.total && c.done === c.total) return { to: 'review', t: 'Everything ticked. Send to review?' };
+  if (st === 'review' && c.reqTotal && c.reqOpen === 0) return { to: 'approved', t: 'Requirements met. Approve?' };
+  if (st === 'brief' && c.reqTotal && c.reqOpen === 0) return { to: 'production', t: 'Brief complete. Start production?' };
+  return null;
+}
+
+/* ---------- auth ---------- */
+async function boot() {
+  const { data } = await sb.auth.getSession();
+  if (!data.session) { $('login').classList.remove('hidden'); return; }
+  $('app').classList.remove('hidden');
+  await load();
+}
+$('l-send').onclick = async () => {
+  const email = $('l-email').value.trim().toLowerCase(); if (!email) return;
+  $('l-msg').textContent = 'Sending...';
+  const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
+  if (error) { $('l-msg').textContent = error.message; return; }
+  $('l-step1').classList.add('hidden'); $('l-step2').classList.remove('hidden');
+  $('l-msg').textContent = 'Code sent to ' + email;
+};
+$('l-verify').onclick = async () => {
+  const email = $('l-email').value.trim().toLowerCase(), token = $('l-code').value.trim();
+  let r = await sb.auth.verifyOtp({ email, token, type: 'email' });
+  if (r.error) r = await sb.auth.verifyOtp({ email, token, type: 'magiclink' });
+  if (r.error) { $('l-msg').textContent = 'That code did not work (' + r.error.message + ')'; return; }
+  location.reload();
+};
+$('logout').onclick = async () => { await sb.auth.signOut(); location.reload(); };
+
+/* ---------- data ---------- */
+async function load() {
+  const { data, error } = await sb.from(TABLE).select('*').eq('city', city).order('sort');
+  if (error) { $('err').textContent = 'Could not load campaigns: ' + error.message; return; }
+  rows = data || [];
+  render();
+}
+async function save(r, patch) {
+  Object.assign(r, patch);
+  const { error } = await sb.from(TABLE).update(patch).eq('key', r.key);
+  if (error) { alert('Save failed: ' + error.message); await load(); return false; }
+  return true;
+}
+function setStatus(r, to) {
+  if (GATED.includes(to) && counts(r).reqOpen > 0 && !confirm(`${counts(r).reqOpen} requirement(s) are still open for "${r.title}". Move to ${S[to].t} anyway?`)) { render(); return; }
+  save(r, { status: to }).then(render);
+}
+
+/* ---------- render ---------- */
+function visible() {
+  const words = q.toLowerCase().split(/\s+/).filter(Boolean);
+  return rows.filter(r => {
+    if (filter === 'launch' && !r.at_launch) return false;
+    if (filter === 'ad' && r.kind !== 'ad') return false;
+    if (filter === 'organic' && r.kind !== 'organic') return false;
+    if (filter === 'attention' && !needsAttention(r)) return false;
+    if (!words.length) return true;
+    const hay = [r.title, r.tagline, r.description, r.code, r.owner, r.notes, r.kpi, r.gift, ...(r.channels || []), ...(r.actions || []).map(a => a.text + ' ' + (a.owner || '')), ...(r.requirements || []).map(a => a.text)].join(' ').toLowerCase();
+    return words.every(w => hay.includes(w));
+  });
+}
+function render() {
+  renderSummary();
+  const list = visible();
+  if (!list.length) { $('board').innerHTML = '<p class="msg">No campaigns match.</p>'; return; }
+  $('board').innerHTML = view === 'cards' ? renderCards(list) : renderPipeline(list);
+  view === 'cards' ? wireCards() : wirePipeline();
+}
+function renderSummary() {
+  const launch = rows.filter(r => r.at_launch);
+  const launchReady = launch.filter(r => ['approved', 'scheduled', 'live', 'done'].includes(r.status)).length;
+  const att = rows.filter(needsAttention).length;
+  const live = rows.filter(r => r.status === 'live').length;
+  const openActs = rows.flatMap(r => (r.actions || []).filter(a => !a.done && a.text));
+  const dueWeek = openActs.filter(a => a.due && dayDiff(a.due) <= 7).length;
+  const deadlines = rows.filter(r => r.deadline && !['live', 'done'].includes(r.status)).sort((a, b) => a.deadline < b.deadline ? -1 : 1);
+  const nd = deadlines[0];
+  const pipe = STATUS.map(s => [s, rows.filter(r => r.status === s.k).length]).filter(x => x[1]);
+  $('summary').innerHTML = `
+    <div class="stat"><div class="l">Launch set ready</div><div class="v">${launchReady}/${launch.length}</div><div class="s">approved, scheduled or live</div></div>
+    <div class="stat"><div class="l">Pipeline</div><div class="v">${rows.length} <span style="font-size:14px;color:var(--soft)">campaigns, ${live} live</span></div>
+      <div class="pipe" title="${pipe.map(([s, n]) => s.t + ': ' + n).join(', ')}">${pipe.map(([s, n]) => `<span style="flex:${n};background:${s.c}"></span>`).join('')}</div></div>
+    <div class="stat ${att ? 'warn' : ''}"><div class="l">Needs attention</div><div class="v">${att}</div><div class="s">blocked, overdue or at risk</div></div>
+    <div class="stat"><div class="l">Open actions</div><div class="v">${openActs.length}</div><div class="s">${dueWeek} due within 7 days</div></div>
+    <div class="stat"><div class="l">Next deadline</div><div class="v" style="font-size:18px;margin-top:5px">${nd ? esc(nd.title) : 'None set'}</div><div class="s">${nd ? `week ${isoWeek(nd.deadline)}, ${fmtDate(nd.deadline)} (${dayDiff(nd.deadline) >= 0 ? 'in ' + dayDiff(nd.deadline) + 'd' : -dayDiff(nd.deadline) + 'd ago'})` : ''}</div></div>`;
+}
+function visual(r) {
+  if (r.image_url) return `<img src="${esc(r.image_url)}" alt="" loading="lazy">`;
+  const ini = (r.title || '?').replace(/[^A-Za-z ]/g, '').split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+  return `<div class="ph" style="background:linear-gradient(150deg,${r.color || '#B597C1'},${r.color || '#B597C1'}99)"><b>${esc(ini)}</b><small>add a visual</small></div>`;
+}
+function checklist(items, key, r, max = 4) {
+  if (!items || !items.length) return '<div class="more">Nothing yet</div>';
+  const shown = items.slice(0, max);
+  return shown.map((it, i) => {
+    const late = key === 'actions' && !it.done && it.due && dayDiff(it.due) < 0;
+    const meta = key === 'actions' ? [it.owner, it.due ? fmtDate(it.due) : ''].filter(Boolean).join(' · ') : '';
+    return `<label class="chk ${it.done ? 'done' : ''}"><input type="checkbox" data-k="${key}" data-i="${i}" ${it.done ? 'checked' : ''}><span>${esc(it.text)}</span>${meta ? `<em class="meta ${late ? 'late' : ''}">${esc(meta)}</em>` : ''}</label>`;
+  }).join('') + (items.length > max ? `<div class="more">+${items.length - max} more</div>` : '');
+}
+function cardHTML(r) {
+  const st = S[r.status] || S.idea, h = health(r), p = pct(r), c = counts(r), na = nextAction(r), sg = suggestion(r);
+  const reqDone = (r.requirements || []).filter(x => x.done).length, assDone = (r.assets || []).filter(x => x.done).length, actDone = (r.actions || []).filter(x => x.done).length;
+  return `<article class="card" data-key="${esc(r.key)}">
+    <div class="vis"><div class="frame">${visual(r)}</div>
+      <div class="badges">${r.at_launch ? '<span class="chip launch">LAUNCH</span>' : ''}${r.wave ? `<span class="chip">Wave ${r.wave}</span>` : ''}<span class="chip">${r.kind === 'ad' ? 'Ad' : 'Organic'}</span>${h.k !== 'ok' ? `<span class="chip ${h.cls}">${esc(h.t)}</span>` : ''}</div></div>
+    <div class="band" style="background:${r.color || '#B597C1'}"><h3>${esc(r.title)}</h3>${r.tagline ? `<p>${esc(r.tagline)}</p>` : ''}</div>
+    <div class="body">
+      <div><select class="sel" data-act="status" aria-label="Status" style="border-left:6px solid ${st.c}">${STATUS.map(s => `<option value="${s.k}" ${s.k === r.status ? 'selected' : ''}>${s.t}</option>`).join('')}</select>
+        <div class="steps">${STATUS.filter(s => s.path >= 0).map(s => `<i class="${st.path >= s.path ? 'on' : ''}" title="${s.t}"></i>`).join('')}</div></div>
+      ${r.blocked_reason ? `<div class="blocked">Blocked: ${esc(r.blocked_reason)}</div>` : ''}
+      ${sg ? `<div class="suggest">${esc(sg.t)}<button class="btn small" data-act="suggest" data-to="${sg.to}">Move</button></div>` : ''}
+      <div class="desc">${esc(r.description || '')}</div>
+      <div class="kv">
+        ${r.landing_page ? `<b>Landing</b><span>${esc(r.landing_page)}</span>` : ''}
+        ${r.app_target ? `<b>In app</b><span>${esc(r.app_target)}</span>` : ''}
+        ${r.gift ? `<b>Gift</b><span>${esc(r.gift)}</span>` : ''}
+        <b>Deadline</b><span>${r.deadline ? `Week ${isoWeek(r.deadline)}, ${fmtDate(r.deadline)}` : '<span class="more">not set</span>'}</span>
+        <b>Owner</b><span>${esc(r.owner || '')}</span>
+        ${r.kpi ? `<b>KPI</b><span>${esc(r.kpi)}</span>` : ''}
+        ${r.pr ? `<b>PR</b><span>${esc(r.pr)}</span>` : ''}
+      </div>
+      ${(r.channels || []).length ? `<div class="chs">${r.channels.map(x => `<span>${esc(x)}</span>`).join('')}</div>` : ''}
+      <div><div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;color:var(--mute);margin-bottom:4px"><span>Progress</span><span>${c.done}/${c.total} · ${p}%</span></div><div class="prog"><span style="width:${p}%"></span></div></div>
+      ${na ? `<div class="next"><b>Next action</b>${esc(na.text)}${na.owner || na.due ? ` <span class="more">(${esc([na.owner, na.due ? fmtDate(na.due) : ''].filter(Boolean).join(', '))})</span>` : ''}</div>` : ''}
+      <div class="sec"><h4>Requirements <span>${reqDone}/${(r.requirements || []).length}</span></h4>${checklist(r.requirements, 'requirements', r)}</div>
+      <div class="sec"><h4>Assets <span>${assDone}/${(r.assets || []).length}</span></h4>${checklist(r.assets, 'assets', r)}</div>
+      <div class="sec"><h4>Actions <span>${actDone}/${(r.actions || []).length}</span></h4>${checklist(r.actions, 'actions', r)}</div>
+      ${r.notes ? `<div class="sec"><h4>Notes</h4><div class="desc">${esc(r.notes)}</div></div>` : ''}
+      <div class="foot"><button class="btn ghost small" data-act="open">Open and edit</button></div>
+    </div></article>`;
+}
+function renderCards(list) {
+  if (filter !== 'all' || q) return `<div class="row">${list.map(cardHTML).join('')}</div>`;
+  const ads = list.filter(r => r.kind === 'ad'), org = list.filter(r => r.kind !== 'ad');
+  return (ads.length ? `<div class="group-t">Ad campaigns<small>every ad links to a quiz or landing page, the result waits in the app</small></div><div class="row">${ads.map(cardHTML).join('')}</div>` : '')
+    + (org.length ? `<div class="group-t">Viral, organic and trust<small>reach we earn, not buy</small></div><div class="row">${org.map(cardHTML).join('')}</div>` : '');
+}
+function wireCards() {
+  $('board').querySelectorAll('.card').forEach(el => {
+    const r = rows.find(x => x.key === el.dataset.key);
+    el.querySelector('[data-act=status]').onchange = e => setStatus(r, e.target.value);
+    el.querySelector('[data-act=open]').onclick = () => openDrawer(r);
+    const sg = el.querySelector('[data-act=suggest]'); if (sg) sg.onclick = () => setStatus(r, sg.dataset.to);
+    el.querySelectorAll('input[type=checkbox][data-k]').forEach(cb => cb.onchange = () => {
+      const k = cb.dataset.k, list = (r[k] || []).map(x => ({ ...x })); list[+cb.dataset.i].done = cb.checked;
+      save(r, { [k]: list }).then(render);
+    });
+  });
+}
+function renderPipeline(list) {
+  return `<div class="kan">${STATUS.map(s => {
+    const items = list.filter(r => r.status === s.k);
+    return `<div class="col" data-s="${s.k}"><h5><i style="background:${s.c}"></i>${s.t}<span>${items.length}</span></h5>${items.map(r => {
+      const h = health(r);
+      return `<div class="mini" draggable="true" data-key="${esc(r.key)}" style="border-left-color:${r.color || '#ccc'}"><b>${esc(r.title)}</b>
+        <small>${r.at_launch ? '<span class="chip launch">LAUNCH</span>' : ''}${h.k !== 'ok' ? `<span class="chip ${h.cls}">${esc(h.t)}</span>` : ''}${r.deadline ? `<span>wk ${isoWeek(r.deadline)}</span>` : ''}<span>${esc(r.owner || '')}</span></small>
+        <div class="prog"><span style="width:${pct(r)}%"></span></div></div>`;
+    }).join('')}</div>`;
+  }).join('')}</div>`;
+}
+function wirePipeline() {
+  let dragKey = null;
+  $('board').querySelectorAll('.mini').forEach(m => {
+    m.ondragstart = e => { dragKey = m.dataset.key; e.dataTransfer.effectAllowed = 'move'; };
+    m.onclick = () => openDrawer(rows.find(x => x.key === m.dataset.key));
+  });
+  $('board').querySelectorAll('.col').forEach(col => {
+    col.ondragover = e => { e.preventDefault(); col.classList.add('over'); };
+    col.ondragleave = () => col.classList.remove('over');
+    col.ondrop = e => { e.preventDefault(); col.classList.remove('over'); const r = rows.find(x => x.key === dragKey); if (r && r.status !== col.dataset.s) setStatus(r, col.dataset.s); };
+  });
+}
+
+/* ---------- drawer (full edit) ---------- */
+let dr = null; // working copy
+function openDrawer(r) {
+  dr = JSON.parse(JSON.stringify(r));
+  $('scrim').classList.remove('hidden'); $('drawer').classList.remove('hidden');
+  drawDrawer();
+}
+function closeDrawer() { $('scrim').classList.add('hidden'); $('drawer').classList.add('hidden'); dr = null; }
+$('scrim').onclick = closeDrawer;
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && dr) closeDrawer(); });
+function listEditor(key, label, withMeta) {
+  const items = dr[key] || [];
+  return `<div class="f list" data-list="${key}"><label>${label}</label>${items.map((it, i) => withMeta
+    ? `<div class="it act"><input type="checkbox" data-i="${i}" data-f="done" ${it.done ? 'checked' : ''}><input type="text" data-i="${i}" data-f="text" value="${esc(it.text)}" placeholder="What needs doing"><select class="ow" data-i="${i}" data-f="owner">${['', ...OWNERS, ...(it.owner && !OWNERS.includes(it.owner) ? [it.owner] : [])].map(o => `<option ${o === (it.owner || '') ? 'selected' : ''} value="${esc(o)}">${o || 'owner'}</option>`).join('')}</select><input class="du" type="date" data-i="${i}" data-f="due" value="${esc(it.due || '')}"><button class="x" data-del="${i}" aria-label="remove">&times;</button></div>`
+    : `<div class="it"><input type="checkbox" data-i="${i}" data-f="done" ${it.done ? 'checked' : ''}><input type="text" data-i="${i}" data-f="text" value="${esc(it.text)}"><button class="x" data-del="${i}" aria-label="remove">&times;</button></div>`).join('')}
+    <button class="add" data-add="${key}">+ add</button></div>`;
+}
+function drawDrawer() {
+  const r = dr;
+  $('drawer').innerHTML = `
+    <div class="dh"><h3>${esc(r.title || 'New campaign')}</h3><span class="saved" id="d-saved"></span><button class="btn small" id="d-save">Save</button><button class="x" id="d-close" aria-label="close">&times;</button></div>
+    <div class="db">
+      <div class="f"><label>Title</label><input type="text" data-f="title" value="${esc(r.title)}"></div>
+      <div class="f"><label>Tagline</label><input type="text" data-f="tagline" value="${esc(r.tagline)}"></div>
+      <div class="two">
+        <div class="f"><label>Status</label><select data-f="status">${STATUS.map(s => `<option value="${s.k}" ${s.k === r.status ? 'selected' : ''}>${s.t}</option>`).join('')}</select></div>
+        <div class="f"><label>Deadline ${r.deadline ? '(week ' + isoWeek(r.deadline) + ')' : ''}</label><input type="date" data-f="deadline" value="${esc(r.deadline || '')}"></div>
+      </div>
+      <div class="f"><label>Blocked by (empty = not blocked)</label><input type="text" data-f="blocked_reason" value="${esc(r.blocked_reason)}" placeholder="e.g. waiting for restaurant tags"></div>
+      <div class="two">
+        <div class="f"><label>Type</label><select data-f="kind"><option value="ad" ${r.kind === 'ad' ? 'selected' : ''}>Ad campaign</option><option value="organic" ${r.kind !== 'ad' ? 'selected' : ''}>Viral, organic, trust</option></select></div>
+        <div class="f"><label>Wave</label><select data-f="wave">${['', 1, 2, 3].map(w => `<option value="${w}" ${String(w) === String(r.wave ?? '') ? 'selected' : ''}>${w ? 'Wave ' + w : 'none'}</option>`).join('')}</select></div>
+      </div>
+      <div class="two">
+        <div class="f"><label>Owner</label><input type="text" data-f="owner" value="${esc(r.owner)}"></div>
+        <div class="f"><label>Code</label><input type="text" data-f="code" value="${esc(r.code)}"></div>
+      </div>
+      <label class="toggle"><input type="checkbox" data-f="at_launch" ${r.at_launch ? 'checked' : ''}> Part of the launch set</label>
+      <div class="f"><label>Campaign in a few sentences</label><textarea data-f="description">${esc(r.description)}</textarea></div>
+      <div class="two">
+        <div class="f"><label>Landing page</label><input type="text" data-f="landing_page" value="${esc(r.landing_page)}"></div>
+        <div class="f"><label>Target in the app</label><input type="text" data-f="app_target" value="${esc(r.app_target)}"></div>
+      </div>
+      <div class="f"><label>Gift / result</label><input type="text" data-f="gift" value="${esc(r.gift)}"></div>
+      <div class="f"><label>Channels (comma separated)</label><input type="text" data-f="channels" value="${esc((r.channels || []).join(', '))}"></div>
+      <div class="two">
+        <div class="f"><label>KPI</label><input type="text" data-f="kpi" value="${esc(r.kpi)}"></div>
+        <div class="f"><label>PR</label><input type="text" data-f="pr" value="${esc(r.pr)}"></div>
+      </div>
+      ${listEditor('requirements', 'Requirements (must be done before Approved)', false)}
+      ${listEditor('assets', 'Assets to make', false)}
+      ${listEditor('actions', 'Project actions', true)}
+      <div class="f"><label>Notes</label><textarea data-f="notes">${esc(r.notes)}</textarea></div>
+      <div class="f"><label>Visual</label><div class="imgrow">${r.image_url ? `<img src="${esc(r.image_url)}" alt="">` : ''}<input type="file" id="d-file" accept="image/*"><input type="url" data-f="image_url" value="${esc(r.image_url)}" placeholder="or paste an image URL"></div></div>
+      <div class="two">
+        <div class="f"><label>Card colour</label><input type="text" data-f="color" value="${esc(r.color)}" placeholder="#F39A2B"></div>
+        <div class="f"><label>Order</label><input type="text" data-f="sort" value="${esc(r.sort)}"></div>
+      </div>
+      ${r._new ? '' : `<button class="out danger" id="d-del" style="align-self:flex-start">Delete this campaign</button>`}
+      <p class="msg">Last saved ${r.updated_at ? new Date(r.updated_at).toLocaleString('en-GB') : 'never'}</p>
+    </div>`;
+  const D = $('drawer');
+  D.querySelectorAll('.db > .f [data-f], .db > .two [data-f], .db > .toggle [data-f], .imgrow [data-f]').forEach(inp => {
+    inp.oninput = inp.onchange = () => {
+      const f = inp.dataset.f;
+      if (f === 'at_launch') dr.at_launch = inp.checked;
+      else if (f === 'channels') dr.channels = inp.value.split(',').map(s => s.trim()).filter(Boolean);
+      else if (f === 'wave') dr.wave = inp.value ? +inp.value : null;
+      else if (f === 'sort') dr.sort = +inp.value || 0;
+      else dr[f] = inp.value || null;
+    };
+  });
+  D.querySelectorAll('[data-list]').forEach(box => {
+    const key = box.dataset.list;
+    box.querySelectorAll('[data-i]').forEach(inp => {
+      inp.oninput = inp.onchange = () => { const it = dr[key][+inp.dataset.i]; it[inp.dataset.f] = inp.type === 'checkbox' ? inp.checked : (inp.value || null); };
+    });
+    box.querySelectorAll('[data-del]').forEach(b => b.onclick = () => { dr[key].splice(+b.dataset.del, 1); drawDrawer(); });
+  });
+  D.querySelectorAll('[data-add]').forEach(b => b.onclick = () => { const k = b.dataset.add; dr[k] = dr[k] || []; dr[k].push(k === 'actions' ? { text: '', owner: 'Ciao', due: null, done: false } : { text: '', done: false }); drawDrawer(); const ins = D.querySelectorAll(`[data-list=${k}] input[type=text]`); ins[ins.length - 1]?.focus(); });
+  $('d-close').onclick = closeDrawer;
+  $('d-save').onclick = saveDrawer;
+  $('d-file').onchange = uploadImage;
+  const del = $('d-del'); if (del) del.onclick = async () => {
+    if (!confirm(`Delete "${dr.title}"? This cannot be undone.`)) return;
+    const { error } = await sb.from(TABLE).delete().eq('key', dr.key);
+    if (error) { alert('Delete failed: ' + error.message); return; }
+    rows = rows.filter(x => x.key !== dr.key); closeDrawer(); render();
+  };
+}
+async function uploadImage(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const path = `${city}/campaigns/${Date.now()}-${(dr.key || 'new').replace(/[^a-z0-9_-]/gi, '')}.${ext}`;
+  $('d-saved').textContent = 'Uploading...';
+  const { error } = await sb.storage.from('marketing').upload(path, file, { upsert: true, contentType: file.type || undefined });
+  if (error) { $('d-saved').textContent = ''; alert('Upload failed: ' + error.message); return; }
+  dr.image_url = sb.storage.from('marketing').getPublicUrl(path).data.publicUrl;
+  $('d-saved').textContent = 'Image ready, press Save'; drawDrawer();
+}
+async function saveDrawer() {
+  if (!dr.title) { alert('Give the campaign a title.'); return; }
+  ['requirements', 'assets', 'actions'].forEach(k => dr[k] = (dr[k] || []).filter(x => x.text && x.text.trim()));
+  const orig = rows.find(x => x.key === dr.key);
+  if (orig && dr.status !== orig.status && GATED.includes(dr.status) && counts(dr).reqOpen > 0 && !confirm(`${counts(dr).reqOpen} requirement(s) are still open. Save as ${S[dr.status].t} anyway?`)) return;
+  const fields = ['title', 'tagline', 'code', 'kind', 'wave', 'at_launch', 'status', 'blocked_reason', 'landing_page', 'app_target', 'gift', 'description', 'channels', 'requirements', 'assets', 'actions', 'kpi', 'deadline', 'owner', 'pr', 'notes', 'image_url', 'color', 'sort'];
+  const row = Object.fromEntries(fields.map(f => [f, dr[f] ?? null]));
+  row.channels = row.channels || []; row.at_launch = !!row.at_launch; row.sort = row.sort || 0;
+  let res;
+  if (dr._new) {
+    row.key = dr.key; row.city = city;
+    res = await sb.from(TABLE).insert(row).select().single();
+  } else {
+    res = await sb.from(TABLE).update(row).eq('key', dr.key).select().single();
+  }
+  if (res.error) { alert('Save failed: ' + res.error.message); return; }
+  const i = rows.findIndex(x => x.key === res.data.key);
+  if (i >= 0) rows[i] = res.data; else rows.push(res.data);
+  rows.sort((a, b) => a.sort - b.sort);
+  dr = JSON.parse(JSON.stringify(res.data)); drawDrawer(); $('d-saved').textContent = 'Saved'; render();
+}
+$('new').onclick = () => {
+  const key = 'c' + Date.now().toString(36);
+  openDrawer({ _new: true, key, city, title: '', kind: filter === 'organic' ? 'organic' : 'ad', status: 'idea', at_launch: false, channels: [], requirements: [], assets: [], actions: [], owner: 'Ciao', color: '#B597C1', sort: (rows.at(-1)?.sort || 0) + 1 });
+};
+
+/* ---------- toolbar ---------- */
+$('view').querySelectorAll('button').forEach(b => b.onclick = () => { view = b.dataset.v; $('view').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); try { localStorage.setItem('cb-view', view); } catch (e) {} render(); });
+$('filter').querySelectorAll('button').forEach(b => b.onclick = () => { filter = b.dataset.f; $('filter').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); render(); });
+$('q').oninput = e => { q = e.target.value; render(); };
+try { const v = localStorage.getItem('cb-view'); if (v) { view = v; $('view').querySelectorAll('button').forEach(x => x.classList.toggle('on', x.dataset.v === v)); } } catch (e) {}
+
+boot();
+</script>
+</body>
+</html>
