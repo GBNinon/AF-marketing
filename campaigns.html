@@ -12,7 +12,7 @@
   :root{--bg:#F8F6FA;--ink:#2f2a38;--mute:#8a7f97;--soft:#a79dbb;--line:#e9e2ef;--card:#fff;--lilac:#B597C1;--pink:#E8B0C8;--red:#d9534f;--amber:#e39b2d;--green:#3a9a6e;}
   body{background:var(--bg);color:var(--ink);font-family:'Karla',-apple-system,sans-serif;padding:24px 20px 80px;}
   .hidden{display:none !important;}
-  .wrap{max-width:1400px;margin:0 auto;}
+  .wrap{max-width:1240px;margin:0 auto;}
   button{font-family:inherit;}
   :focus-visible{outline:2px solid var(--lilac);outline-offset:2px;border-radius:6px;}
   .btn{background:linear-gradient(135deg,var(--lilac),var(--pink));color:#fff;font-weight:800;padding:10px 16px;border:none;border-radius:12px;font-size:14px;cursor:pointer;white-space:nowrap;}
@@ -31,7 +31,32 @@
   .brand{display:flex;align-items:center;gap:10px;margin-right:auto;min-width:0;}
   .mark{width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,var(--lilac),var(--pink));color:#fff;font-weight:800;font-size:17px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 12px rgba(181,151,193,.35);}
   h1{font-size:24px;font-weight:800;}
-  h1 em{font-style:normal;font-weight:400;}
+  .pills{display:flex;gap:4px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:4px;}
+  .pills button{padding:8px 14px;border-radius:10px;font-weight:700;font-size:14px;color:#6f6680;border:none;background:none;cursor:pointer;}
+  .pills button.on{background:var(--ink);color:#fff;}
+  .tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin:0 -20px 18px;padding:0 20px;overflow-x:auto;scrollbar-width:none;}
+  .tabs::-webkit-scrollbar{display:none;}
+  .tabs a{font-size:14.5px;font-weight:800;color:var(--mute);padding:10px 14px;border-bottom:3px solid transparent;margin-bottom:-1px;text-decoration:none;white-space:nowrap;}
+  .tabs a:hover{color:var(--ink);}
+  .tabs a.on{color:var(--ink);border-bottom-color:var(--lilac);}
+  .ptitle{font-size:22px;font-weight:800;margin:4px 0 14px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;}
+  .ptitle em{font-style:normal;font-weight:400;}
+  .ptitle small{font-size:13px;font-weight:600;color:var(--soft);}
+  .ptitle .jump{margin-left:auto;font-size:13px;color:var(--mute);font-weight:700;}
+  /* playbook */
+  .pb{margin-top:34px;padding-top:6px;}
+  .pbgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;}
+  .pbc{border-radius:22px;padding:18px 18px 16px;color:#fff;position:relative;cursor:pointer;box-shadow:0 6px 18px rgba(47,42,56,.08);min-height:160px;}
+  .pbc h3{font-size:12.5px;font-weight:800;letter-spacing:.9px;text-transform:uppercase;opacity:.95;margin-bottom:8px;}
+  .pbc ul{list-style:none;display:flex;flex-direction:column;gap:6px;}
+  .pbc li{font-size:14px;line-height:1.45;padding-left:14px;position:relative;}
+  .pbc li::before{content:"";position:absolute;left:0;top:8px;width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.75);}
+  .pbc .ed{position:absolute;top:14px;right:16px;font-size:12px;font-weight:700;opacity:0;transition:opacity .15s;}
+  .pbc:hover .ed{opacity:.85;}
+  .pbc.editing{cursor:default;background:#fff !important;color:var(--ink);border:2px solid var(--lilac);}
+  .pbc.editing input,.pbc.editing textarea{width:100%;border:1.5px solid #e6dfee;border-radius:10px;padding:8px 10px;font-family:inherit;font-size:14px;margin-bottom:8px;}
+  .pbc.editing textarea{min-height:150px;line-height:1.45;}
+  .pbc .row2{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
   .links{display:flex;gap:12px;align-items:center;}
 
   /* summary */
@@ -136,10 +161,12 @@
   .saved{font-size:12.5px;color:var(--green);font-weight:700;}
   .danger{color:var(--red);}
 
-  @media (max-width:900px){.summary{grid-template-columns:repeat(2,minmax(0,1fr));}.summary .stat:last-child{grid-column:1 / -1;}}
+  @media (max-width:900px){.summary{grid-template-columns:repeat(2,minmax(0,1fr));}.summary .stat:last-child{grid-column:1 / -1;}.pbgrid{grid-template-columns:1fr 1fr;}}
   @media (max-width:560px){
     body{padding:16px 16px 60px;}
     .card{flex-basis:86vw;}
+    .pbgrid{grid-template-columns:1fr;}
+    .tabs{margin:0 -16px 14px;padding:0 16px;}
     .two{grid-template-columns:1fr;}
     .list .it.act{grid-template-columns:20px 1fr auto;}
     .list .it.act .ow,.list .it.act .du{grid-column:2 / 3;}
@@ -165,9 +192,14 @@
 
 <div id="app" class="wrap hidden">
   <header>
-    <div class="brand"><span class="mark" aria-hidden="true">F</span><h1>Plans of <em>Campaigns</em></h1></div>
-    <div class="links"><a class="out" href="index.html">dashboard</a><a class="out" href="home-cms.html">home CMS</a><button class="out" id="logout">log out</button></div>
+    <div class="brand"><span class="mark" aria-hidden="true">F</span><h1>Families App marketing</h1></div>
+    <div class="pills" id="cities"></div>
+    <div class="links"><button class="out" id="logout">log out</button></div>
   </header>
+  <nav class="tabs">
+    <a href="index.html#dashboard">Dashboard</a><a href="index.html#concepts">Concepts</a><a href="index.html#accounts">Accounts</a><a href="index.html#formats">Formats</a><a href="campaigns.html" class="on" aria-current="page">Campaigns</a><a href="index.html#library">Library</a><a href="home-cms.html">Home CMS</a>
+  </nav>
+  <h2 class="ptitle">Plans of <em>Campaigns</em> <small>status, requirements and actions of every campaign</small><a class="jump" href="#playbook">Playbook &darr;</a></h2>
 
   <div class="summary" id="summary"></div>
 
@@ -182,6 +214,11 @@
 
   <div id="board"></div>
   <p class="msg" id="err"></p>
+
+  <section id="playbook" class="pb">
+    <h2 class="ptitle">Playbook <small>the rules every campaign follows. Click a block to edit it</small><button class="btn ghost small" id="pb-add" style="margin-left:auto">+ add block</button></h2>
+    <div class="pbgrid" id="pbgrid"></div>
+  </section>
 </div>
 
 <div id="scrim" class="scrim hidden"></div>
@@ -192,7 +229,9 @@ const SUPABASE_URL = 'https://qczutthumgpgxwepatte.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFjenV0dGh1bWdwZ3h3ZXBhdHRlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkwNzg5NzAsImV4cCI6MjA4NDY1NDk3MH0.vleNYVReRJnMruKBTXEb9gwdKVdhbiuLJTZoDiuUM0g';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 const TABLE = 'marketing_campaign_board';
-const city = (() => { try { return localStorage.getItem('fm-city') || 'amsterdam'; } catch (e) { return 'amsterdam'; } })();
+const CITIES = { ibiza: 'Ibiza', amsterdam: 'Amsterdam', valencia: 'Valencia' };
+let city = (() => { try { return localStorage.getItem('fm-city') || 'amsterdam'; } catch (e) { return 'amsterdam'; } })();
+if (!CITIES[city]) city = 'amsterdam';
 
 /* Status pipeline. "path" statuses are the normal flow; paused and done sit outside it. */
 const STATUS = [
@@ -261,7 +300,8 @@ async function boot() {
   const { data } = await sb.auth.getSession();
   if (!data.session) { $('login').classList.remove('hidden'); return; }
   $('app').classList.remove('hidden');
-  await load();
+  renderCities();
+  await Promise.all([load(), loadPlaybook()]);
 }
 $('l-send').onclick = async () => {
   const email = $('l-email').value.trim().toLowerCase(); if (!email) return;
@@ -307,14 +347,14 @@ function visible() {
     if (filter === 'organic' && r.kind !== 'organic') return false;
     if (filter === 'attention' && !needsAttention(r)) return false;
     if (!words.length) return true;
-    const hay = [r.title, r.tagline, r.description, r.code, r.owner, r.notes, r.kpi, r.gift, ...(r.channels || []), ...(r.actions || []).map(a => a.text + ' ' + (a.owner || '')), ...(r.requirements || []).map(a => a.text)].join(' ').toLowerCase();
+    const hay = [r.title, r.tagline, r.description, r.code, r.owner, r.notes, r.kpi, r.gift, r.involve, ...(r.channels || []), ...(r.actions || []).map(a => a.text + ' ' + (a.owner || '')), ...(r.requirements || []).map(a => a.text)].join(' ').toLowerCase();
     return words.every(w => hay.includes(w));
   });
 }
 function render() {
   renderSummary();
   const list = visible();
-  if (!list.length) { $('board').innerHTML = '<p class="msg">No campaigns match.</p>'; return; }
+  if (!list.length) { $('board').innerHTML = `<p class="msg">${rows.length ? 'No campaigns match.' : 'No campaigns for ' + CITIES[city] + ' yet. Press + New campaign to add the first one.'}</p>`; return; }
   $('board').innerHTML = view === 'cards' ? renderCards(list) : renderPipeline(list);
   view === 'cards' ? wireCards() : wirePipeline();
 }
@@ -367,6 +407,7 @@ function cardHTML(r) {
         ${r.landing_page ? `<b>Landing</b><span>${esc(r.landing_page)}</span>` : ''}
         ${r.app_target ? `<b>In app</b><span>${esc(r.app_target)}</span>` : ''}
         ${r.gift ? `<b>Gift</b><span>${esc(r.gift)}</span>` : ''}
+        ${r.involve ? `<b>Involves</b><span>${esc(r.involve)}</span>` : ''}
         <b>Deadline</b><span>${r.deadline ? `Week ${isoWeek(r.deadline)}, ${fmtDate(r.deadline)}` : '<span class="more">not set</span>'}</span>
         <b>Owner</b><span>${esc(r.owner || '')}</span>
         ${r.kpi ? `<b>KPI</b><span>${esc(r.kpi)}</span>` : ''}
@@ -468,6 +509,7 @@ function drawDrawer() {
         <div class="f"><label>Target in the app</label><input type="text" data-f="app_target" value="${esc(r.app_target)}"></div>
       </div>
       <div class="f"><label>Gift / result</label><input type="text" data-f="gift" value="${esc(r.gift)}"></div>
+      <div class="f"><label>Who is involved</label><input type="text" data-f="involve" value="${esc(r.involve)}" placeholder="partners, tools, people"></div>
       <div class="f"><label>Channels (comma separated)</label><input type="text" data-f="channels" value="${esc((r.channels || []).join(', '))}"></div>
       <div class="two">
         <div class="f"><label>KPI</label><input type="text" data-f="kpi" value="${esc(r.kpi)}"></div>
@@ -529,7 +571,7 @@ async function saveDrawer() {
   ['requirements', 'assets', 'actions'].forEach(k => dr[k] = (dr[k] || []).filter(x => x.text && x.text.trim()));
   const orig = rows.find(x => x.key === dr.key);
   if (orig && dr.status !== orig.status && GATED.includes(dr.status) && counts(dr).reqOpen > 0 && !confirm(`${counts(dr).reqOpen} requirement(s) are still open. Save as ${S[dr.status].t} anyway?`)) return;
-  const fields = ['title', 'tagline', 'code', 'kind', 'wave', 'at_launch', 'status', 'blocked_reason', 'landing_page', 'app_target', 'gift', 'description', 'channels', 'requirements', 'assets', 'actions', 'kpi', 'deadline', 'owner', 'pr', 'notes', 'image_url', 'color', 'sort'];
+  const fields = ['title', 'tagline', 'code', 'kind', 'wave', 'at_launch', 'status', 'blocked_reason', 'landing_page', 'app_target', 'gift', 'involve', 'description', 'channels', 'requirements', 'assets', 'actions', 'kpi', 'deadline', 'owner', 'pr', 'notes', 'image_url', 'color', 'sort'];
   const row = Object.fromEntries(fields.map(f => [f, dr[f] ?? null]));
   row.channels = row.channels || []; row.at_launch = !!row.at_launch; row.sort = row.sort || 0;
   let res;
@@ -555,6 +597,59 @@ $('view').querySelectorAll('button').forEach(b => b.onclick = () => { view = b.d
 $('filter').querySelectorAll('button').forEach(b => b.onclick = () => { filter = b.dataset.f; $('filter').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); render(); });
 $('q').oninput = e => { q = e.target.value; render(); };
 try { const v = localStorage.getItem('cb-view'); if (v) { view = v; $('view').querySelectorAll('button').forEach(x => x.classList.toggle('on', x.dataset.v === v)); } } catch (e) {}
+
+/* ---------- cities ---------- */
+function renderCities() {
+  $('cities').innerHTML = Object.entries(CITIES).map(([k, v]) => `<button data-c="${k}" class="${k === city ? 'on' : ''}">${v}</button>`).join('');
+  $('cities').querySelectorAll('button').forEach(b => b.onclick = () => { city = b.dataset.c; try { localStorage.setItem('fm-city', city); } catch (e) {} renderCities(); load(); loadPlaybook(); });
+}
+
+/* ---------- playbook (knowledge base) ---------- */
+const PB_TABLE = 'marketing_playbook';
+const PB_DEFAULT = [
+  { id: 'sell', sort: 1, color: '#F2679A', title: 'What we sell', body: 'A curated, bilingual, ad-free super app for family life. Nobody paid to be recommended, no agency commissions.\nMembers pay for independence, and independence is a feeling, not a feature.\nAmsterdam Insider: EUR 0,99 a week, price on screen, cancel anytime.\nFounding Family badge for everyone who joins in the first 90 days.' },
+  { id: 'funnel', sort: 2, color: '#8E5FA8', title: 'The funnel', body: 'Every ad asks a question about the family, never about the app.\nIt links to a short quiz or landing page on amsterdamfamilies.com.\nPeople leave their email: that is the only key. No codes, no links to click later.\nThey see half the result on the web; the full result waits in the app.\nThen the hooks keep them: Dailies, Favorites, Playdates, Babysitters.' },
+  { id: 'channels', sort: 3, color: '#4F9FD1', title: 'Channels', body: 'Attention on Meta: one ad set per campaign, four creatives, review every 7 days, kill losers, scale winners 20 to 30 percent.\nIntent on Apple Ads and Google: kinderfeestje Amsterdam, kindvriendelijk restaurant Amsterdam, babysitter Amsterdam, wat te doen met kinderen Amsterdam.\nTrust on Instagram organic: the 8 formats.\nEvery campaign gets its own store listing and deep link, so installs are counted per campaign.' },
+  { id: 'bar', sort: 4, color: '#3A9A6E', title: 'The bar to beat', body: '60% quiz completion.\n5% of quiz completers become Insider (10% is the dream).\n45% first renewal.\nMembers from search 3x cheaper than from Meta.\nRead the numbers against this every Monday on the Dashboard.' },
+  { id: 'creative', sort: 5, color: '#F39A2B', title: 'Creative rules', body: 'Phone-shot beats polished.\nThe hook is a question.\nOne moment per ad.\nPrice on screen, honestly.\nResult cards are ads: 1080x1920 in our palette, members post them, we repost.\nTest, kill, scale.' },
+  { id: 'habits', sort: 6, color: '#F47F6B', title: 'Always-on habits', body: 'First hour after every post: reply to each comment with a question back, answer DMs, comment on 5 local accounts, pin the best comment.\nComment to DM: reels end with "Comment PLAN and we send you the link", then DM the link by hand.\nCollab posts: every post that features a place or a person goes out with Invite Collaborator.\nBoost the winner on Sunday: if one post clearly beat the week, put 15 to 20 euro behind it for 3 days, parents 30 to 45 in the city. Never boost a flop.' },
+];
+let pb = [], pbEdit = null;
+async function loadPlaybook() {
+  const { data, error } = await sb.from(PB_TABLE).select('*').eq('city', city).order('sort');
+  if (error) { pb = PB_DEFAULT.map(x => ({ ...x, _local: true })); renderPlaybook(); return; }
+  pb = data || [];
+  if (!pb.length && city === 'amsterdam') {
+    const rowsIn = PB_DEFAULT.map(x => ({ ...x, city }));
+    const ins = await sb.from(PB_TABLE).insert(rowsIn).select();
+    pb = (!ins.error && ins.data && ins.data.length) ? ins.data.sort((a, b) => a.sort - b.sort) : PB_DEFAULT.map(x => ({ ...x, _local: true }));
+  }
+  renderPlaybook();
+}
+function renderPlaybook() {
+  if (!pb.length) { $('pbgrid').innerHTML = '<p class="msg">No playbook blocks for this city yet. Add one.</p>'; return; }
+  $('pbgrid').innerHTML = pb.map(b => pbEdit === b.id
+    ? `<div class="pbc editing" data-id="${esc(b.id)}"><input type="text" data-k="title" value="${esc(b.title)}"><textarea data-k="body" placeholder="One point per line">${esc(b.body || '')}</textarea>
+        <div class="row2"><input type="text" data-k="color" value="${esc(b.color || '')}" placeholder="#B597C1" style="width:110px;margin:0"><button class="btn small" data-a="save">Save</button><button class="btn ghost small" data-a="cancel">Cancel</button><button class="out danger" data-a="del" style="margin-left:auto">delete</button></div></div>`
+    : `<div class="pbc" data-id="${esc(b.id)}" style="background:linear-gradient(150deg,${b.color || '#B597C1'},${b.color || '#B597C1'}cc)" tabindex="0" role="button" aria-label="Edit ${esc(b.title)}"><span class="ed">edit</span><h3>${esc(b.title)}</h3><ul>${String(b.body || '').split('\n').filter(x => x.trim()).map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>`).join('');
+  $('pbgrid').querySelectorAll('.pbc:not(.editing)').forEach(el => { el.onclick = () => { pbEdit = el.dataset.id; renderPlaybook(); }; el.onkeydown = e => { if (e.key === 'Enter') el.click(); }; });
+  const ed = $('pbgrid').querySelector('.pbc.editing'); if (!ed) return;
+  const b = pb.find(x => x.id === pbEdit);
+  ed.querySelector('[data-a=cancel]').onclick = () => { if (b._new) pb = pb.filter(x => x !== b); pbEdit = null; renderPlaybook(); };
+  ed.querySelector('[data-a=save]').onclick = async () => {
+    const row = { title: ed.querySelector('[data-k=title]').value.trim() || 'Untitled', body: ed.querySelector('[data-k=body]').value, color: ed.querySelector('[data-k=color]').value.trim() || '#B597C1' };
+    const res = b._new ? await sb.from(PB_TABLE).insert({ ...row, id: b.id, city, sort: b.sort }).select().single() : await sb.from(PB_TABLE).update(row).eq('id', b.id).select().single();
+    if (res.error) { alert('Save failed: ' + res.error.message); return; }
+    Object.assign(b, res.data); delete b._new; pbEdit = null; renderPlaybook();
+  };
+  ed.querySelector('[data-a=del]').onclick = async () => {
+    if (!confirm(`Delete the block "${b.title}"?`)) return;
+    if (!b._new) { const { error } = await sb.from(PB_TABLE).delete().eq('id', b.id); if (error) { alert('Delete failed: ' + error.message); return; } }
+    pb = pb.filter(x => x !== b); pbEdit = null; renderPlaybook();
+  };
+  ed.querySelector('[data-k=title]').focus();
+}
+$('pb-add').onclick = () => { const id = 'pb' + Date.now().toString(36); pb.push({ id, _new: true, title: '', body: '', color: '#B597C1', sort: (pb.at(-1)?.sort || 0) + 1 }); pbEdit = id; renderPlaybook(); };
 
 boot();
 </script>

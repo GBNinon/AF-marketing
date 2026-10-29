@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Families App marketing dashboard v2.7 (25 Oct 2026): restored after the 22 Sep overwrite, Growth at a glance row (followers, downloads iOS/Android, reach to download, paid members, partners live), funnel focus line, 12 week downloads chart with table view, Monday reminder, target progress bars, Accounts pipeline summary, search and sort, sticky tabs, Clean and Calm palette, home CMS link; fixes: settings and Add account form always visible, phone overflow on Dashboard and Library. v2.6 (16 Sep 2026): Library tab (knowledge, app screens, design kit), Make a visual (Claude writes the artboard, rendered here to PNG). v2.5 (14 Sep 2026): settings dropdowns prefilled, retry link. v2.4 (11 Sep 2026): coloured panels, plan moved to Concepts, chat on the dashboard, drafts shelf, account lists and export. v2.3: model settings panel. v2.2 (10 Sep 2026): paid layer (quiz funnel, ad spend), kick-off plan campaigns and panel, ad concepts AD1 to AD5. v1 = funnel, advice, weeks, CSV, formats table, plan. v2 adds tabs: Concepts (grid + chat), Accounts, Formats, Campaigns, plus newsletter ideas and 12 week trends. -->
+<!-- Families App marketing dashboard v2.7 (25 Oct 2026): restored after the 22 Sep overwrite, Growth at a glance row (followers, downloads iOS/Android, reach to download, paid members, partners live), funnel focus line, 12 week downloads chart with table view, Monday reminder, target progress bars, Accounts pipeline summary, search and sort, sticky tabs, Clean and Calm palette, tab row shared with Campaigns and Home CMS pages (29 Oct); fixes: settings and Add account form always visible, phone overflow on Dashboard and Library. v2.6 (16 Sep 2026): Library tab (knowledge, app screens, design kit), Make a visual (Claude writes the artboard, rendered here to PNG). v2.5 (14 Sep 2026): settings dropdowns prefilled, retry link. v2.4 (11 Sep 2026): coloured panels, plan moved to Concepts, chat on the dashboard, drafts shelf, account lists and export. v2.3: model settings panel. v2.2 (10 Sep 2026): paid layer (quiz funnel, ad spend), kick-off plan campaigns and panel, ad concepts AD1 to AD5. v1 = funnel, advice, weeks, CSV, formats table, plan. v2 adds tabs: Concepts (grid + chat), Accounts, Formats, Campaigns, plus newsletter ideas and 12 week trends. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -140,6 +140,8 @@
   .tabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid #e9e2ef;margin-bottom:6px;}
   .tabs button{background:none;border:none;font-family:inherit;font-size:14.5px;font-weight:800;color:#8a7f97;padding:10px 14px;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px;}
   .tabs button.on{color:#2f2a38;border-bottom-color:#B597C1;}
+  .tabs a{font-size:14.5px;font-weight:800;color:#8a7f97;padding:10px 14px;border-bottom:3px solid transparent;margin-bottom:-1px;text-decoration:none;white-space:nowrap;}
+  .tabs a:hover,.tabs button:hover{color:#2f2a38;}
   section.tab{display:none;} section.tab.on{display:block;}
   .two{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:20px;align-items:start;}
   .spark{display:block;width:100%;height:28px;margin-top:8px;}
@@ -203,16 +205,6 @@
   .card .bd .meta{font-size:12.5px;color:#8a7f97;margin:4px 0 8px;} .card .bd p{font-size:14px;line-height:1.5;}
   .card .bd textarea{width:100%;border:1.5px solid #e0d8ea;border-radius:10px;padding:8px 10px;font-family:inherit;font-size:13.5px;min-height:90px;margin-top:6px;}
   .card .bd .edit{margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
-  .camp{background:#fff;border:1px solid #e9e2ef;border-radius:18px;padding:18px;}
-  .camp h3{font-size:17px;font-weight:800;display:flex;gap:10px;align-items:center;flex-wrap:wrap;} .camp h3 select{margin-left:auto;border:1.5px solid #e0d8ea;border-radius:10px;padding:6px 10px;font-family:inherit;font-size:13px;font-weight:700;}
-  .camp p{font-size:14px;line-height:1.5;margin:8px 0;} .camp ol{margin:6px 0 6px 20px;font-size:14px;line-height:1.55;}
-  .camp .kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:13.5px;margin-top:8px;} .camp .kv b{color:#8a7f97;font-size:11.5px;text-transform:uppercase;letter-spacing:.5px;padding-top:2px;}
-  .camp input{width:100%;border:1.5px solid #e0d8ea;border-radius:10px;padding:8px 10px;font-family:inherit;font-size:13.5px;margin-top:10px;}
-  .plan-panel{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
-  .plan-panel div{background:#fff;border:1px solid #e9e2ef;border-radius:16px;padding:14px 16px;} .plan-panel b{display:block;font-size:11.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#8a7f97;margin-bottom:6px;} .plan-panel p{font-size:13.5px;line-height:1.5;}
-  .cgroup{font-size:13px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#8a7f97;margin:22px 0 10px;} .cgroup small{font-weight:600;text-transform:none;letter-spacing:0;color:#a79dbb;margin-left:8px;}
-  .camp.paid{border-top:4px solid #E8B0C8;} .camp.retention{border-top:4px solid #7FA9CC;}
-  .camp.running{border-left:5px solid #6FA284;} .camp.planned{border-left:5px solid #7FA9CC;} .camp.done{opacity:.7;}
   .linkish{color:#7a5d8c;text-decoration:underline;cursor:pointer;font-size:13px;}
   /* ---------- v2.7: growth at a glance, downloads chart, reminder, CRM pipeline, polish ---------- */
   .brand{display:flex;align-items:center;gap:10px;margin-right:auto;min-width:0;}
@@ -280,7 +272,7 @@
     .funnel{grid-template-columns:1fr 1fr;} .conv{display:none;}
     .inputs{grid-template-columns:1fr 1fr;}
     .plan{grid-template-columns:44px repeat(7,1fr);} .cell{min-height:60px;font-size:10.5px;padding:5px;}
-    .two,.concepts,.cards,.plan-panel,.settings{grid-template-columns:1fr;} .shelf{grid-template-columns:repeat(3,1fr);} .panel{padding:4px 12px 14px;} .chat{height:70vh;} .acform{grid-template-columns:1fr 1fr;} .adet{grid-template-columns:1fr 1fr;} .lib{grid-template-columns:repeat(3,1fr);} .kform{grid-template-columns:1fr 1fr;} .vis{grid-template-columns:1fr;}
+    .two,.concepts,.cards,.settings{grid-template-columns:1fr;} .shelf{grid-template-columns:repeat(3,1fr);} .panel{padding:4px 12px 14px;} .chat{height:70vh;} .acform{grid-template-columns:1fr 1fr;} .adet{grid-template-columns:1fr 1fr;} .lib{grid-template-columns:repeat(3,1fr);} .kform{grid-template-columns:1fr 1fr;} .vis{grid-template-columns:1fr;}
   }
 </style>
 </head>
@@ -305,7 +297,7 @@
     <div class="brand"><span class="mark" aria-hidden="true">F</span><h1>Families App marketing</h1></div>
     <div class="pills" id="cities"></div>
     <div class="month"><button id="m-prev" aria-label="previous month">&lsaquo;</button><span id="m-label"></span><button id="m-next" aria-label="next month">&rsaquo;</button></div>
-    <div class="links"><a class="out" href="campaigns.html">campaigns</a><a class="out" href="home-cms.html">home CMS</a>
+    <div class="links">
     <button class="out" id="settings-btn">settings</button>
     <button class="out" id="logout">log out</button></div>
   </header>
@@ -321,8 +313,9 @@
     <button data-t="concepts">Concepts</button>
     <button data-t="accounts">Accounts</button>
     <button data-t="formats">Formats</button>
-    <button data-t="campaigns">Campaigns</button>
+    <a href="campaigns.html">Campaigns</a>
     <button data-t="library">Library</button>
+    <a href="home-cms.html">Home CMS</a>
   </nav>
 
 <section class="tab on" id="tab-dashboard">
@@ -504,21 +497,6 @@
   <h2>The 8 formats <small>click the picture to upload a real example, Edit to change the text</small></h2>
   <div class="cards" id="fcards"></div>
   <input type="file" id="fx-file" accept="image/*" hidden>
-</section>
-
-<section class="tab" id="tab-campaigns">
-  <h2>The kick-off plan <small>September 2026, the story every campaign serves</small></h2>
-  <div class="plan-panel">
-    <div><b>What we sell</b><p>A curated, bilingual, ad-free super app for family life. Nobody paid to be recommended. No agency commissions. Members pay for independence, and independence is a feeling, not a feature. Insider: first week 0.49, then 1 euro a week, no free trial, cancel in one tap. Founding Family badge for the first 90 days.</p></div>
-    <div><b>The funnel</b><p>Ad asks a question about the family, never about the app. Web quiz, 5 to 7 questions. Result card, half visible, shareable as a story. Insider welcome with the price on screen. Then the hooks: Dailies, Favorites, Playdates, Babysitters.</p></div>
-    <div><b>Channels</b><p>Attention on Meta (one ad set per angle, four creatives, review weekly, kill losers, scale winners 20 to 30 percent). Intent on Apple Ads and Google (kinderfeestje Amsterdam, kindvriendelijk restaurant Amsterdam, basisschool Amsterdam kiezen, babysitter Amsterdam, wat te doen met kinderen Amsterdam). Trust on Instagram organic: the 8 formats.</p></div>
-    <div><b>The bar to beat</b><p>60% quiz completion. 5% quiz completers to Insider (10 is the dream). 45% first renewal. Search subscribers 3x cheaper than Meta. Read the numbers against this every Monday in the quiz funnel on the Dashboard.</p></div>
-    <div><b>Eight weeks</b><p>W1 pricing FAQ, paywall, 0.49 intro, rename Food AI to Dinner Sorted. W2 web quiz at /quiz, result cards. W3 film Fridge Rescue, launch Meta and Apple Ads, babysitter supply. W4 to 5 hosted playdates filmed, Founding Family badge live, first member gift newsletter. W6 to 8 scale the winning angle, second quiz, partner badge wave.</p></div>
-    <div><b>Creative rules</b><p>Phone shot beats polished. The hook is a question. One moment per ad. Price on screen, honestly. Result cards are ads: 1080x1920 in our palette, members post it, we repost it. Test, kill, scale.</p></div>
-  </div>
-
-  <h2>Campaigns <small>status and notes are per city. Organic from the Ibiza playbook, paid and retention from the kick-off plan</small></h2>
-  <div id="ccards"></div>
 </section>
 
 <section class="tab" id="tab-library">
@@ -1094,14 +1072,17 @@ $('ed-clear').onclick = async () => {
 /* =====================================================================
    v2: tabs, newsletter ideas, concept grid, chat, accounts, formats, campaigns
    ===================================================================== */
-let tab = localStorage.getItem('fm-tab') || 'dashboard';
+const TABS = ['dashboard', 'concepts', 'accounts', 'formats', 'library'];
+let tab = (location.hash || '').slice(1);
+if (!TABS.includes(tab)) tab = localStorage.getItem('fm-tab');
+if (!TABS.includes(tab)) tab = 'dashboard';
 const loaded = {};   // per tab per city, so switching tabs does not refetch
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const fmtDate = d => d ? new Date(d).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : '';
 const fmtWhen = d => d ? new Date(d).toLocaleString(undefined, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
 
 function showTab(t) {
-  tab = t; localStorage.setItem('fm-tab', t);
+  tab = t; localStorage.setItem('fm-tab', t); if (location.hash !== '#' + t) history.replaceState(null, '', '#' + t);
   $('tabs').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.t === t));
   document.querySelectorAll('section.tab').forEach(s => s.classList.toggle('on', s.id === 'tab-' + t));
   const box = $('chat-box');
@@ -1119,7 +1100,6 @@ function loadTab(t, force) {
   if (t === 'concepts' || t === 'dashboard') loadChat();
   if (t === 'accounts') loadAccounts();
   if (t === 'formats') loadFormatsPage();
-  if (t === 'campaigns') loadCampaigns();
   if (t === 'library') loadLibrary();
 }
 
@@ -1966,43 +1946,6 @@ $('fx-file').onchange = async () => {
     const f = fmeta.find(x => x.code === fxCode); if (f) f.example_url = url; renderFormatsPage('');
   } catch (e) { alert('Upload failed: ' + e.message); }
 };
-
-/* ---------- campaigns ---------- */
-let camps = [], campStatus = {};
-async function loadCampaigns() {
-  const [c, s] = await Promise.all([
-    sb.from('marketing_campaigns').select('*').order('sort'),
-    sb.from('marketing_campaign_status').select('*').eq('city', city),
-  ]);
-  if (c.error) { $('ccards').innerHTML = `<p class="msg">Run marketing-schema-v2.sql first (${esc(c.error.message)})</p>`; return; }
-  camps = c.data || []; campStatus = {}; (s.data || []).forEach(r => campStatus[r.campaign_id] = r);
-  renderCampaigns();
-}
-function renderCampaigns() {
-  const order = { running: 0, planned: 1, idea: 2, done: 3 };
-  const GROUPS = [['paid', 'Paid angles', 'every ad to the web quiz, never to the store'], ['organic', 'Organic growth', 'Instagram, around the 8 formats'], ['retention', 'Supply and retention', 'what makes members stay']];
-  const card = c => { const st = campStatus[c.id] || {}; const s = st.status || 'idea'; return `<div class="camp ${s} ${c.kind || 'organic'}" data-id="${c.id}">
-      <h3>${esc(c.name)}<select class="cs">${['idea', 'planned', 'running', 'done'].map(o => `<option ${o === s ? 'selected' : ''}>${o}</option>`).join('')}</select></h3>
-      <p>${esc(c.what)}</p>
-      <ol>${String(c.steps || '').split('\n').filter(Boolean).map(x => `<li>${esc(x)}</li>`).join('')}</ol>
-      <div class="kv"><b>Involve</b><span>${esc(c.involve)}</span><b>KPI</b><span>${esc(c.kpi)}</span><b>When</b><span>${esc(c.timing)}</span></div>
-      <input type="text" class="cn" placeholder="notes for ${esc(CITIES[city])}: who, when, result" value="${esc(st.notes || '')}">
-    </div>`; };
-  $('ccards').innerHTML = GROUPS.map(([g, title, sub]) => {
-    const list = camps.filter(c => (c.kind || 'organic') === g).sort((a, b) => (order[(campStatus[a.id] || {}).status || 'idea'] - order[(campStatus[b.id] || {}).status || 'idea']) || (a.sort - b.sort));
-    return list.length ? `<div class="cgroup">${title}<small>${sub}</small></div><div class="cards">${list.map(card).join('')}</div>` : '';
-  }).join('');
-  $('ccards').querySelectorAll('.camp').forEach(el => {
-    const save = async () => {
-      const row = { city, campaign_id: el.dataset.id, status: el.querySelector('.cs').value, notes: el.querySelector('.cn').value.trim() || null, updated_at: new Date().toISOString() };
-      const { error } = await sb.from('marketing_campaign_status').upsert(row, { onConflict: 'city,campaign_id' });
-      if (error) alert('Save failed: ' + error.message); else { campStatus[row.campaign_id] = row; renderCampaigns(); }
-    };
-    el.querySelector('.cs').onchange = save;
-    el.querySelector('.cn').onblur = () => { const st = campStatus[el.dataset.id] || {}; if ((el.querySelector('.cn').value.trim() || null) !== (st.notes || null)) save(); };
-    el.querySelector('.cn').onkeydown = e => { if (e.key === 'Enter') e.target.blur(); };
-  });
-}
 
 boot();
 </script>

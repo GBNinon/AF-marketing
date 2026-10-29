@@ -1,162 +1,197 @@
 <!doctype html>
+<!-- Home CMS v2 (29 Oct 2026): the preview is the real app home (app-preview/, synced from the latest test build by sync-app-preview.py) in an iPhone 15/16 frame (393x852). Draft shows unsaved edits, Live shows what phones get now. The button list is read from that build, so it always matches the app. Saves to cbldl app_config (ams_home_slides, ams_home_tiles, ams_home_badges) through the qcz cms-save function. Shares the tab row with the dashboard. -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Home CMS - Amsterdam Families</title>
+<title>Home CMS</title>
 <link href="https://fonts.googleapis.com/css2?family=Karla:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
   *{box-sizing:border-box;margin:0;padding:0;}
-  body{background:#faf6ef;color:#2f2a38;font-family:'Karla',-apple-system,sans-serif;padding:24px 20px 80px;}
+  :root{--bg:#F8F6FA;--ink:#2f2a38;--mute:#8a7f97;--soft:#a79dbb;--line:#e9e2ef;--lilac:#B597C1;--pink:#E8B0C8;--green:#2f6b45;--red:#9a3b2e;}
+  body{background:var(--bg);color:var(--ink);font-family:'Karla',-apple-system,sans-serif;padding:24px 20px 80px;}
   .wrap{max-width:1240px;margin:0 auto;}
-  header{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-bottom:20px;}
-  h1{font-size:24px;font-weight:800;margin-right:auto;}
-  a.back{font-size:13px;color:#6f6680;text-decoration:underline;}
-  .out{border:none;background:none;color:#a79dbb;font-family:inherit;font-size:13px;cursor:pointer;text-decoration:underline;}
-  h2{font-size:15px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:#8a7f97;margin:26px 0 12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
-  h2 .right{margin-left:auto;}
-  .btn{background:linear-gradient(135deg,#B597C1,#E8B0C8);color:#fff;font-weight:800;padding:11px 18px;border:none;border-radius:12px;font-size:14px;font-family:inherit;cursor:pointer;white-space:nowrap;}
+  .hidden{display:none!important;}
+  button{font-family:inherit;}
+  :focus-visible{outline:2px solid var(--lilac);outline-offset:2px;border-radius:6px;}
+  .btn{background:linear-gradient(135deg,var(--lilac),var(--pink));color:#fff;font-weight:800;padding:11px 18px;border:none;border-radius:12px;font-size:14px;cursor:pointer;white-space:nowrap;}
   .btn.ghost{background:#fff;color:#6f6680;border:1.5px solid #e0d8ea;}
   .btn.small{padding:7px 12px;font-size:12.5px;border-radius:10px;}
-  .btn:disabled{opacity:.5;}
-  .layout{display:grid;grid-template-columns:400px 1fr;gap:22px;align-items:start;}
-  @media(max-width:960px){.layout{grid-template-columns:1fr;}}
-
-  /* ---------- phone preview ---------- */
-  .phone{position:sticky;top:16px;background:#F8F6FA;border:10px solid #2f2a38;border-radius:34px;padding:14px 10px;max-height:82vh;overflow-y:auto;}
-  .phone::-webkit-scrollbar{width:0;}
-  .p-sec{font-size:13px;font-weight:800;color:#E8A090;margin:12px 4px 6px;}
-  .p-slide{position:relative;border-radius:14px;overflow:hidden;min-height:110px;display:flex;flex-direction:column;justify-content:flex-end;background-size:cover;background-position:center;margin-bottom:8px;}
-  .p-slide .ov{position:absolute;inset:0;}
-  .p-slide .cc{position:relative;padding:10px 12px;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.3);}
-  .p-slide .eb{font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase;}
-  .p-slide .tt{font-size:18px;font-weight:800;line-height:1.1;}
-  .p-slide .ln{font-size:10.5px;margin-top:2px;}
-  .p-slide .bt{display:inline-block;margin-top:6px;background:#fff;color:#2f2a38;font-size:9.5px;font-weight:800;padding:4px 9px;border-radius:8px;}
-  .p-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
-  .p-grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;}
-  .p-tile{position:relative;border-radius:12px;overflow:hidden;aspect-ratio:1.4;background-size:cover;background-position:center;}
-  .p-grid3 .p-tile{aspect-ratio:.9;}
-  .p-tile.wide{aspect-ratio:auto;height:64px;grid-column:1/-1;}
-  .p-tile .ov{position:absolute;inset:0;}
-  .p-tile .tt{position:absolute;left:8px;bottom:7px;color:#fff;font-weight:800;font-size:12px;text-shadow:0 1px 4px rgba(0,0,0,.35);max-width:85%;}
-  .p-tile .sm{position:absolute;left:8px;bottom:24px;color:#fff;font-size:8.5px;font-weight:600;opacity:.92;text-shadow:0 1px 4px rgba(0,0,0,.35);}
-  .p-tile .pl{position:absolute;left:8px;bottom:24px;color:#fff;font-size:8px;font-weight:700;background:rgba(255,255,255,.25);padding:2px 6px;border-radius:6px;}
-  .p-tile .bd{position:absolute;top:6px;right:6px;font-size:8.5px;font-weight:800;color:#fff;padding:2px 7px;border-radius:8px;}
-  .p-tile .nr{position:absolute;top:6px;left:6px;width:18px;height:18px;border-radius:50%;background:#2f2a38;color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;}
-  .p-note{font-size:11px;color:#a79dbb;margin:8px 4px 0;}
-
-  /* ---------- editors ---------- */
-  .card{background:#fff;border:1px solid #e7dfd2;border-radius:18px;padding:16px;margin-bottom:12px;}
-  .card h3{font-size:15px;font-weight:800;display:flex;align-items:center;gap:8px;}
-  .card h3 .nr{width:22px;height:22px;border-radius:50%;background:#2f2a38;color:#fff;font-size:12px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
-  .card h3 small{font-weight:600;color:#a79dbb;font-size:12px;}
-  .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
-  .fld{flex:1;min-width:130px;}
-  .fld label{display:block;font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#8a7f97;margin-bottom:3px;}
-  .fld input,.fld select,.fld textarea{width:100%;border:1.5px solid #e0d8ea;border-radius:10px;padding:8px 10px;font-family:inherit;font-size:13.5px;background:#fff;color:#2f2a38;outline:none;}
-  .fld input:focus,.fld select:focus{border-color:#B597C1;}
-  .imgprev{width:54px;height:54px;border-radius:10px;background-size:cover;background-position:center;background-color:#eeeaf2;flex-shrink:0;align-self:flex-end;}
-  .swatches{display:flex;gap:6px;align-items:center;}
-  .sw{width:26px;height:26px;border-radius:50%;border:2.5px solid transparent;cursor:pointer;}
-  .sw.on{border-color:#2f2a38;}
-  .badgeopts{display:flex;gap:6px;flex-wrap:wrap;}
-  .bo{border:1.5px solid #e0d8ea;background:#fff;border-radius:10px;padding:6px 11px;font-size:12.5px;font-weight:800;font-family:inherit;cursor:pointer;color:#6f6680;}
-  .bo.on{background:#2f2a38;border-color:#2f2a38;color:#fff;}
-  .savebar{position:sticky;bottom:12px;display:flex;gap:10px;justify-content:flex-end;background:rgba(250,246,239,.94);padding:10px 0;}
-  .msg{font-size:13px;font-weight:700;color:#2f6b45;align-self:center;}
-  .msg.err{color:#9a3b2e;}
-  .muted{font-size:12.5px;color:#a79dbb;line-height:1.5;}
-  .pd-item{display:flex;align-items:center;gap:10px;border-top:1px solid #f3eee6;padding:9px 0;font-size:13.5px;}
-  .pd-item b{font-weight:800;}
-  .pd-item .when{color:#8a7f97;font-size:12px;}
-  .pd-item button{margin-left:auto;border:none;background:#f8e3e0;color:#9a3b2e;font-weight:800;font-size:12px;border-radius:8px;padding:5px 10px;cursor:pointer;font-family:inherit;}
+  .btn:disabled{opacity:.5;cursor:default;}
+  .out{border:none;background:none;color:var(--soft);font-size:13px;cursor:pointer;text-decoration:underline;}
+  .muted{font-size:13px;color:var(--soft);line-height:1.5;}
 
   /* login */
-  #login{max-width:380px;margin:80px auto;background:#fff;border:1px solid #e7dfd2;border-radius:20px;padding:26px;}
-  #login h2{margin:0 0 12px;}
-  #login input{width:100%;border:1.5px solid #e0d8ea;border-radius:12px;padding:11px 12px;font-family:inherit;font-size:15px;margin-bottom:10px;}
-  #login .btn{width:100%;}
-  #login p{font-size:13px;color:#8a7f97;margin-bottom:10px;line-height:1.5;}
-  .hidden{display:none!important;}
+  .login{max-width:380px;margin:80px auto;background:#fff;border:1px solid var(--line);border-radius:20px;padding:26px;text-align:center;}
+  .login input{width:100%;border:1.5px solid #e0d8ea;border-radius:12px;padding:12px 14px;font-size:16px;font-family:inherit;margin:14px 0 10px;}
+  .login .btn{width:100%;}
+
+  /* header + tabs (same as the dashboard) */
+  header{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-bottom:18px;}
+  .brand{display:flex;align-items:center;gap:10px;margin-right:auto;min-width:0;}
+  .mark{width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,var(--lilac),var(--pink));color:#fff;font-weight:800;font-size:17px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 12px rgba(181,151,193,.35);}
+  h1{font-size:24px;font-weight:800;}
+  .citychip{background:#fff;border:1px solid var(--line);border-radius:14px;padding:8px 14px;font-weight:800;font-size:14px;}
+  .citychip small{font-weight:600;color:var(--soft);margin-left:6px;}
+  .links{display:flex;gap:12px;align-items:center;}
+  .tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin:0 -20px 18px;padding:0 20px;overflow-x:auto;scrollbar-width:none;}
+  .tabs::-webkit-scrollbar{display:none;}
+  .tabs a{font-size:14.5px;font-weight:800;color:var(--mute);padding:10px 14px;border-bottom:3px solid transparent;margin-bottom:-1px;text-decoration:none;white-space:nowrap;}
+  .tabs a:hover{color:var(--ink);}
+  .tabs a.on{color:var(--ink);border-bottom-color:var(--lilac);}
+  .ptitle{font-size:22px;font-weight:800;margin:4px 0 14px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;}
+  .ptitle small{font-size:13px;font-weight:600;color:var(--soft);}
+
+  .layout{display:grid;grid-template-columns:auto 1fr;gap:28px;align-items:start;}
+
+  /* ---------- iPhone preview ---------- */
+  .pv{position:sticky;top:12px;display:flex;flex-direction:column;align-items:center;gap:10px;}
+  .pvbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center;}
+  .seg{display:flex;gap:3px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:3px;}
+  .seg button{padding:6px 11px;border-radius:9px;font-weight:700;font-size:12.5px;color:#6f6680;border:none;background:none;cursor:pointer;}
+  .seg button.on{background:var(--ink);color:#fff;}
+  .iconbtn{border:1px solid var(--line);background:#fff;border-radius:10px;width:32px;height:32px;cursor:pointer;color:#6f6680;font-size:15px;}
+  .phonebox{position:relative;}
+  .iphone{position:absolute;top:0;left:0;width:417px;height:876px;transform-origin:top left;background:#1d1b22;border-radius:66px;padding:12px;box-shadow:0 0 0 2px #3a3642 inset,0 24px 50px rgba(47,42,56,.22);}
+  .iphone .screen{position:relative;width:393px;height:852px;border-radius:55px;overflow:hidden;background:#F8F6FA;}
+  .iphone .status{position:absolute;top:0;left:0;right:0;height:54px;display:flex;align-items:center;justify-content:space-between;padding:6px 34px 0 46px;font:600 16px -apple-system,'SF Pro Text',sans-serif;color:#000;z-index:2;background:#fff;}
+  .iphone .status i{font-style:normal;letter-spacing:1px;font-size:13px;}
+  .iphone .island{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:124px;height:36px;border-radius:20px;background:#000;z-index:3;}
+  .iphone iframe{position:absolute;top:54px;left:0;width:393px;height:798px;border:0;background:#F8F6FA;}
+  .iphone .homebar{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:#111;opacity:.85;z-index:3;}
+  .pvmeta{font-size:12px;color:var(--soft);text-align:center;max-width:417px;line-height:1.45;}
+  .pvmeta b{color:var(--mute);}
+  .modepill{font-size:11.5px;font-weight:800;border-radius:20px;padding:3px 9px;}
+  .modepill.draft{background:#fdf0dc;color:#9a5d0a;} .modepill.live{background:#e3f4ec;color:#22744f;}
+
+  /* ---------- editors ---------- */
+  h2{font-size:14px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--mute);margin:26px 0 10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  h2:first-child{margin-top:0;}
+  h2 small{font-weight:600;text-transform:none;letter-spacing:0;color:var(--soft);font-size:13px;}
+  h2 .right{margin-left:auto;}
+  .card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px 16px;margin-bottom:10px;transition:border-color .15s,box-shadow .15s;}
+  .card:focus-within{border-color:var(--lilac);box-shadow:0 0 0 3px rgba(181,151,193,.18);}
+  .card h3{font-size:15px;font-weight:800;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .card h3 .k{font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--soft);background:#f4eff8;border-radius:7px;padding:2px 7px;}
+  .card h3 .chg{font-size:11px;font-weight:800;color:#9a5d0a;background:#fdf0dc;border-radius:7px;padding:2px 7px;}
+  .card h3 .show{margin-left:auto;font-size:12px;font-weight:700;color:var(--mute);background:none;border:none;cursor:pointer;text-decoration:underline;}
+  .card.fixed{background:#faf8fc;color:var(--mute);}
+  .grid4{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 14px;}
+  .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+  .fld{flex:1;min-width:130px;}
+  .fld label{display:block;font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--mute);margin-bottom:3px;}
+  .fld input,.fld select{width:100%;border:1.5px solid #e6dfee;border-radius:10px;padding:8px 10px;font-family:inherit;font-size:13.5px;background:#fff;color:var(--ink);outline:none;}
+  .fld input:focus{border-color:var(--lilac);}
+  .fld input::placeholder{color:#c3b9d0;}
+  .imgprev{width:54px;height:54px;border-radius:12px;background-size:cover;background-position:center;background-color:#eeeaf2;flex-shrink:0;align-self:flex-end;border:1px solid var(--line);}
+  .swatches{display:flex;gap:6px;align-items:center;}
+  .sw{width:24px;height:24px;border-radius:50%;border:2.5px solid transparent;cursor:pointer;}
+  .sw.on{border-color:var(--ink);}
+  .badgeopts{display:flex;gap:6px;flex-wrap:wrap;}
+  .bo{border:1.5px solid #e0d8ea;background:#fff;border-radius:10px;padding:5px 11px;font-size:12.5px;font-weight:800;cursor:pointer;color:#6f6680;}
+  .bo.on{background:var(--ink);border-color:var(--ink);color:#fff;}
+  .savebar{position:sticky;bottom:12px;display:flex;gap:10px;justify-content:flex-end;align-items:center;background:rgba(248,246,250,.94);backdrop-filter:blur(6px);padding:10px 0;z-index:5;}
+  .msg{font-size:13px;font-weight:700;color:var(--green);}
+  .msg.err{color:var(--red);}
+  .dirty{font-size:12.5px;font-weight:800;color:#9a5d0a;background:#fdf0dc;border-radius:20px;padding:4px 10px;margin-right:auto;}
+  details.card summary{cursor:pointer;font-weight:800;font-size:15px;list-style:none;}
+  details.card summary::-webkit-details-marker{display:none;}
+  details.card summary::after{content:"show";float:right;font-size:12px;color:var(--mute);text-decoration:underline;font-weight:700;}
+  details.card[open] summary::after{content:"hide";}
+  .pd-item{display:flex;align-items:center;gap:10px;border-top:1px solid #f3eee6;padding:9px 0;font-size:13.5px;flex-wrap:wrap;}
+  .pd-item .when{color:var(--mute);font-size:12px;}
+  .pd-item button{margin-left:auto;border:none;background:#f8e3e0;color:var(--red);font-weight:800;font-size:12px;border-radius:8px;padding:5px 10px;cursor:pointer;}
+
+  @media(max-width:1000px){.layout{grid-template-columns:1fr;}.pv{position:static;}}
+  @media(max-width:560px){body{padding:16px 16px 60px;}.tabs{margin:0 -16px 14px;padding:0 16px;}.grid4{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
-<div class="wrap">
 
-  <div id="login">
-    <h2>Home CMS</h2>
-    <p>Log in with your dashboard email. You get a code by mail.</p>
-    <div id="step1">
-      <input id="email" type="email" placeholder="email">
-      <button class="btn" onclick="sendCode()">Send code</button>
-    </div>
-    <div id="step2" class="hidden">
-      <input id="code" inputmode="numeric" placeholder="code from the email">
-      <button class="btn" onclick="verifyCode()">Log in</button>
-    </div>
-    <p id="loginmsg"></p>
-  </div>
+<div id="login" class="login hidden">
+  <h1 style="margin:0">Home CMS</h1>
+  <p class="muted" style="margin-top:8px">Log in with your email code.</p>
+  <div id="step1"><input id="email" type="email" placeholder="email address"><button class="btn" id="l-send">Send code</button></div>
+  <div id="step2" class="hidden"><input id="code" inputmode="numeric" autocomplete="one-time-code" placeholder="code from the email"><button class="btn" id="l-verify">Log in</button></div>
+  <p class="muted" id="loginmsg" style="margin-top:10px"></p>
+</div>
 
-  <div id="app" class="hidden">
-    <header>
-      <h1>Home CMS</h1>
-      <a class="back" href="index.html">back to dashboard</a>
-      <button class="out" onclick="logout()">log out</button>
-    </header>
+<div id="app" class="wrap hidden">
+  <header>
+    <div class="brand"><span class="mark" aria-hidden="true">F</span><h1>Families App marketing</h1></div>
+    <div class="citychip">Amsterdam<small>Home CMS is Amsterdam only</small></div>
+    <div class="links"><button class="out" id="logout">log out</button></div>
+  </header>
+  <nav class="tabs">
+    <a href="index.html#dashboard">Dashboard</a><a href="index.html#concepts">Concepts</a><a href="index.html#accounts">Accounts</a><a href="index.html#formats">Formats</a><a href="campaigns.html">Campaigns</a><a href="index.html#library">Library</a><a href="home-cms.html" class="on" aria-current="page">Home CMS</a>
+  </nav>
+  <h2 class="ptitle" style="text-transform:none;letter-spacing:0;color:var(--ink)">Home screen <small>what every Amsterdam phone shows when it opens the app</small></h2>
 
-    <div class="layout">
-      <!-- ================= PREVIEW ================= -->
-      <div class="phone" id="phone"></div>
-
-      <!-- ================= EDITORS ================= -->
-      <div>
-        <h2>Hero slides <span class="right"><button class="btn small ghost" onclick="addSlide()">+ add slide</button></span></h2>
-        <div id="slidesEd"></div>
-        <div class="row" style="max-width:280px;">
-          <div class="fld"><label>Seconds per slide (0 = off)</label><input id="slideInterval" type="number" min="0" onchange="draft.slides.interval=parseInt(this.value)||0"></div>
-        </div>
-
-        <h2 style="margin-top:30px;">Home buttons</h2>
-        <p class="muted" style="margin-bottom:10px;">The numbers match the phone preview on the left. Leave a field empty to keep the app's own default. Small line is the little text above the title on the four photo buttons (needs app v1.1 or newer). Corner label is the little flag in the top corner (New, Hot). Images: paste any link, your Cloudinary links work great.</p>
-        <div id="tilesEd"></div>
-
-        <div class="savebar">
-          <span class="msg" id="saveMsg"></span>
-          <button class="btn ghost" onclick="loadAll()">Reset to saved</button>
-          <button class="btn" id="saveBtn" onclick="saveAll()">Save everything</button>
-        </div>
-
-        <h2 style="margin-top:34px;">Playdates to join</h2>
-        <div class="card">
-          <p class="muted">These appear inside the app as plans people can join. Pick a real event or Top 100 plan as the base, or start empty, then give it a friendly host name.</p>
-          <div class="row">
-            <div class="fld" style="flex:2;"><label>Base it on</label>
-              <select id="pdSource" onchange="pdPrefill()"><option value="">Start empty...</option></select>
-            </div>
+  <div class="layout">
+    <!-- ================= PREVIEW ================= -->
+    <div class="pv" id="pvcol">
+      <div class="pvbar">
+        <div class="seg" id="pvmode"><button data-m="draft" class="on">Draft</button><button data-m="live">Live</button></div>
+        <div class="seg" id="pvlang"><button data-l="en" class="on">EN</button><button data-l="nl">NL</button></div>
+        <button class="iconbtn" id="pvreload" title="Reload the preview" aria-label="Reload the preview">&#8635;</button>
+      </div>
+      <div class="phonebox" id="phonebox">
+        <div class="iphone" id="iphone">
+          <div class="screen">
+            <div class="status"><span id="clock">9:41</span><i>&#9679;&#9679;&#9679;&#9679; &#9646;</i></div>
+            <div class="island"></div>
+            <iframe id="pv" title="App home preview"></iframe>
+            <div class="homebar"></div>
           </div>
-          <div class="row">
-            <div class="fld" style="flex:2;"><label>Title</label><input id="pdTitle" placeholder="Picnic and playground at Vondelpark"></div>
-            <div class="fld"><label>Date &amp; time</label><input id="pdWhen" type="datetime-local"></div>
-          </div>
-          <div class="row">
-            <div class="fld"><label>Area</label><input id="pdArea" placeholder="Oost"></div>
-            <div class="fld" style="flex:2;"><label>Location</label><input id="pdLoc" placeholder="Vondelpark, by the big playground"></div>
-          </div>
-          <div class="row">
-            <div class="fld"><label>Kids ages</label><input id="pdAges" placeholder="3-6"></div>
-            <div class="fld"><label>Spots</label><input id="pdSpots" type="number" value="4" min="1"></div>
-            <div class="fld" style="flex:2;"><label>Shown as host</label><input id="pdName" placeholder="Sophie (mama van Mees, 4)"></div>
-          </div>
-          <div class="row">
-            <div class="fld" style="flex:3;"><label>Little description</label><input id="pdDesc" placeholder="We bring snacks, join us!"></div>
-            <button class="btn" style="align-self:flex-end;" onclick="pdCreate()">Add playdate</button>
-          </div>
-          <div id="pdMsg" class="msg" style="display:block;margin-top:6px;"></div>
-          <div id="pdList" style="margin-top:12px;"></div>
         </div>
       </div>
+      <p class="pvmeta" id="pvmeta">Loading the app preview...</p>
+    </div>
+
+    <!-- ================= EDITORS ================= -->
+    <div>
+      <h2>Hero slides <small>the Dailies slide is always first; these rotate after it</small><span class="right"><button class="btn small ghost" id="addSlide">+ add slide</button></span></h2>
+      <div id="slidesEd"></div>
+      <div class="row" style="max-width:260px;margin-top:0">
+        <div class="fld"><label>Seconds per slide (0 = off)</label><input id="slideInterval" type="number" min="0"></div>
+      </div>
+
+      <h2 style="margin-top:28px">Home buttons <small>read from the app build, so this list always matches the app. Empty field = the app's own text or photo (shown in grey)</small></h2>
+      <div id="tilesEd"></div>
+
+      <div class="savebar">
+        <span class="dirty hidden" id="dirty">Unsaved changes, shown in Draft</span>
+        <span class="msg" id="saveMsg"></span>
+        <button class="btn ghost" id="resetBtn">Reset to saved</button>
+        <button class="btn" id="saveBtn">Save everything</button>
+      </div>
+
+      <h2 style="margin-top:30px">Hosted playdates</h2>
+      <details class="card">
+        <summary>Add a playdate people can join in the app</summary>
+        <p class="muted" style="margin-top:8px">Pick a real event or Top 100 plan as the base, or start empty, then give it a friendly host name.</p>
+        <div class="row"><div class="fld" style="flex:2;"><label>Base it on</label><select id="pdSource"><option value="">Start empty...</option></select></div></div>
+        <div class="row">
+          <div class="fld" style="flex:2;"><label>Title</label><input id="pdTitle" placeholder="Picnic and playground at Vondelpark"></div>
+          <div class="fld"><label>Date &amp; time</label><input id="pdWhen" type="datetime-local"></div>
+        </div>
+        <div class="row">
+          <div class="fld"><label>Area</label><input id="pdArea" placeholder="Oost"></div>
+          <div class="fld" style="flex:2;"><label>Location</label><input id="pdLoc" placeholder="Vondelpark, by the big playground"></div>
+        </div>
+        <div class="row">
+          <div class="fld"><label>Kids ages</label><input id="pdAges" placeholder="3-6"></div>
+          <div class="fld"><label>Spots</label><input id="pdSpots" type="number" value="4" min="1"></div>
+          <div class="fld" style="flex:2;"><label>Shown as host</label><input id="pdName" placeholder="Sophie (mama van Mees, 4)"></div>
+        </div>
+        <div class="row">
+          <div class="fld" style="flex:3;"><label>Little description</label><input id="pdDesc" placeholder="We bring snacks, join us!"></div>
+          <button class="btn" style="align-self:flex-end;" id="pdAdd">Add playdate</button>
+        </div>
+        <div id="pdMsg" class="msg" style="display:block;margin-top:6px;"></div>
+        <div id="pdList" style="margin-top:12px;"></div>
+      </details>
     </div>
   </div>
 </div>
@@ -169,279 +204,300 @@ const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 const FN_SAVE = SUPABASE_URL + '/functions/v1/cms-save';
 const CB_URL  = 'https://cbldlpuhmuojdvljdtsk.supabase.co';
 const CB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNibGRscHVobXVvamR2bGpkdHNrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAxNTY5OTUsImV4cCI6MjA3NTczMjk5NX0.HqkbwYs6wpr4Ui78H2AUcGnlIxUWkrvJ2m1JPqACPxM';
+const PREVIEW = 'app-preview/index.html';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+const $ = id => document.getElementById(id);
+const SWATCHES = ['#7BC47F', '#E07070', '#B597C1', '#7FA9CC', '#E0C890'];
+const SECTIONS = { photo: 'Family Needs', tool: 'Family Tools & Games', map: 'Explore Maps' };
 
-const SWATCHES = ['#7BC47F','#E07070','#B597C1','#7FA9CC','#E0C890'];
-const TILES = [
-  {n:1, page:'family-food-spots', kind:'photo', label:'Family Food Spots', dLabel:'Family Friendly', dTitle:'Spots', dImg:'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600', tint:'rgba(200,150,140,.75)'},
-  {n:2, page:'schools-directory', kind:'photo', label:'Schools', dLabel:'All Public & Private', dTitle:'Schools', dImg:'https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=600', tint:'rgba(145,165,185,.78)'},
-  {n:3, page:'after-school-activities', kind:'photo', label:'After School', dLabel:'Kids Clubs', dTitle:'After School', dImg:'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=600', tint:'rgba(175,155,190,.78)'},
-  {n:4, page:'birthdays', kind:'photo', label:'Birthdays', dLabel:'All things', dTitle:'Birthdays', dImg:'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=600', tint:'rgba(190,150,165,.75)'},
-  {n:5, page:'babysitters', kind:'tool', label:'Babysitter', dTitle:'Babysitter', dPill:'Help Finder', dImg:'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300', tint:'rgba(175,155,190,.78)'},
-  {n:6, page:'find-the-baby', kind:'tool', label:'Babydoku', dTitle:'Babydoku', dPill:'New logic game', dImg:'https://images.unsplash.com/photo-1519689680058-324335c77eba?w=300', tint:'rgba(175,155,190,.78)'},
-  {n:7, page:'playdates', kind:'tool', label:'Playdates', dTitle:'Playdates', dPill:'Connects Kids', dImg:'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=300', tint:'rgba(190,175,145,.78)'},
-  {n:8, page:'memory-game', kind:'tool', label:'Memory', dTitle:'Memory', dPill:'Brain Game', dImg:'https://images.unsplash.com/photo-1587654780291-39c9404d746b?w=300', tint:'rgba(145,165,185,.78)'},
-  {n:9, page:'chores-tracker', kind:'tool', label:'Chores', dTitle:'Chores', dPill:'Fun Tracker', dImg:'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=300', tint:'rgba(190,150,165,.75)'},
-  {n:10, page:'groceries-list', kind:'tool', label:'Groceries', dTitle:'Groceries?', dPill:'Your Savior', dImg:'https://images.unsplash.com/photo-1542838132-92c53300491e?w=300', tint:'rgba(145,165,148,.78)'},
-  {n:11, page:'foodieyai', kind:'wide', label:'Ask the Fridge (banner)', dTitle:'Ask the Fridge', dPill:'+ Little Chef', dImg:'https://res.cloudinary.com/dhgfmuuo9/image/upload/f_auto,q_auto,w_800,h_300,c_fill,g_auto/v1789680986/enmzmbtc5ep6ueli51fn.png', tint:'rgba(200,150,140,.75)'},
-  {n:12, page:'maps-hub', kind:'map', label:'All Maps', dTitle:'All Maps', dImg:'https://images.unsplash.com/photo-1569336415962-a4bd9f69cd83?w=400', tint:'rgba(175,155,190,.78)'},
-  {n:13, page:'playgrounds-beaches', kind:'map', label:'Playgrounds', dTitle:'Playgrounds', dImg:'https://images.unsplash.com/photo-1566140967404-b8b3932483f5?w=400', tint:'rgba(145,165,148,.78)'}
-];
-/* note: the Food Map card shares the family-food-spots page, so nr 1 styles both. */
-
-let draft = { tiles:{}, badges:{}, slides:{interval:6, slides:[]} };
+let TILES = [];          // read from the app build
+let draft = { tiles: {}, badges: {}, slides: { interval: 6, slides: [] } };
+let saved = '';          // JSON of what is live
 let session = null;
+let pvMode = 'draft', pvLang = 'en';
 
 /* ---------------- login ---------------- */
-async function sendCode(){
-  const email = document.getElementById('email').value.trim().toLowerCase();
-  if (!email) return;
+$('l-send').onclick = async () => {
+  const email = $('email').value.trim().toLowerCase(); if (!email) return;
   const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
-  document.getElementById('loginmsg').textContent = error ? error.message : 'Code sent, check your mail.';
-  if (!error) { document.getElementById('step1').classList.add('hidden'); document.getElementById('step2').classList.remove('hidden'); }
-}
-async function verifyCode(){
-  const email = document.getElementById('email').value.trim().toLowerCase();
-  const token = document.getElementById('code').value.trim();
-  let r = await sb.auth.verifyOtp({ email, token, type:'email' });
-  if (r.error) r = await sb.auth.verifyOtp({ email, token, type:'magiclink' });
-  if (r.error) { document.getElementById('loginmsg').textContent = r.error.message; return; }
-  boot();
-}
-async function logout(){ await sb.auth.signOut(); location.reload(); }
+  $('loginmsg').textContent = error ? error.message : 'Code sent, check your mail.';
+  if (!error) { $('step1').classList.add('hidden'); $('step2').classList.remove('hidden'); }
+};
+$('l-verify').onclick = async () => {
+  const email = $('email').value.trim().toLowerCase(), token = $('code').value.trim();
+  let r = await sb.auth.verifyOtp({ email, token, type: 'email' });
+  if (r.error) r = await sb.auth.verifyOtp({ email, token, type: 'magiclink' });
+  if (r.error) { $('loginmsg').textContent = r.error.message; return; }
+  location.reload();
+};
+$('logout').onclick = async () => { await sb.auth.signOut(); location.reload(); };
 
-async function boot(){
+async function boot() {
   const { data } = await sb.auth.getSession();
-  if (!data || !data.session) return;
+  if (!data || !data.session) { $('login').classList.remove('hidden'); return; }
   session = data.session;
-  document.getElementById('login').classList.add('hidden');
-  document.getElementById('app').classList.remove('hidden');
-  await loadAll();
+  $('app').classList.remove('hidden');
+  fitPhone();
+  await Promise.all([loadTileList(), loadAll()]);
+  renderEditors();
+  reloadPreview(true);
+  loadVersion();
   pdLoadSources(); pdList();
 }
 
-/* ---------------- load ---------------- */
-async function cbGet(key){
-  const r = await fetch(CB_URL + '/rest/v1/app_config?config_key=eq.' + key + '&select=config_value', { headers:{ apikey: CB_ANON } });
+/* ---------------- data ---------------- */
+async function cbGet(key) {
+  const r = await fetch(CB_URL + '/rest/v1/app_config?config_key=eq.' + key + '&select=config_value', { headers: { apikey: CB_ANON }, cache: 'no-store' });
   if (!r.ok) return null;
   const d = await r.json();
   if (!d[0]) return null;
   return typeof d[0].config_value === 'string' ? JSON.parse(d[0].config_value) : d[0].config_value;
 }
-async function loadAll(){
-  draft.tiles  = (await cbGet('ams_home_tiles'))  || {};
+async function loadAll() {
+  draft.tiles = (await cbGet('ams_home_tiles')) || {};
   draft.badges = (await cbGet('ams_home_badges')) || {};
-  draft.slides = (await cbGet('ams_home_slides')) || { interval:6, slides:[] };
+  draft.slides = (await cbGet('ams_home_slides')) || { interval: 6, slides: [] };
   if (!Array.isArray(draft.slides.slides)) draft.slides.slides = [];
-  document.getElementById('slideInterval').value = draft.slides.interval != null ? draft.slides.interval : 6;
-  renderEditors(); renderPhone();
+  saved = JSON.stringify(draft);
+  $('slideInterval').value = draft.slides.interval != null ? draft.slides.interval : 6;
   setMsg('');
 }
+/* the button list comes from the real home of the latest build */
+async function loadTileList() {
+  try {
+    const html = await fetch(PREVIEW, { cache: 'no-store' }).then(r => r.text());
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const byPage = {}; TILES = [];
+    doc.querySelectorAll('a.photo-card, a.tool-card, a.tool-card-wide, a.map-card').forEach(a => {
+      const href = a.getAttribute('href') || '';
+      const m = href.match(/^([\w-]+)\.html$/);
+      const kind = a.classList.contains('photo-card') ? 'photo' : a.classList.contains('map-card') ? 'map' : 'tool';
+      const txt = sel => ((a.querySelector(sel) || {}).textContent || '').trim();
+      const bgEl = a.querySelector('.photo-card-bg, .tool-card-bg, .map-card-bg');
+      let img = ''; const mm = ((bgEl && bgEl.getAttribute('style')) || '').match(/url\(['"]?([^'")]+)/); if (mm) img = mm[1];
+      if (img && !/^https?:/.test(img)) img = 'app-preview/' + img;
+      const t = { page: m ? m[1] : null, href, kind, dTitle: txt('.photo-card-title, .tool-card-title, .map-card-title'), dPill: txt('.tool-card-pill'), dLabel: txt('.photo-card-label'), dImg: img, also: [] };
+      if (t.page && byPage[t.page]) { byPage[t.page].also.push(SECTIONS[kind] + ': ' + t.dTitle); return; }
+      if (t.page) byPage[t.page] = t;
+      TILES.push(t);
+    });
+  } catch (e) { TILES = []; }
+}
+async function loadVersion() {
+  try {
+    const v = await fetch('app-preview/version.json', { cache: 'no-store' }).then(r => r.json());
+    $('pvmeta').innerHTML = `Real app home, <b>v${esc(v.version)}</b> (test build of ${esc(fmtDay(v.built))}). Texts, photos and labels come from Supabase. Taps are switched off in the preview.`;
+  } catch (e) { $('pvmeta').textContent = 'Real app home from the latest synced build. Taps are switched off in the preview.'; }
+}
+const fmtDay = d => d ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
 
 /* ---------------- save ---------------- */
-function setMsg(t, err){ const m = document.getElementById('saveMsg'); m.textContent = t; m.className = 'msg' + (err ? ' err' : ''); }
-async function cmsSave(key, value){
-  // Always use a fresh token: the one from login expires after an hour.
+function setMsg(t, err) { const m = $('saveMsg'); m.textContent = t; m.className = 'msg' + (err ? ' err' : ''); }
+async function cmsSave(key, value) {
   const s = await sb.auth.getSession();
   if (!s.data || !s.data.session) throw new Error('Your login expired. Reload the page and log in again.');
   session = s.data.session;
-  const r = await fetch(FN_SAVE, { method:'POST', headers:{ 'Content-Type':'application/json', apikey: SUPABASE_ANON, Authorization:'Bearer ' + session.access_token }, body: JSON.stringify({ key, value }) });
-  const d = await r.json().catch(()=>({}));
+  const r = await fetch(FN_SAVE, { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: SUPABASE_ANON, Authorization: 'Bearer ' + session.access_token }, body: JSON.stringify({ key, value }) });
+  const d = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error((d.error || d.message || d.msg || 'save failed') + ' (' + r.status + ')');
 }
-async function saveAll(){
-  const b = document.getElementById('saveBtn'); b.disabled = true; setMsg('Saving...');
+$('saveBtn').onclick = async () => {
+  const b = $('saveBtn'); b.disabled = true; setMsg('Saving...');
   try {
-    await cmsSave('ams_home_tiles',  draft.tiles);
+    await cmsSave('ams_home_tiles', draft.tiles);
     await cmsSave('ams_home_badges', draft.badges);
     await cmsSave('ams_home_slides', draft.slides);
-    setMsg('Saved! Every phone picks this up on its next Home open.');
-  } catch(e){ setMsg(e.message, true); }
+    saved = JSON.stringify(draft); changed();
+    setMsg('Saved. Every phone picks this up on its next Home open.');
+    setMode('live');
+  } catch (e) { setMsg(e.message, true); }
   b.disabled = false;
-}
+};
+$('resetBtn').onclick = async () => { await loadAll(); renderEditors(); changed(); };
+$('slideInterval').onchange = e => { draft.slides.interval = parseInt(e.target.value) || 0; changed(); };
 
 /* ---------------- editors ---------------- */
-function tileVal(page, field){ return (draft.tiles[page] && draft.tiles[page][field]) || ''; }
-function setTile(page, field, v){
+function tileVal(page, field) { return (draft.tiles[page] && draft.tiles[page][field]) || ''; }
+function setTile(page, field, v) {
   if (!draft.tiles[page]) draft.tiles[page] = {};
   if (v === '') delete draft.tiles[page][field]; else draft.tiles[page][field] = v;
   if (!Object.keys(draft.tiles[page]).length) delete draft.tiles[page];
-  renderPhone();
+  const prev = document.querySelector(`.card[data-page="${page}"] .imgprev`);
+  if (field === 'img' && prev) { const t = TILES.find(x => x.page === page); prev.style.backgroundImage = `url('${(v || (t && t.dImg) || '').replace(/'/g, '%27')}')`; }
+  changed();
 }
-function badgeOf(page){ return draft.badges[page] || null; }
-function setBadge(page, text_en, text_nl, color){
+function badgeOf(page) { return draft.badges[page] || null; }
+function setBadge(page, text_en, text_nl, color) {
   if (!text_en) delete draft.badges[page];
   else draft.badges[page] = { text_en, text_nl: text_nl || text_en, color: color || SWATCHES[0] };
-  renderEditors(); renderPhone();
+  renderEditors(); changed();
 }
-
-function renderEditors(){
-  const host = document.getElementById('tilesEd');
-  host.innerHTML = TILES.map(t => {
-    const b = badgeOf(t.page);
-    const img = tileVal(t.page,'img') || t.dImg;
-    const badgeBtns = ['','New','Hot'].map(x => {
-      const on = (!b && x==='') || (b && b.text_en === x);
-      return '<button class="bo' + (on?' on':'') + '" onclick="pickBadge(\'' + t.page + '\',\'' + x + '\')">' + (x===''?'none':x) + '</button>';
-    }).join('') + '<button class="bo' + (b && ['New','Hot'].indexOf(b.text_en)===-1 ? ' on':'') + '" onclick="pickBadge(\'' + t.page + '\',\'custom\')">custom</button>';
-    const sw = SWATCHES.map(c => '<div class="sw' + (b && b.color===c?' on':'') + '" style="background:' + c + '" onclick="pickBadgeColor(\'' + t.page + '\',\'' + c + '\')"></div>').join('');
-    const labelRow = (t.kind==='photo') ?
-      '<div class="fld"><label>Small line EN</label><input value="' + esc(tileVal(t.page,'label_en')) + '" placeholder="' + esc(t.dLabel||'') + '" oninput="setTile(\'' + t.page + '\',\'label_en\',this.value)"></div>' +
-      '<div class="fld"><label>Small line NL</label><input value="' + esc(tileVal(t.page,'label_nl')) + '" placeholder="' + esc(t.dLabel||'') + '" oninput="setTile(\'' + t.page + '\',\'label_nl\',this.value)"></div>' : '';
-    const pillRow = (t.kind==='tool'||t.kind==='wide') ?
-      '<div class="fld"><label>Pill EN</label><input value="' + esc(tileVal(t.page,'pill_en')) + '" placeholder="' + esc(t.dPill||'') + '" oninput="setTile(\'' + t.page + '\',\'pill_en\',this.value)"></div>' +
-      '<div class="fld"><label>Pill NL</label><input value="' + esc(tileVal(t.page,'pill_nl')) + '" placeholder="' + esc(t.dPill||'') + '" oninput="setTile(\'' + t.page + '\',\'pill_nl\',this.value)"></div>' : '';
-    const customRow = (b && ['New','Hot'].indexOf(b.text_en)===-1) ?
-      '<div class="row"><div class="fld"><label>Corner label EN</label><input value="' + esc(b.text_en) + '" oninput="setBadgeText(\'' + t.page + '\',\'en\',this.value)"></div>' +
-      '<div class="fld"><label>Corner label NL</label><input value="' + esc(b.text_nl||'') + '" oninput="setBadgeText(\'' + t.page + '\',\'nl\',this.value)"></div></div>' : '';
-    return '<div class="card"><h3><span class="nr">' + t.n + '</span>' + t.label + ' <small>' + t.kind + '</small></h3>' +
-      '<div class="row"><div class="fld" style="flex:3;"><label>Image link</label><input value="' + esc(tileVal(t.page,'img')) + '" placeholder="' + esc(t.dImg) + '" oninput="setTile(\'' + t.page + '\',\'img\',this.value)"></div>' +
-      '<div class="imgprev" style="background-image:url(\'' + esc(img) + '\')"></div></div>' +
-      '<div class="row"><div class="fld"><label>Title EN</label><input value="' + esc(tileVal(t.page,'title_en')) + '" placeholder="' + esc(t.dTitle) + '" oninput="setTile(\'' + t.page + '\',\'title_en\',this.value)"></div>' +
-      '<div class="fld"><label>Title NL</label><input value="' + esc(tileVal(t.page,'title_nl')) + '" placeholder="' + esc(t.dTitle) + '" oninput="setTile(\'' + t.page + '\',\'title_nl\',this.value)"></div>' + pillRow + '</div>' +
-      (labelRow ? '<div class="row">' + labelRow + '</div>' : '') +
-      '<div class="row" style="align-items:center;"><div class="fld" style="flex:0 0 auto;"><label>Corner label</label><div class="badgeopts">' + badgeBtns + '</div></div>' +
-      '<div class="fld" style="flex:0 0 auto;"><label>Colour</label><div class="swatches">' + sw + '</div></div></div>' + customRow +
-      '</div>';
-  }).join('');
+function pickBadge(page, x) {
+  if (x === '') { setBadge(page, ''); return; }
+  if (x === 'custom') { setBadge(page, 'Label', 'Label', (badgeOf(page) || {}).color); return; }
+  setBadge(page, x, x === 'New' ? 'Nieuw' : x, (badgeOf(page) || {}).color || (x === 'Hot' ? '#E07070' : '#7BC47F'));
+}
+function pickBadgeColor(page, c) { const b = badgeOf(page); if (!b) return; b.color = c; renderEditors(); changed(); }
+function setBadgeText(page, l, v) { const b = badgeOf(page); if (!b) return; if (l === 'en') b.text_en = v; else b.text_nl = v; changed(); }
+function inp(page, field, label, ph) {
+  return `<div class="fld"><label>${label}</label><input value="${esc(tileVal(page, field))}" placeholder="${esc(ph || '')}" data-page="${page}" data-field="${field}"></div>`;
+}
+function renderEditors() {
+  const groups = ['photo', 'tool', 'map'];
+  $('tilesEd').innerHTML = TILES.length ? groups.map(g => {
+    const list = TILES.filter(t => t.kind === g); if (!list.length) return '';
+    return `<h2 style="margin-top:18px;font-size:12.5px">${SECTIONS[g]}</h2>` + list.map(t => {
+      if (!t.page) return `<div class="card fixed"><h3>${esc(t.dTitle)} <span class="k">fixed in the app</span></h3><p class="muted" style="margin-top:4px">${esc(t.dPill || '')} This button opens a picker inside the app, so it is not managed here.</p></div>`;
+      const b = badgeOf(t.page);
+      const changedHere = !!(draft.tiles[t.page] || b);
+      const canBadge = t.kind !== 'map';
+      const badgeBtns = ['', 'New', 'Hot'].map(x => {
+        const on = (!b && x === '') || (b && b.text_en === x);
+        return `<button class="bo${on ? ' on' : ''}" data-badge="${t.page}" data-x="${x}">${x === '' ? 'none' : x}</button>`;
+      }).join('') + `<button class="bo${b && ['New', 'Hot'].indexOf(b.text_en) === -1 ? ' on' : ''}" data-badge="${t.page}" data-x="custom">custom</button>`;
+      const sw = SWATCHES.map(c => `<div class="sw${b && b.color === c ? ' on' : ''}" style="background:${c}" data-sw="${t.page}" data-c="${c}" role="button" aria-label="colour ${c}"></div>`).join('');
+      const custom = (b && ['New', 'Hot'].indexOf(b.text_en) === -1) ? `<div class="row"><div class="fld"><label>Corner label EN</label><input value="${esc(b.text_en)}" data-btext="${t.page}" data-l="en"></div><div class="fld"><label>Corner label NL</label><input value="${esc(b.text_nl || '')}" data-btext="${t.page}" data-l="nl"></div></div>` : '';
+      return `<div class="card" data-page="${t.page}"><h3>${esc(t.dTitle)} <span class="k">${t.kind === 'photo' ? 'photo button' : t.kind === 'tool' ? 'tool' : 'map'}</span>${changedHere ? '<span class="chg">customised</span>' : ''}<button class="show" data-showpage="${t.page}">show in phone</button></h3>
+        ${t.also.length ? `<p class="muted" style="margin-top:2px">Also styles ${esc(t.also.join(', '))}</p>` : ''}
+        <div class="row"><div class="fld" style="flex:3;"><label>Image link</label><input value="${esc(tileVal(t.page, 'img'))}" placeholder="${esc(t.dImg)}" data-page="${t.page}" data-field="img"></div>
+          <div class="imgprev" style="background-image:url('${esc(tileVal(t.page, 'img') || t.dImg)}')"></div></div>
+        <div class="grid4" style="margin-top:10px">
+          ${inp(t.page, 'title_en', 'Title EN', t.dTitle)}${inp(t.page, 'title_nl', 'Title NL', t.dTitle)}
+          ${t.kind === 'tool' ? inp(t.page, 'pill_en', 'Pill EN', t.dPill) + inp(t.page, 'pill_nl', 'Pill NL', t.dPill) : ''}
+          ${t.kind === 'photo' ? inp(t.page, 'label_en', 'Small line EN', t.dLabel) + inp(t.page, 'label_nl', 'Small line NL', t.dLabel) : ''}
+        </div>
+        ${canBadge ? `<div class="row" style="align-items:center;"><div class="fld" style="flex:0 0 auto;"><label>Corner label</label><div class="badgeopts">${badgeBtns}</div></div>
+          ${b ? `<div class="fld" style="flex:0 0 auto;"><label>Colour</label><div class="swatches">${sw}</div></div>` : ''}</div>${custom}` : ''}
+      </div>`;
+    }).join('');
+  }).join('') : '<p class="muted">Could not read the button list from the app preview. Run the sync script once (see the Project doc).</p>';
+  const host = $('tilesEd');
+  host.querySelectorAll('input[data-field]').forEach(i => i.oninput = () => setTile(i.dataset.page, i.dataset.field, i.value.trim()));
+  host.querySelectorAll('[data-badge]').forEach(bn => bn.onclick = () => pickBadge(bn.dataset.badge, bn.dataset.x));
+  host.querySelectorAll('[data-sw]').forEach(s => s.onclick = () => pickBadgeColor(s.dataset.sw, s.dataset.c));
+  host.querySelectorAll('[data-btext]').forEach(i => i.oninput = () => setBadgeText(i.dataset.btext, i.dataset.l, i.value));
+  host.querySelectorAll('[data-showpage]').forEach(bn => bn.onclick = () => highlight(`a[href="${bn.dataset.showpage}.html"]`));
+  host.querySelectorAll('.card[data-page]').forEach(c => c.addEventListener('focusin', () => highlight(`a[href="${c.dataset.page}.html"]`, true)));
   renderSlidesEd();
 }
-function pickBadge(page, x){
-  if (x === '') { setBadge(page, ''); return; }
-  if (x === 'custom') { setBadge(page, 'Label', 'Label', (badgeOf(page)||{}).color); return; }
-  const nl = x === 'New' ? 'Nieuw' : x;
-  setBadge(page, x, nl, (badgeOf(page)||{}).color || (x==='Hot'?'#E07070':'#7BC47F'));
+const SFIELDS = [['eyebrow', 'Eyebrow'], ['title', 'Title'], ['line', 'Line'], ['btn', 'Button']];
+function renderSlidesEd() {
+  const host = $('slidesEd');
+  host.innerHTML = draft.slides.slides.map((s, i) => `<div class="card" data-slide="${i}"><h3>Slide ${i + 2} <span class="k">after the Dailies</span>${slideState(s)}<button class="show" data-del="${i}">remove</button></h3>
+    <div class="grid4" style="margin-top:8px">${SFIELDS.map(([f, l]) => `<div class="fld"><label>${l} EN</label><input value="${esc(s[f + '_en'] || '')}" data-i="${i}" data-f="${f}_en"></div><div class="fld"><label>${l} NL</label><input value="${esc(s[f + '_nl'] || '')}" data-i="${i}" data-f="${f}_nl"></div>`).join('')}</div>
+    <div class="row"><div class="fld"><label>Opens page</label><input value="${esc(s.href || '')}" placeholder="foodieyai.html" data-i="${i}" data-f="href"></div>
+      <div class="fld" style="flex:2;"><label>Photo link (empty = colour only)</label><input value="${esc(s.img || '')}" data-i="${i}" data-f="img"></div></div>
+    <div class="row"><div class="fld"><label>Tint colour</label><input value="${esc(s.overlay || '#C9584A')}" data-i="${i}" data-f="overlay"></div>
+      <div class="fld"><label>Tint strength (0-1)</label><input value="${s.overlay_opacity != null ? s.overlay_opacity : 0.78}" data-i="${i}" data-f="overlay_opacity"></div>
+      <div class="fld"><label>Show from</label><input type="date" value="${esc(s.start || '')}" data-i="${i}" data-f="start"></div>
+      <div class="fld"><label>Until</label><input type="date" value="${esc(s.end || '')}" data-i="${i}" data-f="end"></div></div>
+  </div>`).join('') || '<p class="muted">No campaign slides yet. The Dailies slide is always there; slides you add rotate after it.</p>';
+  host.querySelectorAll('input[data-f]').forEach(i => i.oninput = () => {
+    const s = draft.slides.slides[+i.dataset.i], f = i.dataset.f;
+    s[f] = f === 'overlay_opacity' ? (parseFloat(i.value) || 0.78) : i.value;
+    if (f === 'start' || f === 'end') renderSlidesEd();
+    changed();
+  });
+  host.querySelectorAll('[data-del]').forEach(b => b.onclick = () => { draft.slides.slides.splice(+b.dataset.del, 1); renderSlidesEd(); changed(); });
+  host.querySelectorAll('.card[data-slide]').forEach(c => c.addEventListener('focusin', () => highlight('#heroCarousel', true)));
 }
-function pickBadgeColor(page, c){ const b = badgeOf(page); if (!b) return; b.color = c; renderEditors(); renderPhone(); }
-function setBadgeText(page, l, v){ const b = badgeOf(page); if (!b) return; if (l==='en') b.text_en = v; else b.text_nl = v; renderPhone(); }
-
-function renderSlidesEd(){
-  const host = document.getElementById('slidesEd');
-  host.innerHTML = draft.slides.slides.map((s, i) =>
-    '<div class="card"><h3><span class="nr">S' + (i+1) + '</span>Slide ' + (i+1) +
-    ' <small style="margin-left:auto;"><button class="bo" onclick="delSlide(' + i + ')">remove</button></small></h3>' +
-    '<div class="row"><div class="fld"><label>Eyebrow EN</label><input value="' + esc(s.eyebrow_en||'') + '" oninput="sset(' + i + ',\'eyebrow_en\',this.value)"></div>' +
-    '<div class="fld"><label>Eyebrow NL</label><input value="' + esc(s.eyebrow_nl||'') + '" oninput="sset(' + i + ',\'eyebrow_nl\',this.value)"></div></div>' +
-    '<div class="row"><div class="fld"><label>Title EN</label><input value="' + esc(s.title_en||'') + '" oninput="sset(' + i + ',\'title_en\',this.value)"></div>' +
-    '<div class="fld"><label>Title NL</label><input value="' + esc(s.title_nl||'') + '" oninput="sset(' + i + ',\'title_nl\',this.value)"></div></div>' +
-    '<div class="row"><div class="fld"><label>Line EN</label><input value="' + esc(s.line_en||'') + '" oninput="sset(' + i + ',\'line_en\',this.value)"></div>' +
-    '<div class="fld"><label>Line NL</label><input value="' + esc(s.line_nl||'') + '" oninput="sset(' + i + ',\'line_nl\',this.value)"></div></div>' +
-    '<div class="row"><div class="fld"><label>Button EN</label><input value="' + esc(s.btn_en||'') + '" oninput="sset(' + i + ',\'btn_en\',this.value)"></div>' +
-    '<div class="fld"><label>Button NL</label><input value="' + esc(s.btn_nl||'') + '" oninput="sset(' + i + ',\'btn_nl\',this.value)"></div>' +
-    '<div class="fld"><label>Opens page</label><input value="' + esc(s.href||'') + '" placeholder="foodieyai.html" oninput="sset(' + i + ',\'href\',this.value)"></div></div>' +
-    '<div class="row"><div class="fld" style="flex:2;"><label>Photo link (empty = colour only)</label><input value="' + esc(s.img||'') + '" oninput="sset(' + i + ',\'img\',this.value)"></div>' +
-    '<div class="fld"><label>Tint colour</label><input value="' + esc(s.overlay||'#C9584A') + '" oninput="sset(' + i + ',\'overlay\',this.value)"></div>' +
-    '<div class="fld"><label>Tint strength (0-1)</label><input value="' + (s.overlay_opacity!=null?s.overlay_opacity:0.78) + '" oninput="sset(' + i + ',\'overlay_opacity\',parseFloat(this.value)||0.78)"></div></div>' +
-    '<div class="row"><div class="fld"><label>Show from</label><input type="date" value="' + esc(s.start||'') + '" oninput="sset(' + i + ',\'start\',this.value)"></div>' +
-    '<div class="fld"><label>Until</label><input type="date" value="' + esc(s.end||'') + '" oninput="sset(' + i + ',\'end\',this.value)"></div></div>' +
-    '</div>').join('') || '<p class="muted">No campaign slides yet. The Dailies slide is always there; slides you add rotate after it.</p>';
+function slideState(s) {
+  const today = new Date().toISOString().slice(0, 10);
+  if (s.end && s.end < today) return '<span class="chg" style="background:#f3eef7;color:#8a7f97">ended</span>';
+  if (s.start && s.start > today) return '<span class="chg">starts ' + esc(fmtDay(s.start)) + '</span>';
+  return '<span class="chg" style="background:#e3f4ec;color:#22744f">showing</span>';
 }
-function sset(i, f, v){ draft.slides.slides[i][f] = v; renderPhone(); }
-function addSlide(){ draft.slides.slides.push({ overlay:'#C9584A', overlay_opacity:0.78, eyebrow_en:'New', eyebrow_nl:'Nieuw', title_en:'', title_nl:'', line_en:'', line_nl:'', btn_en:'', btn_nl:'', href:'', start:'', end:'' }); renderEditors(); renderPhone(); }
-function delSlide(i){ draft.slides.slides.splice(i,1); renderEditors(); renderPhone(); }
+$('addSlide').onclick = () => { draft.slides.slides.push({ overlay: '#C9584A', overlay_opacity: 0.78, eyebrow_en: 'New', eyebrow_nl: 'Nieuw', title_en: 'New slide', title_nl: 'Nieuwe slide', line_en: '', line_nl: '', btn_en: '', btn_nl: '', href: '', start: '', end: '' }); renderSlidesEd(); changed(); };
 
 /* ---------------- preview ---------------- */
-function mix(hex, r2,g2,b2, t){ const h=(hex||'#C9584A').replace('#',''); const r=parseInt(h.substr(0,2),16),g=parseInt(h.substr(2,2),16),b=parseInt(h.substr(4,2),16);
-  return [Math.round(r*(1-t)+r2*t), Math.round(g*(1-t)+g2*t), Math.round(b*(1-t)+b2*t)]; }
-function pastelOverlay(hex, op){ op = op || 0.82;
-  const a=mix(hex,190,170,205,0.55), b=mix(hex,205,185,170,0.6), c=mix(hex,175,165,155,0.6);
-  return 'linear-gradient(135deg, rgba(' + a + ',' + Math.min(1,op+0.06) + ') 0%, rgba(' + b + ',' + op + ') 50%, rgba(' + c + ',' + Math.min(1,op+0.06) + ') 100%)'; }
-
-function pTile(t){
-  const img = tileVal(t.page,'img') || t.dImg;
-  const title = tileVal(t.page,'title_en') || t.dTitle;
-  const pill = (t.kind==='tool'||t.kind==='wide') ? (tileVal(t.page,'pill_en') || t.dPill || '') : '';
-  const small = (t.kind==='photo') ? (tileVal(t.page,'label_en') || t.dLabel || '') : '';
-  const b = badgeOf(t.page);
-  return '<div class="p-tile' + (t.kind==='wide'?' wide':'') + '" style="background-image:url(\'' + esc(img) + '\')">' +
-    '<div class="ov" style="background:' + t.tint + '"></div>' +
-    '<span class="nr">' + t.n + '</span>' +
-    (pill ? '<span class="pl">' + esc(pill) + '</span>' : '') +
-    (small ? '<span class="sm">' + esc(small) + '</span>' : '') +
-    '<span class="tt">' + esc(title) + '</span>' +
-    (b ? '<span class="bd" style="background:' + (b.color||SWATCHES[0]) + '">' + esc(b.text_en) + '</span>' : '') +
-    '</div>';
+let pvTimer = null, pvScroll = 0, pvPendingSel = null;
+function changed() {
+  const dirty = JSON.stringify(draft) !== saved;
+  $('dirty').classList.toggle('hidden', !dirty);
+  if (dirty && pvMode !== 'draft') { setMode('draft'); return; }
+  if (pvMode === 'draft') { clearTimeout(pvTimer); pvTimer = setTimeout(() => reloadPreview(), 650); }
 }
-function renderPhone(){
-  const ph = document.getElementById('phone');
-  const slides = draft.slides.slides.map((s, i) =>
-    '<div class="p-slide" style="background-image:url(\'' + esc(s.img||'') + '\')">' +
-    '<div class="ov" style="background:' + pastelOverlay(s.overlay, s.overlay_opacity) + '"></div>' +
-    '<div class="cc"><div class="eb">' + esc(s.eyebrow_en||'') + '</div><div class="tt">' + esc(s.title_en||'Slide ' + (i+1)) + '</div>' +
-    '<div class="ln">' + esc(s.line_en||'') + '</div>' + (s.btn_en ? '<span class="bt">' + esc(s.btn_en) + '</span>' : '') + '</div></div>').join('');
-  ph.innerHTML =
-    '<div class="p-sec">Get Inspired</div>' +
-    '<div class="p-slide" style="background:linear-gradient(135deg,#cbb3d6,#e6c9bc);"><div class="cc"><div class="tt">Dailies</div><div class="ln">always the first slide</div></div></div>' +
-    slides +
-    '<div class="p-sec">Family Needs</div>' +
-    '<div class="p-grid">' + TILES.filter(t=>t.kind==='photo').map(pTile).join('') + '</div>' +
-    '<div class="p-sec">Family Tools &amp; Games</div>' +
-    '<div class="p-grid3">' + TILES.filter(t=>t.kind==='tool').map(pTile).join('') + '</div>' +
-    TILES.filter(t=>t.kind==='wide').map(pTile).join('') +
-    '<div class="p-sec">Explore Maps</div>' +
-    '<div class="p-grid3">' + TILES.filter(t=>t.kind==='map').map(pTile).join('') +
-      '<div class="p-tile"><div class="ov" style="background:rgba(200,150,140,.75)"></div><span class="tt">Food Map</span></div>' +
-    '</div>' +
-    '<div class="p-note">Preview shows the English texts. The Food Map card follows button 1.</div>';
+function setMode(m) {
+  pvMode = m; clearTimeout(pvTimer);
+  $('pvmode').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.m === m));
+  reloadPreview();
 }
+$('pvmode').querySelectorAll('button').forEach(b => b.onclick = () => setMode(b.dataset.m));
+$('pvlang').querySelectorAll('button').forEach(b => b.onclick = () => { pvLang = b.dataset.l; $('pvlang').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); reloadPreview(); });
+$('pvreload').onclick = () => reloadPreview();
+function reloadPreview(first) {
+  // the preview page reads these two values through its preview shim
+  window.__cmsDraft = pvMode === 'draft' ? { ams_home_slides: draft.slides, ams_home_tiles: draft.tiles, ams_home_badges: draft.badges } : null;
+  window.__cmsLang = pvLang;
+  const f = $('pv');
+  try { if (!first && f.contentWindow) pvScroll = f.contentWindow.scrollY || 0; } catch (e) {}
+  f.src = PREVIEW + '?t=' + Date.now();
+}
+$('pv').addEventListener('load', () => {
+  const f = $('pv'); let w;
+  try { w = f.contentWindow; if (!/\/app-preview\/index\.html$/.test(w.location.pathname)) { reloadPreview(); return; } } catch (e) { return; }
+  setTimeout(() => { try { w.scrollTo(0, pvScroll); } catch (e) {} if (pvPendingSel) { const s = pvPendingSel; pvPendingSel = null; highlight(s); } }, 350);
+});
+function highlight(sel, soft) {
+  const f = $('pv'); let d;
+  try { d = f.contentDocument; } catch (e) { return; }
+  const el = d && d.querySelector(sel);
+  if (!el) { if (!soft) pvPendingSel = sel; return; }
+  el.scrollIntoView({ block: 'center', behavior: soft ? 'smooth' : 'auto' });
+  el.style.transition = 'box-shadow .2s'; el.style.boxShadow = '0 0 0 4px #B597C1, 0 0 0 9px rgba(181,151,193,.35)';
+  clearTimeout(el._hl); el._hl = setTimeout(() => { el.style.boxShadow = ''; }, 1600);
+}
+function fitPhone() {
+  const W = 417, H = 876;
+  const narrow = window.innerWidth <= 1000;
+  const k = Math.max(0.5, Math.min(1, narrow ? (Math.min(window.innerWidth - 40, W) / W) : (window.innerHeight - 140) / H));
+  $('iphone').style.transform = `scale(${k})`;
+  $('phonebox').style.width = (W * k) + 'px'; $('phonebox').style.height = (H * k) + 'px';
+}
+window.addEventListener('resize', fitPhone);
+setInterval(() => { const d = new Date(); $('clock').textContent = d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0'); }, 15000);
 
 /* ---------------- playdates ---------------- */
 let pdSources = [];
-async function pdLoadSources(){
-  const sel = document.getElementById('pdSource');
+async function pdLoadSources() {
   try {
-    const ev = await fetch(CB_URL + '/rest/v1/ams_events?is_active=eq.true&start_date=gte.' + new Date().toISOString() + '&select=id,name,start_date,venue,neighbourhood&order=start_date&limit=150', { headers:{ apikey: CB_ANON } }).then(r=>r.json());
-    const tp = await fetch(CB_URL + '/rest/v1/ams_top100_plans?select=id,title_en,neighbourhood,address&order=plan_number&limit=120', { headers:{ apikey: CB_ANON } }).then(r=>r.json());
+    const ev = await fetch(CB_URL + '/rest/v1/ams_events?is_active=eq.true&start_date=gte.' + new Date().toISOString() + '&select=id,name,start_date,venue,neighbourhood&order=start_date&limit=150', { headers: { apikey: CB_ANON } }).then(r => r.json());
+    const tp = await fetch(CB_URL + '/rest/v1/ams_top100_plans?select=id,title_en,neighbourhood,address&order=plan_number&limit=120', { headers: { apikey: CB_ANON } }).then(r => r.json());
     pdSources = [];
-    (ev||[]).forEach(e => pdSources.push({ id:'ev-'+e.id, label:'Event: ' + e.name + ' (' + (e.start_date||'').slice(0,10) + ')', title:e.name, area:e.neighbourhood||'', loc:e.venue||'', when:e.start_date, type:'ams_event', srcId:String(e.id) }));
-    (tp||[]).forEach(p => pdSources.push({ id:'tp-'+p.id, label:'Top 100: ' + p.title_en, title:p.title_en, area:p.neighbourhood||'', loc:p.address||'', when:'', type:'ams_top100', srcId:String(p.id) }));
-    sel.innerHTML = '<option value="">Start empty...</option>' + pdSources.map(s => '<option value="' + s.id + '">' + esc(s.label) + '</option>').join('');
-  } catch(e){}
+    (ev || []).forEach(e => pdSources.push({ id: 'ev-' + e.id, label: 'Event: ' + e.name + ' (' + (e.start_date || '').slice(0, 10) + ')', title: e.name, area: e.neighbourhood || '', loc: e.venue || '', when: e.start_date, type: 'ams_event', srcId: String(e.id) }));
+    (tp || []).forEach(p => pdSources.push({ id: 'tp-' + p.id, label: 'Top 100: ' + p.title_en, title: p.title_en, area: p.neighbourhood || '', loc: p.address || '', when: '', type: 'ams_top100', srcId: String(p.id) }));
+    $('pdSource').innerHTML = '<option value="">Start empty...</option>' + pdSources.map(s => '<option value="' + s.id + '">' + esc(s.label) + '</option>').join('');
+  } catch (e) {}
 }
-function pdPrefill(){
-  const s = pdSources.find(x => x.id === document.getElementById('pdSource').value);
-  if (!s) return;
-  document.getElementById('pdTitle').value = s.title;
-  document.getElementById('pdArea').value = s.area;
-  document.getElementById('pdLoc').value = s.loc;
-  if (s.when) document.getElementById('pdWhen').value = s.when.slice(0,16);
-}
-async function pdCreate(){
-  const m = document.getElementById('pdMsg');
-  const src = pdSources.find(x => x.id === document.getElementById('pdSource').value);
+$('pdSource').onchange = () => {
+  const s = pdSources.find(x => x.id === $('pdSource').value); if (!s) return;
+  $('pdTitle').value = s.title; $('pdArea').value = s.area; $('pdLoc').value = s.loc;
+  if (s.when) $('pdWhen').value = s.when.slice(0, 16);
+};
+$('pdAdd').onclick = async () => {
+  const m = $('pdMsg');
+  const src = pdSources.find(x => x.id === $('pdSource').value);
   const row = {
     creator_id: session.user.id,
-    creator_name: document.getElementById('pdName').value.trim() || 'Amsterdam Families',
-    title: document.getElementById('pdTitle').value.trim(),
-    activity: 'meetup',
-    plan_date: document.getElementById('pdWhen').value ? new Date(document.getElementById('pdWhen').value).toISOString() : null,
-    area: document.getElementById('pdArea').value.trim(),
-    location_text: document.getElementById('pdLoc').value.trim(),
-    kids_ages: document.getElementById('pdAges').value.trim(),
-    max_spots: parseInt(document.getElementById('pdSpots').value) || 4,
-    visibility: 'public',
-    description: document.getElementById('pdDesc').value.trim(),
-    source_type: src ? src.type : null,
-    source_id: src ? src.srcId : null
+    creator_name: $('pdName').value.trim() || 'Amsterdam Families',
+    title: $('pdTitle').value.trim(), activity: 'meetup',
+    plan_date: $('pdWhen').value ? new Date($('pdWhen').value).toISOString() : null,
+    area: $('pdArea').value.trim(), location_text: $('pdLoc').value.trim(), kids_ages: $('pdAges').value.trim(),
+    max_spots: parseInt($('pdSpots').value) || 4, visibility: 'public', description: $('pdDesc').value.trim(),
+    source_type: src ? src.type : null, source_id: src ? src.srcId : null
   };
-  if (!row.title || !row.plan_date) { m.textContent = 'Title and date are needed.'; m.className='msg err'; return; }
+  if (!row.title || !row.plan_date) { m.textContent = 'Title and date are needed.'; m.className = 'msg err'; return; }
   const { error } = await sb.from('playdates').insert(row);
-  m.textContent = error ? error.message : 'Playdate is live in the app.';
-  m.className = 'msg' + (error ? ' err' : '');
-  if (!error) { document.getElementById('pdTitle').value=''; document.getElementById('pdDesc').value=''; pdList(); }
-}
-async function pdList(){
-  const host = document.getElementById('pdList');
+  m.textContent = error ? error.message : 'Playdate is live in the app.'; m.className = 'msg' + (error ? ' err' : '');
+  if (!error) { $('pdTitle').value = ''; $('pdDesc').value = ''; pdList(); }
+};
+async function pdList() {
   const { data } = await sb.from('playdates').select('id,title,plan_date,area,creator_name,creator_id').gte('plan_date', new Date().toISOString()).order('plan_date').limit(40);
-  host.innerHTML = (data||[]).map(p =>
-    '<div class="pd-item"><b>' + esc(p.title) + '</b><span class="when">' + (p.plan_date||'').slice(0,16).replace('T',' ') + ' · ' + esc(p.area||'') + ' · ' + esc(p.creator_name||'') + '</span>' +
-    (p.creator_id === session.user.id ? '<button onclick="pdDel(\'' + p.id + '\')">remove</button>' : '') + '</div>').join('') || '<p class="muted">No upcoming playdates.</p>';
+  $('pdList').innerHTML = (data || []).map(p => '<div class="pd-item"><b>' + esc(p.title) + '</b><span class="when">' + (p.plan_date || '').slice(0, 16).replace('T', ' ') + ' · ' + esc(p.area || '') + ' · ' + esc(p.creator_name || '') + '</span>' + (p.creator_id === session.user.id ? '<button data-pd="' + p.id + '">remove</button>' : '') + '</div>').join('') || '<p class="muted">No upcoming playdates.</p>';
+  $('pdList').querySelectorAll('[data-pd]').forEach(b => b.onclick = async () => { await sb.from('playdates').delete().eq('id', b.dataset.pd); pdList(); });
 }
-async function pdDel(id){ await sb.from('playdates').delete().eq('id', id); pdList(); }
 
-/* ---------------- utils ---------------- */
-function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
-
+function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
 boot();
 </script>
 </body>
