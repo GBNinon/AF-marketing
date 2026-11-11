@@ -1,0 +1,215 @@
+<!doctype html>
+<!-- Reviews v1 (10 Nov 2026): approve or reject Ibiza playground reviews (1 and 2 stars wait here; 3 to 5 stars go live by themselves). Uses qcz rpc ibz_review_queue / ibz_review_decide (admins only). Was: Home CMS v2 (29 Oct 2026): the preview is the real app home (app-preview/, synced from the latest test build by sync-app-preview.py) in an iPhone 15/16 frame (393x852). Draft shows unsaved edits, Live shows what phones get now. The button list is read from that build, so it always matches the app. Saves to cbldl app_config (ams_home_slides, ams_home_tiles, ams_home_badges) through the qcz cms-save function. Shares the tab row with the dashboard. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reviews</title>
+<link href="https://fonts.googleapis.com/css2?family=Karla:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  :root{--bg:#F8F6FA;--ink:#2f2a38;--mute:#8a7f97;--soft:#a79dbb;--line:#e9e2ef;--lilac:#B597C1;--pink:#E8B0C8;--green:#2f6b45;--red:#9a3b2e;}
+  body{background:var(--bg);color:var(--ink);font-family:'Karla',-apple-system,sans-serif;padding:24px 20px 80px;}
+  .wrap{max-width:1240px;margin:0 auto;}
+  .hidden{display:none!important;}
+  button{font-family:inherit;}
+  :focus-visible{outline:2px solid var(--lilac);outline-offset:2px;border-radius:6px;}
+  .btn{background:linear-gradient(135deg,var(--lilac),var(--pink));color:#fff;font-weight:800;padding:11px 18px;border:none;border-radius:12px;font-size:14px;cursor:pointer;white-space:nowrap;}
+  .btn.ghost{background:#fff;color:#6f6680;border:1.5px solid #e0d8ea;}
+  .btn.small{padding:7px 12px;font-size:12.5px;border-radius:10px;}
+  .btn:disabled{opacity:.5;cursor:default;}
+  .out{border:none;background:none;color:var(--soft);font-size:13px;cursor:pointer;text-decoration:underline;}
+  .muted{font-size:13px;color:var(--soft);line-height:1.5;}
+
+  /* login */
+  .login{max-width:380px;margin:80px auto;background:#fff;border:1px solid var(--line);border-radius:20px;padding:26px;text-align:center;}
+  .login input{width:100%;border:1.5px solid #e0d8ea;border-radius:12px;padding:12px 14px;font-size:16px;font-family:inherit;margin:14px 0 10px;}
+  .login .btn{width:100%;}
+
+  /* header + tabs (same as the dashboard) */
+  header{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-bottom:18px;}
+  .brand{display:flex;align-items:center;gap:10px;margin-right:auto;min-width:0;}
+  .mark{width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,var(--lilac),var(--pink));color:#fff;font-weight:800;font-size:17px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 12px rgba(181,151,193,.35);}
+  h1{font-size:24px;font-weight:800;}
+  .citychip{background:#fff;border:1px solid var(--line);border-radius:14px;padding:8px 14px;font-weight:800;font-size:14px;}
+  .citychip small{font-weight:600;color:var(--soft);margin-left:6px;}
+  .links{display:flex;gap:12px;align-items:center;}
+  .tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin:0 -20px 18px;padding:0 20px;overflow-x:auto;scrollbar-width:none;}
+  .tabs::-webkit-scrollbar{display:none;}
+  .tabs a{font-size:14.5px;font-weight:800;color:var(--mute);padding:10px 14px;border-bottom:3px solid transparent;margin-bottom:-1px;text-decoration:none;white-space:nowrap;}
+  .tabs a:hover{color:var(--ink);}
+  .tabs a.on{color:var(--ink);border-bottom-color:var(--lilac);}
+  .ptitle{font-size:22px;font-weight:800;margin:4px 0 14px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;}
+  .ptitle small{font-size:13px;font-weight:600;color:var(--soft);}
+
+  .layout{display:grid;grid-template-columns:auto 1fr;gap:28px;align-items:start;}
+
+  /* ---------- iPhone preview ---------- */
+  .pv{position:sticky;top:12px;display:flex;flex-direction:column;align-items:center;gap:10px;}
+  .pvbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center;}
+  .seg{display:flex;gap:3px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:3px;}
+  .seg button{padding:6px 11px;border-radius:9px;font-weight:700;font-size:12.5px;color:#6f6680;border:none;background:none;cursor:pointer;}
+  .seg button.on{background:var(--ink);color:#fff;}
+  .iconbtn{border:1px solid var(--line);background:#fff;border-radius:10px;width:32px;height:32px;cursor:pointer;color:#6f6680;font-size:15px;}
+  .phonebox{position:relative;}
+  .iphone{position:absolute;top:0;left:0;width:417px;height:876px;transform-origin:top left;background:#1d1b22;border-radius:66px;padding:12px;box-shadow:0 0 0 2px #3a3642 inset,0 24px 50px rgba(47,42,56,.22);}
+  .iphone .screen{position:relative;width:393px;height:852px;border-radius:55px;overflow:hidden;background:#F8F6FA;}
+  .iphone .status{position:absolute;top:0;left:0;right:0;height:54px;display:flex;align-items:center;justify-content:space-between;padding:6px 34px 0 46px;font:600 16px -apple-system,'SF Pro Text',sans-serif;color:#000;z-index:2;background:#fff;}
+  .iphone .status i{font-style:normal;letter-spacing:1px;font-size:13px;}
+  .iphone .island{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:124px;height:36px;border-radius:20px;background:#000;z-index:3;}
+  .iphone iframe{position:absolute;top:54px;left:0;width:393px;height:798px;border:0;background:#F8F6FA;}
+  .iphone .homebar{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:#111;opacity:.85;z-index:3;}
+  .pvmeta{font-size:12px;color:var(--soft);text-align:center;max-width:417px;line-height:1.45;}
+  .pvmeta b{color:var(--mute);}
+  .modepill{font-size:11.5px;font-weight:800;border-radius:20px;padding:3px 9px;}
+  .modepill.draft{background:#fdf0dc;color:#9a5d0a;} .modepill.live{background:#e3f4ec;color:#22744f;}
+
+  /* ---------- editors ---------- */
+  h2{font-size:14px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--mute);margin:26px 0 10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  h2:first-child{margin-top:0;}
+  h2 small{font-weight:600;text-transform:none;letter-spacing:0;color:var(--soft);font-size:13px;}
+  h2 .right{margin-left:auto;}
+  .card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px 16px;margin-bottom:10px;transition:border-color .15s,box-shadow .15s;}
+  .card:focus-within{border-color:var(--lilac);box-shadow:0 0 0 3px rgba(181,151,193,.18);}
+  .card h3{font-size:15px;font-weight:800;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .card h3 .k{font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--soft);background:#f4eff8;border-radius:7px;padding:2px 7px;}
+  .card h3 .chg{font-size:11px;font-weight:800;color:#9a5d0a;background:#fdf0dc;border-radius:7px;padding:2px 7px;}
+  .card h3 .show{margin-left:auto;font-size:12px;font-weight:700;color:var(--mute);background:none;border:none;cursor:pointer;text-decoration:underline;}
+  .card.fixed{background:#faf8fc;color:var(--mute);}
+  .grid4{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 14px;}
+  .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+  .fld{flex:1;min-width:130px;}
+  .fld label{display:block;font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--mute);margin-bottom:3px;}
+  .fld input,.fld select{width:100%;border:1.5px solid #e6dfee;border-radius:10px;padding:8px 10px;font-family:inherit;font-size:13.5px;background:#fff;color:var(--ink);outline:none;}
+  .fld input:focus{border-color:var(--lilac);}
+  .fld input::placeholder{color:#c3b9d0;}
+  .imgprev{width:54px;height:54px;border-radius:12px;background-size:cover;background-position:center;background-color:#eeeaf2;flex-shrink:0;align-self:flex-end;border:1px solid var(--line);}
+  .swatches{display:flex;gap:6px;align-items:center;}
+  .sw{width:24px;height:24px;border-radius:50%;border:2.5px solid transparent;cursor:pointer;}
+  .sw.on{border-color:var(--ink);}
+  .badgeopts{display:flex;gap:6px;flex-wrap:wrap;}
+  .bo{border:1.5px solid #e0d8ea;background:#fff;border-radius:10px;padding:5px 11px;font-size:12.5px;font-weight:800;cursor:pointer;color:#6f6680;}
+  .bo.on{background:var(--ink);border-color:var(--ink);color:#fff;}
+  .savebar{position:sticky;bottom:12px;display:flex;gap:10px;justify-content:flex-end;align-items:center;background:rgba(248,246,250,.94);backdrop-filter:blur(6px);padding:10px 0;z-index:5;}
+  .msg{font-size:13px;font-weight:700;color:var(--green);}
+  .msg.err{color:var(--red);}
+  .dirty{font-size:12.5px;font-weight:800;color:#9a5d0a;background:#fdf0dc;border-radius:20px;padding:4px 10px;margin-right:auto;}
+  details.card summary{cursor:pointer;font-weight:800;font-size:15px;list-style:none;}
+  details.card summary::-webkit-details-marker{display:none;}
+  details.card summary::after{content:"show";float:right;font-size:12px;color:var(--mute);text-decoration:underline;font-weight:700;}
+  details.card[open] summary::after{content:"hide";}
+  .pd-item{display:flex;align-items:center;gap:10px;border-top:1px solid #f3eee6;padding:9px 0;font-size:13.5px;flex-wrap:wrap;}
+  .pd-item .when{color:var(--mute);font-size:12px;}
+  .pd-item button{margin-left:auto;border:none;background:#f8e3e0;color:var(--red);font-weight:800;font-size:12px;border-radius:8px;padding:5px 10px;cursor:pointer;}
+
+  @media(max-width:1000px){.layout{grid-template-columns:1fr;}.pv{position:static;}}
+  @media(max-width:560px){body{padding:16px 16px 60px;}.tabs{margin:0 -16px 14px;padding:0 16px;}.grid4{grid-template-columns:1fr;}}
+
+  .rv{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px 18px;margin-bottom:12px;display:grid;gap:8px;}
+  .rv .top{display:flex;flex-wrap:wrap;gap:10px;align-items:baseline;}
+  .rv .pg{font-weight:800;font-size:16px;}
+  .rv .stars{color:#e0a020;font-size:16px;letter-spacing:1px;}
+  .rv .meta{font-size:13px;color:var(--soft);}
+  .rv .txt{font-size:15px;line-height:1.5;white-space:pre-wrap;}
+  .rv .acts{display:flex;gap:8px;flex-wrap:wrap;}
+  .rv.done{opacity:.55;}
+  .tag{display:inline-block;font-size:12px;font-weight:800;border-radius:999px;padding:3px 10px;background:#f1ecf5;color:#6f6680;}
+  .tag.ok{background:#e4f2e8;color:var(--green);} .tag.no{background:#f7e3e0;color:var(--red);}
+  .bar2{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px;}
+</style>
+</head>
+<body>
+<div id="login" class="login hidden">
+  <h1 style="margin:0">Reviews</h1>
+  <p class="muted" style="margin-top:8px">Log in with your email code.</p>
+  <div id="step1"><input id="email" type="email" placeholder="email address"><button class="btn" id="l-send">Send code</button></div>
+  <div id="step2" class="hidden"><input id="code" inputmode="numeric" autocomplete="one-time-code" placeholder="code from the email"><button class="btn" id="l-verify">Log in</button></div>
+  <p class="muted" id="loginmsg" style="margin-top:10px"></p>
+</div>
+
+<div id="app" class="wrap hidden">
+  <header>
+    <div class="brand"><span class="mark" aria-hidden="true">F</span><h1>Families App marketing</h1></div>
+    <div class="citychip">Ibiza<small>playground reviews</small></div>
+    <div class="links"><button class="out" id="logout">log out</button></div>
+  </header>
+  <nav class="tabs">
+    <a href="index.html#dashboard">Dashboard</a><a href="index.html#concepts">Concepts</a><a href="index.html#accounts">Accounts</a><a href="index.html#formats">Formats</a><a href="campaigns.html">Campaigns</a><a href="index.html#library">Library</a><a href="home-cms.html">Home CMS</a><a href="reviews.html" class="on" aria-current="page">Reviews</a>
+  </nav>
+  <h2 class="ptitle" style="text-transform:none;letter-spacing:0;color:var(--ink)">Playground reviews <small>1 and 2 star reviews wait here. 3 to 5 stars go live by themselves.</small></h2>
+  <div class="bar2">
+    <button class="btn ghost small" id="showPending" aria-pressed="true">Waiting</button>
+    <button class="btn ghost small" id="showAll" aria-pressed="false">All reviews</button>
+    <span class="muted" id="msg"></span>
+  </div>
+  <div id="list"></div>
+</div>
+
+<script>
+'use strict';
+const SUPABASE_URL  = 'https://qczutthumgpgxwepatte.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFjenV0dGh1bWdwZ3h3ZXBhdHRlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkwNzg5NzAsImV4cCI6MjA4NDY1NDk3MH0.vleNYVReRJnMruKBTXEb9gwdKVdhbiuLJTZoDiuUM0g';
+const CB_URL  = 'https://cbldlpuhmuojdvljdtsk.supabase.co';
+const CB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNibGRscHVobXVvamR2bGpkdHNrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAxNTY5OTUsImV4cCI6MjA3NTczMjk5NX0.HqkbwYs6wpr4Ui78H2AUcGnlIxUWkrvJ2m1JPqACPxM';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+let NAMES = {}, showAll = false;
+
+$('l-send').onclick = async () => {
+  const email = $('email').value.trim().toLowerCase(); if (!email) return;
+  const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
+  $('loginmsg').textContent = error ? error.message : 'Code sent, check your mail.';
+  if (!error) { $('step1').classList.add('hidden'); $('step2').classList.remove('hidden'); }
+};
+$('l-verify').onclick = async () => {
+  const email = $('email').value.trim().toLowerCase(), token = $('code').value.trim();
+  let r = await sb.auth.verifyOtp({ email, token, type: 'email' });
+  if (r.error) r = await sb.auth.verifyOtp({ email, token, type: 'magiclink' });
+  if (r.error) { $('loginmsg').textContent = r.error.message; return; }
+  location.reload();
+};
+$('logout').onclick = async () => { await sb.auth.signOut(); location.reload(); };
+$('showPending').onclick = () => { showAll = false; setTabs(); load(); };
+$('showAll').onclick = () => { showAll = true; setTabs(); load(); };
+function setTabs() { $('showPending').setAttribute('aria-pressed', !showAll); $('showAll').setAttribute('aria-pressed', showAll); $('showPending').style.borderColor = showAll ? '' : 'var(--lilac)'; $('showAll').style.borderColor = showAll ? 'var(--lilac)' : ''; }
+
+async function names() {
+  try {
+    const r = await fetch(CB_URL + '/rest/v1/ibz_playgrounds?select=id,title,area', { headers: { apikey: CB_ANON } });
+    (await r.json()).forEach(p => { NAMES[String(p.id)] = p.title + (p.area ? ' (' + p.area + ')' : ''); });
+  } catch (e) {}
+}
+async function load() {
+  $('msg').textContent = 'Loading...';
+  const { data, error } = await sb.rpc('ibz_review_queue', { p_all: showAll });
+  if (error) { $('msg').textContent = /not allowed/.test(error.message) ? 'This login is not a marketing admin.' : error.message; $('list').innerHTML = ''; return; }
+  $('msg').textContent = showAll ? data.length + ' reviews' : (data.length ? data.length + ' waiting for you' : 'Nothing waiting. All good.');
+  $('list').innerHTML = data.map(r => {
+    const state = r.approved ? '<span class="tag ok">Live</span>' : r.rejected ? '<span class="tag no">Rejected</span>' : '<span class="tag">Waiting</span>';
+    const when = new Date(r.created_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    return `<div class="rv${r.approved || r.rejected ? ' done' : ''}" data-id="${esc(r.id)}">
+      <div class="top"><span class="pg">${esc(NAMES[r.playground_id] || 'Spot ' + r.playground_id)}</span><span class="stars">${'\u2605'.repeat(r.rating)}${'\u2606'.repeat(5 - r.rating)}</span>${state}</div>
+      <div class="meta">${esc(r.user_name || 'No name')} · ${esc(when)}${r.age_frames ? ' · ages ' + esc(r.age_frames) : ''}</div>
+      ${r.comment ? `<div class="txt">${esc(r.comment)}</div>` : '<div class="meta">No text, stars only.</div>'}
+      <div class="acts"><button class="btn small" data-a="1">Approve: show it</button><button class="btn ghost small" data-a="0">Reject: keep it hidden</button></div>
+    </div>`;
+  }).join('');
+}
+$('list').onclick = async e => {
+  const b = e.target.closest('button[data-a]'); if (!b) return;
+  const card = b.closest('.rv'); b.disabled = true;
+  const { error } = await sb.rpc('ibz_review_decide', { p_id: card.dataset.id, p_approve: b.dataset.a === '1' });
+  if (error) { $('msg').textContent = error.message; b.disabled = false; return; }
+  load();
+};
+(async () => {
+  const { data } = await sb.auth.getSession();
+  if (!data || !data.session) { $('login').classList.remove('hidden'); return; }
+  $('app').classList.remove('hidden'); setTabs();
+  await names(); load();
+})();
+</script>
+</body>
+</html>
