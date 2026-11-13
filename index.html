@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Families App marketing dashboard v2.7 (25 Oct 2026): restored after the 22 Sep overwrite, Growth at a glance row (followers, downloads iOS/Android, reach to download, paid members, partners live), funnel focus line, 12 week downloads chart with table view, Monday reminder, target progress bars, Accounts pipeline summary, search and sort, sticky tabs, Clean and Calm palette, tab row shared with Campaigns and Home CMS pages (29 Oct); fixes: settings and Add account form always visible, phone overflow on Dashboard and Library. v2.6 (16 Sep 2026): Library tab (knowledge, app screens, design kit), Make a visual (Claude writes the artboard, rendered here to PNG). v2.5 (14 Sep 2026): settings dropdowns prefilled, retry link. v2.4 (11 Sep 2026): coloured panels, plan moved to Concepts, chat on the dashboard, drafts shelf, account lists and export. v2.3: model settings panel. v2.2 (10 Sep 2026): paid layer (quiz funnel, ad spend), kick-off plan campaigns and panel, ad concepts AD1 to AD5. v1 = funnel, advice, weeks, CSV, formats table, plan. v2 adds tabs: Concepts (grid + chat), Accounts, Formats, Campaigns, plus newsletter ideas and 12 week trends. -->
+<!-- Families App marketing dashboard v2.8 (13 Nov 2026): Accounts tab rebuilt as the partner CRM (category, area, how hot, partner group, what we did, what they did, content status, app pages, top tags, next step; category overview cards, click a coloured cell to change it, bulk change, sort on every column, loads past 1000 rows, import with the new columns; needs marketing-schema-v7.sql). Nothing outside the Accounts tab changed. v2.7 (25 Oct 2026): restored after the 22 Sep overwrite, Growth at a glance row (followers, downloads iOS/Android, reach to download, paid members, partners live), funnel focus line, 12 week downloads chart with table view, Monday reminder, target progress bars, Accounts pipeline summary, search and sort, sticky tabs, Clean and Calm palette, tab row shared with Campaigns and Home CMS pages (29 Oct); fixes: settings and Add account form always visible, phone overflow on Dashboard and Library. v2.6 (16 Sep 2026): Library tab (knowledge, app screens, design kit), Make a visual (Claude writes the artboard, rendered here to PNG). v2.5 (14 Sep 2026): settings dropdowns prefilled, retry link. v2.4 (11 Sep 2026): coloured panels, plan moved to Concepts, chat on the dashboard, drafts shelf, account lists and export. v2.3: model settings panel. v2.2 (10 Sep 2026): paid layer (quiz funnel, ad spend), kick-off plan campaigns and panel, ad concepts AD1 to AD5. v1 = funnel, advice, weeks, CSV, formats table, plan. v2 adds tabs: Concepts (grid + chat), Accounts, Formats, Campaigns, plus newsletter ideas and 12 week trends. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -194,6 +194,53 @@
   .status{font-size:11px;font-weight:800;padding:3px 8px;border-radius:7px;letter-spacing:.3px;white-space:nowrap;}
   .s-to{background:#eeeaf2;color:#6f6680;} .s-contacted{background:#dfeaf3;color:#2f5878;} .s-agreed{background:#fff1dc;color:#9a6a2e;} .s-posted{background:#e3efe6;color:#2f6b45;}
   .delta{font-size:12px;font-weight:800;margin-left:4px;}
+  /* v2.8 accounts CRM */
+  #tab-accounts .crm{grid-template-columns:2fr repeat(4,minmax(0,1fr));}
+  #tab-accounts .crm .kpi.click{cursor:pointer;} #tab-accounts .crm .kpi.click:hover{border-color:#cdbfd8;}
+  #tab-accounts .crm .kpi.sel{border-color:#2f2a38;box-shadow:0 0 0 1px #2f2a38;}
+  .catboard{display:grid;grid-template-columns:repeat(auto-fill,minmax(114px,1fr));gap:8px;margin:0 0 12px;}
+  .catcard{background:#fff;border:1.5px solid #e9e2ef;border-radius:14px;padding:9px 10px 8px;cursor:pointer;text-align:left;font-family:inherit;color:#2f2a38;border-top:5px solid var(--c,#cfc6da);min-width:0;}
+  .catcard:hover{border-color:#cdbfd8;border-top-color:var(--c,#cfc6da);} .catcard.on{border-color:#2f2a38;border-top-color:var(--c,#cfc6da);box-shadow:0 0 0 1px #2f2a38;}
+  .catcard b{display:block;font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .catcard .n{font-size:22px;font-weight:800;letter-spacing:-.4px;line-height:1.15;}
+  .catcard .s{font-size:11.5px;color:#6f6680;font-weight:700;line-height:1.45;} .catcard .s em{font-style:normal;color:#c2452f;} .catcard .s u{text-decoration:none;color:#b0326a;}
+  .frow{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px;} .frow .lbl{font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#8a7f97;min-width:42px;}
+  .frow button{background:#fff;border:1.5px solid #e0d8ea;border-radius:10px;padding:5px 10px;font-family:inherit;font-size:12.5px;font-weight:700;color:#6f6680;cursor:pointer;}
+  .frow button.on{background:#2f2a38;color:#fff;border-color:#2f2a38;} .frow button span{opacity:.65;font-weight:600;}
+  .fsel{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px;}
+  .fsel select{border:1.5px solid #e0d8ea;border-radius:10px;padding:6px 8px;font-family:inherit;font-size:12.5px;font-weight:700;color:#6f6680;background:#fff;max-width:190px;}
+  .fsel select.act{border-color:#2f2a38;color:#2f2a38;background:#f3eef6;}
+  .bulk{display:flex;gap:6px;align-items:center;flex-wrap:wrap;} .bulk select{border:1.5px solid #e0d8ea;border-radius:10px;padding:6px 8px;font-family:inherit;font-size:13px;background:#fff;color:#2f2a38;max-width:200px;}
+  #accounts{overflow:visible;border-collapse:separate;border-spacing:0;min-width:1720px;font-size:13px;}
+  #accounts th{position:sticky;top:0;cursor:pointer;white-space:nowrap;padding:10px 8px;user-select:none;} #accounts th.nos{cursor:default;}
+  #accounts th.sorted{color:#2f2a38;} #accounts th i{font-style:normal;font-size:10px;margin-left:3px;}
+  #accounts td{padding:6px 8px;font-size:13px;}
+  #accounts td.c-acc{position:sticky;left:0;background:#fff;z-index:2;min-width:200px;max-width:230px;box-shadow:1px 0 0 #f1ecf4;} #accounts th.c-acc{position:sticky;left:0;z-index:3;}
+  #accounts tr.clickable:hover td.c-acc{background:#fbf9fc;}
+  #accounts td.c-acc b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;} #accounts td.c-acc .linkish{font-size:12px;}
+  #accounts td.ed{cursor:pointer;min-width:96px;} #accounts td.ed:hover{background:#f6f1f9;}
+  #accounts td.txt{max-width:200px;color:#6f6680;font-size:12.5px;line-height:1.35;} #accounts td.txt div{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+  #accounts tr.grp td{background:var(--g,#eeeaf2);font-weight:800;font-size:13px;letter-spacing:.3px;cursor:pointer;padding:9px 12px;color:#2f2a38;border-bottom:none;}
+  #accounts tr.grp td span{font-weight:700;color:#6f6680;margin-left:6px;} #accounts tr.grp td i{font-style:normal;display:inline-block;width:14px;}
+  #accounts tr.more td{text-align:center;padding:12px;}
+  .pill{display:block;text-align:center;font-size:11.5px;font-weight:800;padding:6px 8px;border-radius:8px;white-space:nowrap;letter-spacing:.2px;background:var(--b,#eeeaf2);color:var(--t,#4a4356);}
+  .pill.none{background:none;color:#c9c0d4;font-weight:700;} td.ed:hover .pill.none{color:#8a7f97;}
+  .chipz{display:flex;gap:3px;flex-wrap:wrap;} .chipz .pill{display:inline-block;padding:4px 7px;font-size:11px;border-radius:7px;}
+  #accounts td[data-f=app_pages]{min-width:205px;} #accounts td[data-f=outreach],#accounts td[data-f=response]{min-width:150px;} #accounts td.c-tags{min-width:190px;}
+  .bulk select:empty{display:none;}
+  .acpop{position:absolute;z-index:80;background:#fff;border:1px solid #e0d8ea;border-radius:14px;box-shadow:0 12px 34px rgba(47,42,56,.18);padding:8px;display:flex;flex-direction:column;gap:5px;min-width:170px;max-width:260px;}
+  .acpop h5{font-size:10.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#8a7f97;margin:2px 4px 3px;}
+  .acpop button{border:none;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:6px;justify-content:center;font-size:12px;font-weight:800;padding:7px 10px;border-radius:8px;background:var(--b,#eeeaf2);color:var(--t,#4a4356);}
+  .acpop button.off{opacity:.6;} .acpop button:hover{opacity:1;filter:brightness(.96);} .acpop button.clr{background:none;color:#8a7f97;font-weight:700;}
+  .acmodal{position:fixed;inset:0;z-index:90;background:rgba(47,42,56,.42);display:flex;align-items:flex-start;justify-content:center;padding:32px 16px;overflow-y:auto;}
+  .acmodal .acform{width:100%;max-width:900px;margin:0;box-shadow:0 20px 60px rgba(47,42,56,.3);}
+  .acform h3{grid-column:1 / -1;font-size:17px;font-weight:800;margin:0 0 2px;}
+  .acform textarea{width:100%;border:1.5px solid #e0d8ea;border-radius:10px;padding:9px 10px;font-family:inherit;font-size:14px;color:#2f2a38;min-height:64px;resize:vertical;}
+  .acform .wide{grid-column:1 / -1;} .acform .half{grid-column:span 2;}
+  .acform .checks{display:flex;gap:6px;flex-wrap:wrap;} .acform .checks label{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:800;letter-spacing:0;text-transform:none;padding:6px 9px;border-radius:8px;margin:0;cursor:pointer;background:var(--b,#eeeaf2);color:var(--t,#4a4356);opacity:.62;}
+  .acform .checks label.on{opacity:1;box-shadow:0 0 0 2px #2f2a38;} .acform .checks input{width:auto;margin:0;}
+  @media (max-width:980px){ #tab-accounts .crm{grid-template-columns:1fr 1fr;} #tab-accounts .crm .kpi:first-child{grid-column:1 / -1;} }
+  @media (max-width:820px){ .acform{grid-template-columns:1fr 1fr;} .acform .half{grid-column:1 / -1;} #accounts td.c-acc{min-width:150px;max-width:170px;} }
   /* formats + campaigns */
   .cards{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
   .card{background:#fff;border:1px solid #e9e2ef;border-radius:18px;overflow:hidden;display:grid;grid-template-columns:150px 1fr;}
@@ -470,26 +517,44 @@
 </section>
 
 <section class="tab" id="tab-accounts">
-  <h2>Accounts <small>influencers, famous parents, partner Instagrams</small><span class="right"><button class="btn ghost" id="ac-import">Import CSV</button> <button class="btn ghost" id="ac-refresh">Refresh followers</button> <button class="btn" id="ac-new">Add account</button></span></h2>
+  <h2>Accounts <small>partner CRM: partners, influencers, famous parents</small><span class="right"><button class="btn ghost" id="ac-import">Import CSV</button> <button class="btn ghost" id="ac-refresh">Refresh followers</button> <button class="btn" id="ac-new">Add account</button></span></h2>
   <input type="file" id="ac-csv" accept=".csv,text/csv,.txt" hidden>
-  <div class="drop hidden" id="ac-drop" style="margin:0 0 14px"><b>Drop a CSV of accounts here</b><br>Columns by header, any order: name, handle (or instagram, a full profile URL is fine), web, email, phone, type, status, notes, followers. Existing handles are updated, new ones added.<br><span class="msg" id="ac-imsg"></span></div>
-  <div class="acform hidden" id="acform">
+  <div class="drop hidden" id="ac-drop" style="margin:0 0 14px"><b>Drop a CSV of accounts here</b><br>Columns by header, any order: name, handle (or instagram, a full profile URL is fine), web, email, phone, type, status, notes, followers, category, area, heat, listing, app_pages, top_tags, outreach, response, content, contact_name, next_step. Several values in one cell: separate with | . Existing accounts are updated (matched on handle, or on name when there is no handle), new ones added.<br><span class="msg" id="ac-imsg"></span></div>
+  <div class="acmodal hidden" id="acmodal">
+  <div class="acform" id="acform">
+    <h3 id="ac-title">Account</h3>
     <div class="f"><label>Name</label><input type="text" id="ac-name"></div>
     <div class="f"><label>Instagram handle</label><input type="text" id="ac-handle" placeholder="without @"></div>
-    <div class="f"><label>Type</label><select id="ac-type"><option>influencer</option><option>famous parent</option><option>partner</option><option>press</option><option>other</option></select></div>
-    <div class="f"><label>Status</label><select id="ac-status"><option>to contact</option><option>contacted</option><option>agreed</option><option>posted</option></select></div>
-    <div class="f"><label>Web</label><input type="url" id="ac-web"></div>
+    <div class="f"><label>Type</label><select id="ac-type"><option>partner</option><option>influencer</option><option>famous parent</option><option>press</option><option>other</option></select></div>
+    <div class="f"><label>Partner group</label><select id="ac-listing"></select></div>
+    <div class="f"><label>Category</label><select id="ac-category"></select></div>
+    <div class="f"><label>Area</label><select id="ac-area"></select></div>
+    <div class="f"><label>How hot</label><select id="ac-heat"></select></div>
+    <div class="f"><label>Pipeline status</label><select id="ac-status"><option>to contact</option><option>contacted</option><option>agreed</option><option>posted</option></select></div>
+    <div class="f"><label>Contact person</label><input type="text" id="ac-contactname"></div>
     <div class="f"><label>Email</label><input type="email" id="ac-email"></div>
-    <div class="f"><label>Phone</label><input type="text" id="ac-phone"></div>
-    <div class="f"><label>Notes</label><input type="text" id="ac-notes"></div>
-    <div class="f" style="grid-column:1 / -1"><label>Lists (comma separated, e.g. newsletter monthly, launch partners)</label><input type="text" id="ac-listsfield"></div>
+    <div class="f"><label>Phone or WhatsApp</label><input type="text" id="ac-phone"></div>
+    <div class="f"><label>Web</label><input type="url" id="ac-web"></div>
+    <div class="f half"><label>What we did</label><div class="checks" id="ac-outreach"></div></div>
+    <div class="f half"><label>What they did</label><div class="checks" id="ac-response"></div></div>
+    <div class="f half"><label>In the app on</label><div class="checks" id="ac-pages"></div></div>
+    <div class="f"><label>Content</label><select id="ac-content"></select></div>
+    <div class="f"><label>Last contact</label><input type="date" id="ac-lastcontact"></div>
+    <div class="f half"><label>Next step, what we want to do with them</label><input type="text" id="ac-nextstep"></div>
+    <div class="f half"><label>Top tags (comma separated)</label><input type="text" id="ac-toptags"></div>
+    <div class="f half"><label>Lists (comma separated, e.g. newsletter monthly, launch partners)</label><input type="text" id="ac-listsfield"></div>
+    <div class="f half"><label>Notes</label><textarea id="ac-notes"></textarea></div>
     <div class="row"><button class="btn" id="ac-save">Save</button><button class="btn ghost" id="ac-cancel">Cancel</button><span style="flex:1"></span><button class="btn ghost hidden" id="ac-delete">Delete</button><span class="msg" id="ac-msg"></span></div>
   </div>
+  </div>
   <div class="crm" id="ac-crm"></div>
-  <div class="actools"><input type="search" id="ac-search" placeholder="search name, handle, email, notes" aria-label="search accounts"><select id="ac-sort" aria-label="sort accounts"><option value="status">sort: pipeline status</option><option value="followers">sort: most followers</option><option value="growth">sort: follower growth</option><option value="name">sort: name A to Z</option><option value="recent">sort: recently changed</option></select></div>
-  <div class="filters" id="ac-filters"></div>
+  <div class="catboard" id="ac-cats"></div>
+  <div class="frow" id="ac-areas"></div>
+  <div class="frow" id="ac-heats"></div>
+  <div class="actools"><input type="search" id="ac-search" placeholder="search name, handle, email, notes, next step" aria-label="search accounts"><span class="msg" id="ac-count"></span><button class="btn ghost" id="ac-clear" style="padding:7px 12px;font-size:13px">Clear filters</button></div>
+  <div class="fsel" id="ac-fsel"></div>
   <div class="filters" id="ac-lists"></div>
-  <div class="selbar"><span class="msg" id="ac-selcount"></span><input type="text" id="ac-listname" placeholder="list name"><button class="btn ghost" id="ac-addlist">Add to list</button><button class="btn ghost" id="ac-removelist">Remove from list</button><button class="btn ghost" id="ac-export">Export CSV</button></div>
+  <div class="selbar"><span class="msg" id="ac-selcount"></span><span class="bulk"><select id="ac-bulkfield" aria-label="field to change"></select><select id="ac-bulkval" aria-label="new value"></select><button class="btn ghost" id="ac-bulkgo">Apply to selected</button></span><input type="text" id="ac-listname" placeholder="list name"><button class="btn ghost" id="ac-addlist">Add to list</button><button class="btn ghost" id="ac-removelist">Remove from list</button><button class="btn ghost" id="ac-export">Export CSV</button></div>
   <div class="tscroll"><table id="accounts"></table></div>
 </section>
 
@@ -1717,114 +1782,288 @@ $('ch-clear').onclick = async () => {
   await sb.from('marketing_chat').delete().eq('city', city); chat = []; renderChat();
 };
 
-/* ---------- accounts ---------- */
-let accounts = [], acFilter = 'all', acList = '', acEditing = null; const acSel = new Set();
+/* ---------- accounts (v2.8: partner CRM) ---------- */
+let accounts = [], acList = '', acEditing = null; const acSel = new Set();
 const ST = ['to contact', 'contacted', 'agreed', 'posted'];
-const stClass = s => 's-' + (s === 'to contact' ? 'to' : s);
+const ST_COL = { 'to contact': '#cfc6da', contacted: '#7FA9CC', agreed: '#E0B56A', posted: '#3a9a6e' };
+const NONE = '(none)';
+/* option lists: value -> [background, text]. Order is the sort order. */
+const AC_OPT = {
+  category: { Restaurants: ['#F0A794', '#5a2418'], Museums: ['#B597C1', '#3d2748'], Culture: ['#EDA9C6', '#5c2340'], Sports: ['#93BEDD', '#1f4763'], Entertainment: ['#EBCB7A', '#5c4708'], 'Nature & outdoors': ['#9FD0AB', '#1f4d2c'], 'Workshops & parties': ['#F4B66E', '#5e3a06'], 'Venues & other': ['#D5CCE0', '#4a4356'] },
+  area: { Centre: ['#E9E1F0', '#4a3a5c'], West: ['#FBE3DC', '#8a3f2d'], 'New-West': ['#FCEBD3', '#7d5410'], South: ['#E1F0E5', '#2d6540'], East: ['#DDEAF4', '#2a5878'], 'South-East': ['#F8E1EC', '#8a2f5c'], North: ['#F6EFD5', '#6a5510'], 'Outside Amsterdam': ['#E4E4EA', '#4c4c5c'], Citywide: ['#EEEAF2', '#6f6680'] },
+  heat: { hot: ['#E5533D', '#fff'], warm: ['#F5A04E', '#4a2a00'], cool: ['#A9CBE3', '#1f4763'] },
+  status: { 'to contact': ['#E6E0EC', '#6f6680'], contacted: ['#7FA9CC', '#fff'], agreed: ['#E8B95E', '#4a3200'], posted: ['#3a9a6e', '#fff'] },
+  listing: { 'in scope': ['#E8B0C8', '#5c2340'], live: ['#8CC79C', '#1f4d2c'], offline: ['#B9A6D3', '#3d2748'] },
+  outreach: { 'shared on socials': ['#EDA9C6', '#5c2340'], 'sent email': ['#93BEDD', '#1f4763'], 'sent whatsapp': ['#8CC79C', '#1f4d2c'], 'personal contact': ['#B597C1', '#3d2748'] },
+  response: { 'shared our post': ['#3a9a6e', '#fff'], 'shared badge post': ['#E8B95E', '#4a3200'], 'asked more info': ['#5B9BD0', '#fff'], 'not interested': ['#C9C3D1', '#4a4356'] },
+  content_status: { 'asked for content': ['#EBCB7A', '#5c4708'], 'new content to process': ['#DC4A7A', '#fff'], 'content processed': ['#9FD0AB', '#1f4d2c'] },
+  app_pages: { 'Food spots': ['#FBE3DC', '#8a3f2d'], 'Birthdays': ['#F8E1EC', '#8a2f5c'], 'Top 100 plans': ['#F6EFD5', '#6a5510'], 'Event agenda': ['#DDEAF4', '#2a5878'], 'After-school clubs': ['#E1F0E5', '#2d6540'], 'Babysitters': ['#E9E1F0', '#4a3a5c'], 'Schools': ['#E4E4EA', '#4c4c5c'], 'Playgrounds': ['#FCEBD3', '#7d5410'] },
+};
+const AC_MULTI = ['outreach', 'response', 'app_pages'];
+const AC_LABEL = { category: 'Category', area: 'Area', heat: 'How hot', status: 'Pipeline', listing: 'Partner group', outreach: 'We did', response: 'They did', content_status: 'Content', app_pages: 'App pages', top_tags: 'Top tags', type: 'Type' };
+const LISTING_LABEL = { 'in scope': 'In-scope partners', live: 'Live partners', offline: 'Offline partners' };
+const LISTING_SUB = { 'in scope': 'not in the app yet', live: 'listed in the app now', offline: 'were in the app, no longer listed' };
+const HOT_AT = 10000, WARM_AT = 2000;   // followers: hot from 10k, warm from 2k, below that cool
+const autoHeat = a => a.followers == null ? '' : a.followers >= HOT_AT ? 'hot' : a.followers >= WARM_AT ? 'warm' : 'cool';
+const heatOf = a => a.heat || autoHeat(a);
+const listingOf = a => a.listing || 'in scope';
+const arr = v => Array.isArray(v) ? v : [];
+const acN = n => n == null ? '–' : n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : n >= 10000 ? (n % 1000 ? (n / 1000).toFixed(1) : n / 1000) + 'k' : String(n);
+const pillStyle = (f, v) => { const c = (AC_OPT[f] || {})[v]; return c ? `--b:${c[0]};--t:${c[1]}` : ''; };
+const pill = (f, v, label) => `<span class="pill" style="${pillStyle(f, v)}">${esc(label || v)}</span>`;
+
+let acF = {}, acQuery = '', acSortKey = 'followers', acSortDir = -1, acShown = 150, acClosed = {};
+const AC_F0 = { category: 'all', area: 'all', heat: 'all', status: 'all', listing: 'all', outreach: 'all', response: 'all', content_status: 'all', app_pages: 'all', top_tags: 'all', type: 'all' };
+try { acF = Object.assign({}, AC_F0, JSON.parse(localStorage.getItem('fm-acf') || '{}')); const s = JSON.parse(localStorage.getItem('fm-acsort2') || '{}'); if (s.k) { acSortKey = s.k; acSortDir = s.d; } acClosed = JSON.parse(localStorage.getItem('fm-acclosed') || '{}'); } catch (e) { acF = Object.assign({}, AC_F0); }
+const acSaveState = () => { localStorage.setItem('fm-acf', JSON.stringify(acF)); localStorage.setItem('fm-acsort2', JSON.stringify({ k: acSortKey, d: acSortDir })); localStorage.setItem('fm-acclosed', JSON.stringify(acClosed)); };
+
 async function loadAccounts() {
-  const { data, error } = await sb.from('marketing_accounts').select('*').eq('city', city).order('name');
-  if (error) { $('accounts').innerHTML = `<tr><td class="msg">Run marketing-schema-v2.sql first (${esc(error.message)})</td></tr>`; return; }
-  accounts = (data || []).sort((a, b) => (ST.indexOf(a.status) - ST.indexOf(b.status)) || ((b.followers || 0) - (a.followers || 0)) || String(a.name || a.handle || '').localeCompare(String(b.name || b.handle || '')));
+  let all = [], from = 0, error = null;
+  for (;;) {   // PostgREST returns 1000 rows at most per request
+    const r = await sb.from('marketing_accounts').select('*').eq('city', city).order('name').order('id').range(from, from + 999);
+    if (r.error) { error = r.error; break; }
+    all = all.concat(r.data || []);
+    if (!r.data || r.data.length < 1000) break;
+    from += 1000;
+  }
+  if (error) { $('accounts').innerHTML = `<tr><td class="msg">Run marketing-schema-v2.sql and v7 first (${esc(error.message)})</td></tr>`; return; }
+  accounts = all;
   renderAccounts();
 }
+function acMatch(a, skip) {
+  const q = acQuery.toLowerCase();
+  const one = (f, v) => skip === f || acF[f] === 'all' || (acF[f] === NONE ? !v : v === acF[f]);
+  const many = (f, v) => skip === f || acF[f] === 'all' || (acF[f] === NONE ? !arr(v).length : arr(v).includes(acF[f]));
+  return one('category', a.category) && one('area', a.area) && one('heat', heatOf(a)) && one('status', a.status) && one('listing', listingOf(a)) && one('content_status', a.content_status) && one('type', a.type)
+    && many('outreach', a.outreach) && many('response', a.response) && many('app_pages', a.app_pages) && many('top_tags', a.top_tags)
+    && (!acList || arr(a.lists).includes(acList))
+    && (!q || [a.name, a.handle, a.email, a.notes, a.type, a.web, a.category, a.area, a.next_step, a.contact_name, arr(a.lists).join(' '), arr(a.top_tags).join(' ')].some(v => String(v || '').toLowerCase().includes(q)));
+}
+function visibleAccounts() {
+  const rows = accounts.filter(a => acMatch(a));
+  const nm = a => String(a.name || a.handle || '').toLowerCase();
+  const idx = (f, v) => { const i = Object.keys(AC_OPT[f]).indexOf(v); return i < 0 ? 99 : i; };
+  const top = (f, v) => arr(v).length ? Math.max(...arr(v).map(x => Object.keys(AC_OPT[f]).indexOf(x))) + arr(v).length / 10 : -1;
+  const key = {
+    name: nm, category: a => idx('category', a.category), area: a => idx('area', a.area), heat: a => ({ hot: 3, warm: 2, cool: 1 })[heatOf(a)] || 0,
+    followers: a => a.followers == null ? -1 : a.followers, status: a => ST.indexOf(a.status),
+    outreach: a => top('outreach', a.outreach), response: a => top('response', a.response), content_status: a => ({ 'new content to process': 3, 'asked for content': 2, 'content processed': 1 })[a.content_status] || 0,
+    app_pages: a => arr(a.app_pages).length * 100 - idx('app_pages', arr(a.app_pages)[0]), top_tags: a => arr(a.top_tags).length,
+    next_step: a => String(a.next_step || '￿').toLowerCase(), contact: a => (a.email ? 2 : 0) + (a.phone ? 1 : 0), last_contact: a => a.last_contact || '', notes: a => String(a.notes || '￿').toLowerCase(), updated: a => a.updated_at || '',
+  }[acSortKey] || nm;
+  const cmp = (x, y) => x < y ? -1 : x > y ? 1 : 0;
+  return rows.sort((a, b) => (cmp(key(a), key(b)) * acSortDir) || ((b.followers || 0) - (a.followers || 0)) || cmp(nm(a), nm(b)));
+}
+const AC_COLS = [['name', 'Account'], ['category', 'Category'], ['area', 'Area'], ['heat', 'How hot'], ['followers', 'Followers'], ['status', 'Pipeline'], ['outreach', 'We did'], ['response', 'They did'], ['content_status', 'Content'], ['app_pages', 'In the app on'], ['top_tags', 'Top tags'], ['next_step', 'Next step'], ['contact', 'Contact'], ['notes', 'Notes']];
 function renderAccounts() {
-  const counts = { all: accounts.length }; ST.forEach(s => counts[s] = accounts.filter(a => a.status === s).length);
-  $('ac-filters').innerHTML = ['all', ...ST].map(s => `<button data-s="${s}" class="${acFilter === s ? 'on' : ''}">${s} <span class="muted">${counts[s]}</span></button>`).join('') + `<span class="msg" style="margin-left:auto">${accounts.filter(a => a.last_checked).length ? 'followers checked ' + fmtDate(accounts.map(a => a.last_checked).filter(Boolean).sort().pop()) : 'followers not checked yet'}</span>`;
-  $('ac-filters').querySelectorAll('button').forEach(b => b.onclick = () => { acFilter = b.dataset.s; renderAccounts(); });
-  const allLists = [...new Set(accounts.flatMap(a => a.lists || []))].sort();
-  $('ac-lists').innerHTML = allLists.length ? '<span class="msg">lists:</span>' + allLists.map(l => `<button data-l="${esc(l)}" class="${acList === l ? 'on' : ''}">${esc(l)} <span class="muted">${accounts.filter(a => (a.lists || []).includes(l)).length}</span></button>`).join('') : '<span class="msg">No lists yet. Tick accounts, type a list name, press Add to list.</span>';
-  $('ac-lists').querySelectorAll('button').forEach(b => b.onclick = () => { acList = acList === b.dataset.l ? '' : b.dataset.l; renderAccounts(); });
-  renderCrm();
+  renderCrm(); renderAcFilters();
+  const allLists = [...new Set(accounts.flatMap(a => arr(a.lists)))].sort();
+  $('ac-lists').innerHTML = allLists.length ? '<span class="msg">lists:</span>' + allLists.map(l => `<button data-l="${esc(l)}" class="${acList === l ? 'on' : ''}">${esc(l)} <span class="muted">${accounts.filter(a => arr(a.lists).includes(l)).length}</span></button>`).join('') : '';
+  $('ac-lists').querySelectorAll('button').forEach(b => b.onclick = () => { acList = acList === b.dataset.l ? '' : b.dataset.l; acShown = 150; renderAccounts(); });
   const rows = visibleAccounts();
-  let html = `<tr><th><input type="checkbox" id="ac-all" ${rows.length && rows.every(a => acSel.has(a.id)) ? 'checked' : ''}></th><th>Account</th><th>Type</th><th>Status</th><th>Followers</th><th>Contact</th><th>Lists</th><th>Notes</th></tr>`;
-  if (!rows.length) html += `<tr><td colspan="8" class="muted">${acQuery ? 'Nothing matches "' + esc(acQuery) + '".' : 'No accounts here yet. Press Add account.'}</td></tr>`;
-  for (const a of rows) {
-    const d = (a.followers != null && a.followers_prev != null) ? a.followers - a.followers_prev : null;
-    const contact = [a.web ? `<a href="${esc(a.web)}" target="_blank" rel="noopener" class="linkish">web</a>` : '', a.email ? `<a href="mailto:${esc(a.email)}" class="linkish">${esc(a.email)}</a>` : '', a.phone ? esc(a.phone) : ''].filter(Boolean).join(' &middot; ');
-    html += `<tr class="clickable" data-id="${a.id}"><td><input type="checkbox" class="ac-chk" data-id="${a.id}" ${acSel.has(a.id) ? 'checked' : ''}></td><td><b>${esc(a.name || a.handle)}</b>${a.handle ? `<br><a href="https://instagram.com/${esc(a.handle.replace(/^@/, ''))}" target="_blank" rel="noopener" class="linkish">@${esc(a.handle.replace(/^@/, ''))}</a>` : ''}</td><td>${esc(a.type)}</td><td><span class="status ${stClass(a.status)}">${esc(a.status)}</span></td><td>${a.followers != null ? '<b>' + fmtN(a.followers) + '</b>' : '<span class="muted">–</span>'}${d != null && d !== 0 ? `<span class="delta ${d > 0 ? 'up' : 'down'}" style="background:none;padding:0">${d > 0 ? '+' : ''}${d}</span>` : ''}</td><td>${contact || '<span class="muted">–</span>'}</td><td>${(a.lists || []).map(l => `<span class="status s-to">${esc(l)}</span>`).join(' ')}</td><td class="muted">${esc(a.notes || '')}</td></tr>`;
+  const chk = accounts.map(a => a.last_checked).filter(Boolean).sort().pop();
+  $('ac-count').textContent = `${rows.length} of ${accounts.length} shown` + (chk ? ', followers checked ' + fmtDate(chk) : '');
+  let html = `<tr><th class="nos"><input type="checkbox" id="ac-all" ${rows.length && rows.every(a => acSel.has(a.id)) ? 'checked' : ''} aria-label="select all shown"></th>` + AC_COLS.map(([k, l]) => `<th data-k="${k}" class="${k === 'name' ? 'c-acc ' : ''}${acSortKey === k ? 'sorted' : ''}">${l}${acSortKey === k ? `<i>${acSortDir > 0 ? '&#9650;' : '&#9660;'}</i>` : ''}</th>`).join('') + '</tr>';
+  if (!rows.length) html += `<tr><td colspan="${AC_COLS.length + 1}" class="muted">${accounts.length ? 'Nothing matches these filters. Press Clear filters.' : 'No accounts here yet. Press Add account or Import CSV.'}</td></tr>`;
+  let shown = 0;
+  for (const g of Object.keys(AC_OPT.listing)) {
+    const grp = rows.filter(a => listingOf(a) === g); if (!grp.length) continue;
+    html += `<tr class="grp" data-g="${g}" style="--g:${AC_OPT.listing[g][0]}55"><td colspan="${AC_COLS.length + 1}"><i>${acClosed[g] ? '&#9656;' : '&#9662;'}</i>${LISTING_LABEL[g]} <span>${grp.length}, ${LISTING_SUB[g]}</span></td></tr>`;
+    if (acClosed[g]) continue;
+    for (const a of grp) {
+      if (shown >= acShown) break; shown++;
+      const d = (a.followers != null && a.followers_prev != null) ? a.followers - a.followers_prev : null, h = heatOf(a), hd = String(a.handle || '').replace(/^@/, '');
+      const one = (f, v, label) => `<td class="ed" data-f="${f}">${v ? pill(f, v, label) : '<span class="pill none">+</span>'}</td>`;
+      const many = (f, v) => `<td class="ed" data-f="${f}">${arr(v).length ? '<div class="chipz">' + arr(v).map(x => pill(f, x)).join('') + '</div>' : '<span class="pill none">+</span>'}</td>`;
+      const contact = [a.contact_name ? `<b>${esc(a.contact_name)}</b>` : '', a.email ? `<a href="mailto:${esc(a.email)}" class="linkish">${esc(a.email)}</a>` : '', a.phone ? esc(a.phone) : '', a.web ? `<a href="${esc(a.web)}" target="_blank" rel="noopener" class="linkish">web</a>` : ''].filter(Boolean).join('<br>');
+      html += `<tr class="clickable" data-id="${a.id}"><td><input type="checkbox" class="ac-chk" data-id="${a.id}" ${acSel.has(a.id) ? 'checked' : ''}></td>
+        <td class="c-acc"><b title="${esc(a.name || hd)}">${esc(a.name || hd)}</b>${hd ? `<a href="https://instagram.com/${esc(hd)}" target="_blank" rel="noopener" class="linkish">@${esc(hd)}</a>` : `<span class="muted" style="font-size:12px">${esc(a.type || '')}, no Instagram</span>`}</td>
+        ${one('category', a.category)}${one('area', a.area)}${one('heat', h)}
+        <td>${a.followers != null ? '<b>' + acN(a.followers) + '</b>' : '<span class="muted">–</span>'}${d != null && d !== 0 ? `<span class="delta ${d > 0 ? 'up' : 'down'}" style="background:none;padding:0">${d > 0 ? '+' : ''}${d}</span>` : ''}</td>
+        ${one('status', a.status)}${many('outreach', a.outreach)}${many('response', a.response)}${one('content_status', a.content_status)}${many('app_pages', a.app_pages)}
+        <td class="c-tags">${arr(a.top_tags).length ? '<div class="chipz">' + arr(a.top_tags).map(x => `<span class="pill" style="--b:#F3EAF6;--t:#6F4E7C">${esc(x)}</span>`).join('') + '</div>' : ''}</td>
+        <td class="txt"><div>${esc(a.next_step || '')}</div>${a.last_contact ? `<span class="muted" style="font-size:11.5px">last contact ${fmtDate(a.last_contact)}</span>` : ''}</td>
+        <td style="font-size:12.5px;line-height:1.45;white-space:nowrap">${contact || '<span class="muted">–</span>'}</td><td class="txt"><div title="${esc(a.notes || '')}">${esc(a.notes || '')}</div></td></tr>`;
+    }
   }
-  $('accounts').innerHTML = html;
-  $('accounts').querySelectorAll('tr.clickable').forEach(tr => tr.onclick = e => { if (e.target.closest('a') || e.target.closest('input')) return; openAccount(tr.dataset.id); });
-  $('accounts').querySelectorAll('.ac-chk').forEach(c => c.onchange = () => { if (c.checked) acSel.add(c.dataset.id); else acSel.delete(c.dataset.id); updateSelBar(); });
+  const openTotal = rows.filter(a => !acClosed[listingOf(a)]).length;
+  if (openTotal > shown) html += `<tr class="more"><td colspan="${AC_COLS.length + 1}"><button class="btn ghost" id="ac-more">Show ${Math.min(150, openTotal - shown)} more (${openTotal - shown} hidden)</button></td></tr>`;
+  const T = $('accounts'); T.innerHTML = html;
+  T.querySelectorAll('th[data-k]').forEach(th => th.onclick = () => { const k = th.dataset.k; if (acSortKey === k) acSortDir = -acSortDir; else { acSortKey = k; acSortDir = ['name', 'category', 'area', 'next_step', 'notes'].includes(k) ? 1 : -1; } acSaveState(); renderAccounts(); });
+  T.querySelectorAll('tr.grp').forEach(tr => tr.onclick = () => { acClosed[tr.dataset.g] = !acClosed[tr.dataset.g]; acSaveState(); renderAccounts(); });
+  T.querySelectorAll('tr.clickable').forEach(tr => tr.onclick = e => {
+    if (e.target.closest('a') || e.target.closest('input')) return;
+    const td = e.target.closest('td.ed'); if (td) { openAcPop(td, tr.dataset.id, td.dataset.f); return; }
+    openAccount(tr.dataset.id);
+  });
+  T.querySelectorAll('.ac-chk').forEach(c => c.onchange = () => { if (c.checked) acSel.add(c.dataset.id); else acSel.delete(c.dataset.id); updateSelBar(); });
   const all = $('ac-all'); if (all) all.onchange = () => { rows.forEach(a => all.checked ? acSel.add(a.id) : acSel.delete(a.id)); renderAccounts(); };
+  const more = $('ac-more'); if (more) more.onclick = () => { acShown += 150; renderAccounts(); };
   updateSelBar();
 }
-function updateSelBar() { $('ac-selcount').textContent = acSel.size ? acSel.size + ' selected' : 'none selected, export takes the visible rows'; }
-/* v2.7: search, sort and the pipeline summary */
-let acQuery = '', acSort = localStorage.getItem('fm-acsort') || 'status';
-const ST_COL = { 'to contact': '#cfc6da', contacted: '#7FA9CC', agreed: '#E0B56A', posted: '#3a9a6e' };
-function visibleAccounts() {
-  const q = acQuery.toLowerCase();
-  const rows = accounts.filter(a => (acFilter === 'all' || a.status === acFilter) && (!acList || (a.lists || []).includes(acList))
-    && (!q || [a.name, a.handle, a.email, a.notes, a.type, a.web, (a.lists || []).join(' ')].some(v => String(v || '').toLowerCase().includes(q))));
-  const nm = a => String(a.name || a.handle || '');
-  const gr = a => (a.followers != null && a.followers_prev != null) ? a.followers - a.followers_prev : -Infinity;
-  const by = {
-    status: (a, b) => (ST.indexOf(a.status) - ST.indexOf(b.status)) || ((b.followers || 0) - (a.followers || 0)) || nm(a).localeCompare(nm(b)),
-    followers: (a, b) => ((b.followers || 0) - (a.followers || 0)) || nm(a).localeCompare(nm(b)),
-    growth: (a, b) => (gr(b) - gr(a)) || ((b.followers || 0) - (a.followers || 0)),
-    name: (a, b) => nm(a).localeCompare(nm(b)),
-    recent: (a, b) => String(b.updated_at || '').localeCompare(String(a.updated_at || '')),
-  };
-  return rows.sort(by[acSort] || by.status);
-}
+function updateSelBar() { $('ac-selcount').textContent = acSel.size ? acSel.size + ' selected' : 'none selected, export takes the shown rows'; }
 function renderCrm() {
   const n = accounts.length, cnt = {}; ST.forEach(s => cnt[s] = accounts.filter(a => a.status === s).length);
-  const live = accounts.filter(a => a.status === 'agreed' || a.status === 'posted');
-  const liveReach = live.reduce((s, a) => s + (a.followers || 0), 0), allReach = accounts.reduce((s, a) => s + (a.followers || 0), 0);
-  const won = n ? Math.round(live.length / n * 100) : 0;
-  const reply = (cnt.contacted + cnt.agreed + cnt.posted) ? Math.round((cnt.agreed + cnt.posted) / (cnt.contacted + cnt.agreed + cnt.posted) * 100) : null;
+  const hot = accounts.filter(a => heatOf(a) === 'hot'), hotOpen = hot.filter(a => !arr(a.outreach).length);
+  const todo = accounts.filter(a => a.content_status === 'new content to process');
+  const shared = accounts.filter(a => arr(a.response).some(x => x.startsWith('shared'))), sharedReach = shared.reduce((s, a) => s + (a.followers || 0), 0);
+  const asked = accounts.filter(a => arr(a.response).includes('asked more info'));
+  const sel = (k, v) => acF[k] === v ? ' sel' : '';
   $('ac-crm').innerHTML = `<div class="kpi" style="--k:#B597C1"><div class="lbl">Pipeline <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:600">${n} account${n === 1 ? '' : 's'}</span></div>
       <div class="pipe" role="img" aria-label="${ST.map(s => cnt[s] + ' ' + s).join(', ')}">${n ? ST.filter(s => cnt[s]).map(s => `<i style="width:${cnt[s] / n * 100}%;background:${ST_COL[s]}" title="${cnt[s]} ${s}"></i>`).join('') : ''}</div>
       <div class="pipe-leg">${ST.map(s => `<span><i style="background:${ST_COL[s]}"></i>${s} ${cnt[s]}</span>`).join('')}</div></div>
-    <div class="kpi" style="--k:#3a9a6e"><div class="lbl">Agreed or posted</div><div class="big">${won}%<small>${live.length} of ${n}</small></div><div class="sub">${reply != null ? reply + '% of everyone contacted said yes' : 'nobody contacted yet'}</div></div>
-    <div class="kpi" style="--k:#E8B0C8"><div class="lbl">Audience on board</div><div class="big">${fmtN(liveReach)}</div><div class="sub">followers of agreed and posting accounts${allReach ? ', ' + Math.round(liveReach / allReach * 100) + '% of ' + fmtN(allReach) + ' in the list' : ''}</div></div>`;
+    <div class="kpi click${acF.heat === 'hot' && acF.outreach === NONE ? ' sel' : ''}" data-q="hot" style="--k:#E5533D"><div class="lbl">Hot, not contacted</div><div class="big">${hotOpen.length}<small>of ${hot.length} hot</small></div><div class="sub">over ${acN(HOT_AT)} followers, start here</div></div>
+    <div class="kpi click${sel('content_status', 'new content to process')}" data-q="todo" style="--k:#DC4A7A"><div class="lbl">Content to process</div><div class="big">${todo.length}</div><div class="sub">partners who sent something new</div></div>
+    <div class="kpi click${sel('response', 'asked more info')}" data-q="asked" style="--k:#5B9BD0"><div class="lbl">Asked more info</div><div class="big">${asked.length}</div><div class="sub">waiting for an answer from you</div></div>
+    <div class="kpi" style="--k:#3a9a6e"><div class="lbl">They shared us</div><div class="big">${shared.length}</div><div class="sub">${shared.length ? acN(sharedReach) + ' followers reached through reshares' : 'no reshares logged yet'}</div></div>`;
+  $('ac-crm').querySelectorAll('.kpi.click').forEach(k => k.onclick = () => {
+    const q = k.dataset.q, on = k.classList.contains('sel');
+    if (q === 'hot') { acF.heat = on ? 'all' : 'hot'; acF.outreach = on ? 'all' : NONE; }
+    if (q === 'todo') acF.content_status = on ? 'all' : 'new content to process';
+    if (q === 'asked') acF.response = on ? 'all' : 'asked more info';
+    acShown = 150; acSaveState(); renderAccounts();
+  });
 }
-$('ac-search').oninput = e => { acQuery = e.target.value.trim(); renderAccounts(); };
-$('ac-sort').value = acSort;
-$('ac-sort').onchange = e => { acSort = e.target.value; localStorage.setItem('fm-acsort', acSort); renderAccounts(); };
+function renderAcFilters() {
+  const setF = (f, v) => { acF[f] = v; acShown = 150; acSaveState(); renderAccounts(); };
+  /* category cards: the filter and the "which category needs what" overview in one */
+  const base = accounts.filter(a => acMatch(a, 'category'));
+  const card = (v, label, col, rows) => {
+    const hot = rows.filter(a => heatOf(a) === 'hot').length, contacted = rows.filter(a => arr(a.outreach).length).length, todo = rows.filter(a => a.content_status === 'new content to process').length, sh = rows.filter(a => arr(a.response).some(x => x.startsWith('shared'))).length;
+    return `<button class="catcard ${acF.category === v ? 'on' : ''}" data-v="${esc(v)}" style="--c:${col}"><b>${esc(label)}</b><span class="n">${rows.length}</span><span class="s"><br><em>${hot} hot</em> &middot; ${rows.length ? Math.round(contacted / rows.length * 100) : 0}% contacted<br>${sh} shared${todo ? ` &middot; <u>${todo} to process</u>` : ''}</span></button>`;
+  };
+  const noCat = base.filter(a => !a.category);
+  $('ac-cats').innerHTML = card('all', 'All', '#2f2a38', base) + Object.keys(AC_OPT.category).map(c => card(c, c, AC_OPT.category[c][0], base.filter(a => a.category === c))).join('') + (noCat.length ? card(NONE, 'No category', '#e0d8ea', noCat) : '');
+  $('ac-cats').querySelectorAll('button').forEach(b => b.onclick = () => setF('category', b.dataset.v));
+  const chips = (el, f, label, vals, valOf) => {
+    const b0 = accounts.filter(a => acMatch(a, f));
+    $(el).innerHTML = `<span class="lbl">${label}</span>` + ['all', ...vals].map(v => `<button data-v="${esc(v)}" class="${acF[f] === v ? 'on' : ''}">${esc(v)} <span>${v === 'all' ? b0.length : b0.filter(a => (valOf(a) || NONE) === v).length}</span></button>`).join('');
+    $(el).querySelectorAll('button').forEach(b => b.onclick = () => setF(f, b.dataset.v));
+  };
+  chips('ac-areas', 'area', 'Area', [...Object.keys(AC_OPT.area), ...(accounts.some(a => !a.area) ? [NONE] : [])], a => a.area);
+  chips('ac-heats', 'heat', 'Hot', [...Object.keys(AC_OPT.heat), ...(accounts.some(a => !heatOf(a)) ? [NONE] : [])], heatOf);
+  const tags = [...new Set(accounts.flatMap(a => arr(a.top_tags)))].sort(), types = [...new Set(accounts.map(a => a.type).filter(Boolean))].sort();
+  const sel = (f, label, vals, noneLabel) => `<select data-f="${f}" class="${acF[f] !== 'all' ? 'act' : ''}" aria-label="${label}"><option value="all">${label}: all</option>${vals.map(v => `<option value="${esc(v)}" ${acF[f] === v ? 'selected' : ''}>${esc(v)}</option>`).join('')}${noneLabel ? `<option value="${NONE}" ${acF[f] === NONE ? 'selected' : ''}>${noneLabel}</option>` : ''}</select>`;
+  $('ac-fsel').innerHTML = sel('listing', 'Partner group', Object.keys(AC_OPT.listing)) + sel('status', 'Pipeline', ST) + sel('outreach', 'We did', Object.keys(AC_OPT.outreach), 'not contacted yet') + sel('response', 'They did', Object.keys(AC_OPT.response), 'no reaction yet')
+    + sel('content_status', 'Content', Object.keys(AC_OPT.content_status), 'nothing yet') + sel('app_pages', 'App page', Object.keys(AC_OPT.app_pages), 'not in the app') + sel('top_tags', 'Top tag', tags, 'no top tag') + sel('type', 'Type', types);
+  $('ac-fsel').querySelectorAll('select').forEach(s => s.onchange = () => setF(s.dataset.f, s.value));
+}
+$('ac-search').oninput = e => { acQuery = e.target.value.trim(); acShown = 150; renderAccounts(); };
+$('ac-clear').onclick = () => { acF = Object.assign({}, AC_F0); acQuery = ''; acList = ''; $('ac-search').value = ''; acShown = 150; acSaveState(); renderAccounts(); };
+
+/* one field change, with the pipeline following along */
+function acPatchFor(a, f, v) {
+  const p = { [f]: v };
+  if (f === 'outreach' && arr(v).length > arr(a.outreach).length) { p.last_contact = iso(new Date()); if (a.status === 'to contact') p.status = 'contacted'; }
+  if (f === 'response') { if (arr(v).some(x => x.startsWith('shared'))) p.status = 'posted'; else if (arr(v).includes('asked more info') && a.status === 'to contact') p.status = 'contacted'; }
+  return p;
+}
+async function acSave(id, patch) {
+  const a = accounts.find(x => x.id === id); if (!a) return false;
+  const { error } = await sb.from('marketing_accounts').update({ ...patch, updated_at: new Date().toISOString() }).eq('id', id);
+  if (error) { alert('Save failed: ' + error.message); return false; }
+  Object.assign(a, patch); return true;
+}
+/* click a coloured cell: small picker */
+let acPop = null;
+function closeAcPop() { if (acPop) { acPop.remove(); acPop = null; } }
+document.addEventListener('mousedown', e => { if (acPop && !acPop.contains(e.target)) closeAcPop(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeAcPop(); if (!$('acmodal').classList.contains('hidden')) $('ac-cancel').click(); } });
+function openAcPop(td, id, f) {
+  closeAcPop();
+  const a = accounts.find(x => x.id === id); if (!a) return;
+  const multi = AC_MULTI.includes(f), opts = Object.keys(AC_OPT[f]);
+  acPop = document.createElement('div'); acPop.className = 'acpop';
+  const draw = () => {
+    const cur = multi ? arr(a[f]) : (f === 'heat' ? a.heat : f === 'listing' ? listingOf(a) : a[f]);
+    acPop.innerHTML = `<h5>${AC_LABEL[f]}${multi ? ', tick all that apply' : ''}</h5>` + opts.map(o => `<button data-v="${esc(o)}" class="${multi && !cur.includes(o) ? 'off' : ''}" style="${pillStyle(f, o)}">${multi ? (cur.includes(o) ? '&#10003; ' : '') : (cur === o ? '&#10003; ' : '')}${esc(o)}</button>`).join('')
+      + (multi ? '<button class="clr" data-done="1">Done</button>' : f === 'heat' ? `<button class="clr" data-v="">${a.heat ? 'back to automatic (' + (autoHeat(a) || 'no followers') + ')' : 'automatic, by followers'}</button>` : (f === 'status' || f === 'listing') ? '' : '<button class="clr" data-v="">clear</button>');
+    acPop.querySelectorAll('button').forEach(b => b.onclick = async () => {
+      if (b.dataset.done) { closeAcPop(); renderAccounts(); return; }
+      const v = b.dataset.v;
+      if (multi) { const cur2 = arr(a[f]); const nv = cur2.includes(v) ? cur2.filter(x => x !== v) : opts.filter(o => cur2.includes(o) || o === v); if (await acSave(id, acPatchFor(a, f, nv))) draw(); }
+      else { if (await acSave(id, acPatchFor(a, f, v || null))) { closeAcPop(); renderAccounts(); } }
+    });
+  };
+  draw(); document.body.appendChild(acPop);
+  const r = td.getBoundingClientRect(), w = acPop.offsetWidth, h = acPop.offsetHeight;
+  acPop.style.left = Math.max(8, Math.min(window.scrollX + r.left, window.scrollX + document.documentElement.clientWidth - w - 8)) + 'px';
+  acPop.style.top = (r.bottom + h + 8 > window.innerHeight && r.top - h - 4 > 0 ? window.scrollY + r.top - h - 4 : window.scrollY + r.bottom + 4) + 'px';
+}
+/* bulk change for ticked rows */
+const AC_BULK = ['status', 'category', 'area', 'heat', 'listing', 'content_status', 'outreach', 'response', 'app_pages'];
+$('ac-bulkfield').innerHTML = '<option value="">change for selected...</option>' + AC_BULK.map(f => `<option value="${f}">${AC_MULTI.includes(f) ? 'add to ' : 'set '}${AC_LABEL[f]}</option>`).join('');
+$('ac-bulkfield').onchange = () => { const f = $('ac-bulkfield').value; $('ac-bulkval').innerHTML = f ? Object.keys(AC_OPT[f]).map(o => `<option>${esc(o)}</option>`).join('') + (AC_MULTI.includes(f) ? '<option value="__clear">(clear all)</option>' : ['status', 'listing'].includes(f) ? '' : `<option value="__clear">${f === 'heat' ? '(automatic)' : '(clear)'}</option>`) : ''; };
+$('ac-bulkgo').onclick = async () => {
+  const f = $('ac-bulkfield').value, v = $('ac-bulkval').value;
+  if (!f) { $('ac-bulkfield').focus(); return; }
+  if (!acSel.size) { alert('Tick the accounts first.'); return; }
+  const ids = [...acSel].filter(id => accounts.some(a => a.id === id));
+  if (!confirm(`${AC_MULTI.includes(f) && v !== '__clear' ? 'Add' : 'Set'} ${AC_LABEL[f]} "${v === '__clear' ? 'empty' : v}" for ${ids.length} account${ids.length === 1 ? '' : 's'}?`)) return;
+  $('ac-bulkgo').disabled = true;
+  const jobs = ids.map(id => { const a = accounts.find(x => x.id === id); const nv = AC_MULTI.includes(f) ? (v === '__clear' ? [] : Object.keys(AC_OPT[f]).filter(o => arr(a[f]).includes(o) || o === v)) : (v === '__clear' ? null : v); return [id, acPatchFor(a, f, nv)]; });
+  for (let i = 0; i < jobs.length; i += 10) { const ok = await Promise.all(jobs.slice(i, i + 10).map(([id, p]) => acSave(id, p))); if (ok.includes(false)) break; $('ac-bulkgo').textContent = `${Math.min(i + 10, jobs.length)} of ${jobs.length}...`; }
+  $('ac-bulkgo').disabled = false; $('ac-bulkgo').textContent = 'Apply to selected'; renderAccounts();
+};
 function csvCell(v) { v = v == null ? '' : String(v); return /[",;\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
+const AC_ARR = ['lists', 'app_pages', 'top_tags', 'outreach', 'response'];
 $('ac-export').onclick = () => {
   const rows = acSel.size ? accounts.filter(a => acSel.has(a.id)) : visibleAccounts();
   if (!rows.length) { alert('Nothing to export.'); return; }
-  const cols = ['name', 'handle', 'type', 'status', 'web', 'email', 'phone', 'followers', 'followers_prev', 'last_checked', 'lists', 'notes'];
-  const csv = [cols.join(',')].concat(rows.map(a => cols.map(c => csvCell(c === 'lists' ? (a.lists || []).join('|') : a[c])).join(','))).join('\n');
-  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
-  const u = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = u; link.download = `accounts-${city}-${acList || acFilter}-${iso(new Date())}.csv`; document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(u);
+  const cols = ['name', 'handle', 'type', 'listing', 'category', 'area', 'heat', 'followers', 'status', 'outreach', 'response', 'content_status', 'app_pages', 'top_tags', 'next_step', 'last_contact', 'contact_name', 'email', 'phone', 'web', 'followers_prev', 'last_checked', 'lists', 'notes'];
+  const csv = [cols.join(',')].concat(rows.map(a => cols.map(c => csvCell(AC_ARR.includes(c) ? arr(a[c]).join('|') : c === 'heat' ? heatOf(a) : c === 'listing' ? listingOf(a) : a[c])).join(','))).join('\n');
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
+  const u = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = u; link.download = `accounts-${city}-${acList || (acF.category !== 'all' ? acF.category : 'all')}-${iso(new Date())}.csv`.replace(/[^\w.\-]+/g, '-'); document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(u);
 };
 $('ac-addlist').onclick = async () => {
   const name = $('ac-listname').value.trim(); if (!name) { $('ac-listname').focus(); return; }
   if (!acSel.size) { alert('Tick the accounts first.'); return; }
-  for (const id of acSel) { const a = accounts.find(x => x.id === id); if (!a) continue; const lists = [...new Set([...(a.lists || []), name])]; const { error } = await sb.from('marketing_accounts').update({ lists, updated_at: new Date().toISOString() }).eq('id', id); if (error) { alert(error.message); return; } a.lists = lists; }
+  for (const id of acSel) { const a = accounts.find(x => x.id === id); if (!a) continue; const lists = [...new Set([...arr(a.lists), name])]; const { error } = await sb.from('marketing_accounts').update({ lists, updated_at: new Date().toISOString() }).eq('id', id); if (error) { alert(error.message); return; } a.lists = lists; }
   $('ac-listname').value = ''; renderAccounts();
 };
 $('ac-removelist').onclick = async () => {
   const name = acList || $('ac-listname').value.trim(); if (!name) { alert('Pick a list (click it) or type its name.'); return; }
   if (!acSel.size) { alert('Tick the accounts first.'); return; }
-  for (const id of acSel) { const a = accounts.find(x => x.id === id); if (!a) continue; const lists = (a.lists || []).filter(l => l !== name); const { error } = await sb.from('marketing_accounts').update({ lists, updated_at: new Date().toISOString() }).eq('id', id); if (error) { alert(error.message); return; } a.lists = lists; }
+  for (const id of acSel) { const a = accounts.find(x => x.id === id); if (!a) continue; const lists = arr(a.lists).filter(l => l !== name); const { error } = await sb.from('marketing_accounts').update({ lists, updated_at: new Date().toISOString() }).eq('id', id); if (error) { alert(error.message); return; } a.lists = lists; }
   renderAccounts();
 };
-const AF = { name: 'ac-name', handle: 'ac-handle', type: 'ac-type', status: 'ac-status', web: 'ac-web', email: 'ac-email', phone: 'ac-phone', notes: 'ac-notes', lists: 'ac-listsfield' };
+/* the full edit form, in a dialog */
+const AF = { name: 'ac-name', handle: 'ac-handle', type: 'ac-type', status: 'ac-status', web: 'ac-web', email: 'ac-email', phone: 'ac-phone', notes: 'ac-notes', lists: 'ac-listsfield', listing: 'ac-listing', category: 'ac-category', area: 'ac-area', heat: 'ac-heat', content_status: 'ac-content', contact_name: 'ac-contactname', next_step: 'ac-nextstep', last_contact: 'ac-lastcontact', top_tags: 'ac-toptags' };
+const AF_CHECKS = { outreach: 'ac-outreach', response: 'ac-response', app_pages: 'ac-pages' };
+const AF_DEF = { type: 'partner', status: 'to contact', listing: 'in scope' };
+(function () {
+  const fill = (el, f, empty) => $(el).innerHTML = (empty != null ? `<option value="">${empty}</option>` : '') + Object.keys(AC_OPT[f]).map(o => `<option>${esc(o)}</option>`).join('');
+  fill('ac-listing', 'listing'); fill('ac-category', 'category', 'no category'); fill('ac-area', 'area', 'unknown'); fill('ac-heat', 'heat', 'automatic, by followers'); fill('ac-content', 'content_status', 'nothing yet');
+  Object.entries(AF_CHECKS).forEach(([f, el]) => { $(el).innerHTML = Object.keys(AC_OPT[f]).map(o => `<label style="${pillStyle(f, o)}"><input type="checkbox" value="${esc(o)}">${esc(o)}</label>`).join(''); $(el).querySelectorAll('input').forEach(i => i.onchange = () => i.parentElement.classList.toggle('on', i.checked)); });
+})();
 function openAccount(id) {
+  closeAcPop();
   acEditing = id; const a = id ? accounts.find(x => x.id === id) : null;
-  Object.entries(AF).forEach(([k, el]) => $(el).value = a ? (k === 'lists' ? (a.lists || []).join(', ') : (a[k] || (k === 'type' ? 'influencer' : k === 'status' ? 'to contact' : ''))) : (k === 'type' ? 'influencer' : k === 'status' ? 'to contact' : ''));
-  $('ac-delete').classList.toggle('hidden', !a); $('ac-msg').textContent = a && a.last_checked ? 'followers checked ' + fmtWhen(a.last_checked) : '';
-  $('acform').classList.remove('hidden'); $('ac-name').focus();
+  Object.entries(AF).forEach(([k, el]) => $(el).value = a ? (['lists', 'top_tags'].includes(k) ? arr(a[k]).join(', ') : (a[k] || AF_DEF[k] || '')) : (AF_DEF[k] || ''));
+  Object.entries(AF_CHECKS).forEach(([f, el]) => $(el).querySelectorAll('input').forEach(i => { i.checked = !!a && arr(a[f]).includes(i.value); i.parentElement.classList.toggle('on', i.checked); }));
+  $('ac-title').textContent = a ? (a.name || a.handle || 'Account') : 'New account';
+  $('ac-delete').classList.toggle('hidden', !a); $('ac-msg').textContent = a && a.last_checked ? 'followers ' + acN(a.followers) + ', checked ' + fmtWhen(a.last_checked) : '';
+  $('acmodal').classList.remove('hidden'); $('ac-name').focus();
 }
+const closeAccount = () => { $('acmodal').classList.add('hidden'); acEditing = null; };
 $('ac-new').onclick = () => openAccount(null);
-$('ac-cancel').onclick = () => { $('acform').classList.add('hidden'); acEditing = null; };
+$('ac-cancel').onclick = closeAccount;
+$('acmodal').onmousedown = e => { if (e.target === $('acmodal')) closeAccount(); };
 $('ac-save').onclick = async () => {
   const row = { city, updated_at: new Date().toISOString() };
-  Object.entries(AF).forEach(([k, el]) => row[k] = k === 'lists' ? $(el).value.split(',').map(x => x.trim()).filter(Boolean) : ($(el).value.trim() || null));
+  Object.entries(AF).forEach(([k, el]) => row[k] = ['lists', 'top_tags'].includes(k) ? $(el).value.split(',').map(x => x.trim()).filter(Boolean) : ($(el).value.trim() || null));
+  Object.entries(AF_CHECKS).forEach(([f, el]) => row[f] = [...$(el).querySelectorAll('input:checked')].map(i => i.value));
   if (row.handle) row.handle = row.handle.replace(/^@/, '').replace(/^https?:\/\/(www\.)?instagram\.com\//i, '').replace(/[\/?].*$/, '');
   if (!row.name && !row.handle) { $('ac-msg').textContent = 'A name or a handle, at least.'; return; }
-  const wasNew = !acEditing, handleChanged = acEditing ? (accounts.find(x => x.id === acEditing) || {}).handle !== row.handle : true;
+  const old = acEditing ? accounts.find(x => x.id === acEditing) : null;
+  if (row.outreach.length > arr(old && old.outreach).length) { if (!row.last_contact || (old && row.last_contact === old.last_contact)) row.last_contact = iso(new Date()); if (row.status === 'to contact') row.status = 'contacted'; }
+  if (row.response.some(x => x.startsWith('shared')) && !arr(old && old.response).some(x => x.startsWith('shared'))) row.status = 'posted';
+  const wasNew = !acEditing, handleChanged = old ? old.handle !== row.handle : true;
   const q = acEditing ? sb.from('marketing_accounts').update(row).eq('id', acEditing).select().single() : sb.from('marketing_accounts').insert(row).select().single();
   const { data, error } = await q;
   if (error) { $('ac-msg').textContent = 'Save failed: ' + error.message; return; }
-  $('acform').classList.add('hidden'); acEditing = null; await loadAccounts();
+  closeAccount(); await loadAccounts();
   if (data && row.handle && (wasNew || handleChanged)) {   // fetch followers for this one handle right away
-    $('ac-msg').textContent = 'Checking followers of @' + row.handle + '...';
     try { const r = await callFn({ action: 'followers', city, ids: [data.id] }); if (r.error) throw new Error(r.error); if (!r.updated) throw new Error(r.error_detail || 'profile not found'); await loadAccounts(); }
     catch (e) { alert('Followers for @' + row.handle + ' not fetched: ' + e.message); }
   }
@@ -1832,11 +2071,12 @@ $('ac-save').onclick = async () => {
 $('ac-delete').onclick = async () => {
   if (!acEditing || !confirm('Delete this account?')) return;
   await sb.from('marketing_accounts').delete().eq('id', acEditing);
-  $('acform').classList.add('hidden'); acEditing = null; loadAccounts();
+  acSel.delete(acEditing); closeAccount(); loadAccounts();
 };
 $('ac-refresh').onclick = async () => {
   const n = accounts.filter(a => a.handle).length;
   if (!n) { alert('No handles to check yet.'); return; }
+  if (n > 100 && !confirm(`This checks ${n} Instagram accounts through Apify in one go (roughly $${(n * 0.0023).toFixed(2)} of credit) and can take a few minutes. Go ahead?`)) return;
   $('ac-refresh').disabled = true; $('ac-refresh').textContent = `Checking ${n}...`;
   try {
     const r = await callFn({ action: 'followers', city });
@@ -1859,36 +2099,51 @@ const cleanHandle = h => String(h || '').trim().replace(/^@/, '').replace(/^http
 async function importAccounts(file) {
   const rows = parseCsv(await file.text());
   if (rows.length < 2) { $('ac-imsg').textContent = 'Could not read that file.'; return; }
-  const headers = rows[0].map(h => h.trim().toLowerCase());
+  const headers = rows[0].map(h => h.trim().toLowerCase().replace(/^﻿/, ''));
   const col = {
     name: findCol(headers, [/^name$/, /^naam$/, /^nombre$/, /business/, /account/, /^title$/]),
-    handle: findCol(headers, [/^handle$/, /instagram/, /^ig$/, /^username$/, /^user$/]),
+    handle: findCol(headers, [/^handle$/, /^instagram_handle$/, /^instagram$/, /^ig$/, /^username$/, /^user$/, /instagram/]),
     web: findCol(headers, [/^web/, /^url$/, /site/]),
-    email: findCol(headers, [/mail/]),
+    email: findCol(headers, [/^e-?mail$/, /mail/]),
     phone: findCol(headers, [/phone/, /tel/, /whatsapp/, /movil/, /mobile/]),
-    type: findCol(headers, [/^type$/, /^category$/, /^categor/, /^soort$/]),
-    status: findCol(headers, [/^status$/, /^estado$/]),
-    notes: findCol(headers, [/note/, /comment/, /opmerking/, /descr/]),
-    followers: findCol(headers, [/follower/, /volgers/, /seguidores/]),
+    type: findCol(headers, [/^type$/, /^soort$/]),
+    status: findCol(headers, [/^status$/, /^pipeline/, /^estado$/]),
+    notes: findCol(headers, [/^notes?$/, /comment/, /opmerking/, /descr/]),
+    followers: findCol(headers, [/^followers$/, /^instagram_followers$/, /volgers/, /seguidores/, /follower/]),
+    category: findCol(headers, [/^category$/, /^categor/]), area: findCol(headers, [/^area$/, /^district$/, /^stadsdeel$/]), heat: findCol(headers, [/^heat$/, /^hot/]),
+    listing: findCol(headers, [/^listing$/, /^partner.?group$/, /^group$/]), app_pages: findCol(headers, [/^app.?pages?$/, /^app.?position$/]), top_tags: findCol(headers, [/^top.?tags?$/]),
+    outreach: findCol(headers, [/^outreach$/, /^we.?did$/, /^contact.?level$/]), response: findCol(headers, [/^response$/, /^they.?did$/]), content_status: findCol(headers, [/^content/]),
+    contact_name: findCol(headers, [/^contact.?name$/, /^contact.?person$/, /^poc$/]), next_step: findCol(headers, [/^next.?step$/]), last_checked: findCol(headers, [/^last.?checked$/]),
   };
   if (col.name < 0 && col.handle < 0) { $('ac-imsg').textContent = 'No name or handle column found. Headers seen: ' + headers.slice(0, 12).join(', '); return; }
   const TYPES = ['influencer', 'famous parent', 'partner', 'press', 'other'];
   const get = (r, k) => col[k] >= 0 ? String(r[col[k]] || '').trim() : '';
-  const byHandle = {}; accounts.forEach(a => { if (a.handle) byHandle[a.handle.toLowerCase()] = a; });
+  const optOf = (f, v) => Object.keys(AC_OPT[f]).find(o => o.toLowerCase() === String(v).trim().toLowerCase()) || null;
+  const list = (r, k, f) => get(r, k).split(/\s*[|;]\s*/).map(x => x.trim()).filter(Boolean).map(x => f ? optOf(f, x) : x).filter(Boolean);
+  const nameKey = n => String(n || '').trim().toLowerCase();
+  const byHandle = {}, byName = {}; accounts.forEach(a => { if (a.handle) byHandle[a.handle.toLowerCase()] = a; else if (a.name) byName[nameKey(a.name)] = a; });
   const inserts = [], updates = []; let skipped = 0; const seen = new Set();
   for (const r of rows.slice(1)) {
     const name = get(r, 'name') || null, handle = cleanHandle(get(r, 'handle'));
     if (!name && !handle) { skipped++; continue; }
-    if (handle && seen.has(handle)) { skipped++; continue; } if (handle) seen.add(handle);
+    const k = handle ? '@' + handle : 'n:' + nameKey(name);
+    if (seen.has(k)) { skipped++; continue; } seen.add(k);
     const t = get(r, 'type').toLowerCase(), st = get(r, 'status').toLowerCase();
     const row = { city, name, handle, web: get(r, 'web') || null, email: get(r, 'email').toLowerCase() || null, phone: get(r, 'phone') || null, notes: get(r, 'notes') || null,
       type: TYPES.find(x => t.includes(x.split(' ')[0])) || (/(mom|mum|dad|parent|ouder|madre|padre)/.test(t) ? 'famous parent' : /(venue|business|shop|club|school|restaurant|partner|bedrijf|empresa)/.test(t) ? 'partner' : /(press|media|magazine|blog)/.test(t) ? 'press' : 'influencer'),
       status: ST.find(x => st.startsWith(x.split(' ')[0])) || 'to contact', updated_at: new Date().toISOString() };
-    const f = get(r, 'followers').replace(/[^\d]/g, ''); if (f) row.followers = parseInt(f, 10);
-    const ex = handle ? byHandle[handle] : null;
+    const f = get(r, 'followers').replace(/[^\d]/g, ''); if (f) { row.followers = parseInt(f, 10); const lc = get(r, 'last_checked'); row.last_checked = lc && !isNaN(Date.parse(lc)) ? new Date(lc).toISOString() : new Date().toISOString(); }
+    for (const k2 of ['category', 'area', 'heat', 'listing', 'content_status']) if (col[k2] >= 0) row[k2] = optOf(k2, get(r, k2));
+    for (const k2 of ['outreach', 'response', 'app_pages']) if (col[k2] >= 0) row[k2] = list(r, k2, k2);
+    if (col.top_tags >= 0) row.top_tags = list(r, 'top_tags');
+    for (const k2 of ['contact_name', 'next_step']) if (col[k2] >= 0) row[k2] = get(r, k2) || null;
+    if (col.listing < 0 || !row.listing) row.listing = 'in scope';
+    const ex = handle ? byHandle[handle] : byName[nameKey(name)];
     if (ex) {
       const patch = { id: ex.id }; let changed = false;
-      for (const k of ['name', 'web', 'email', 'phone', 'notes', 'followers']) if (row[k] != null && row[k] !== ex[k]) { patch[k] = row[k]; changed = true; }
+      for (const k2 of ['name', 'web', 'email', 'phone', 'notes', 'followers', 'last_checked', 'category', 'area', 'heat', 'content_status', 'contact_name', 'next_step']) if (row[k2] != null && row[k2] !== ex[k2]) { patch[k2] = row[k2]; changed = true; }
+      for (const k2 of ['outreach', 'response', 'app_pages', 'top_tags']) if (row[k2] && row[k2].length && row[k2].join('|') !== arr(ex[k2]).join('|')) { patch[k2] = [...new Set([...arr(ex[k2]), ...row[k2]])]; changed = true; }
+      if (col.listing >= 0 && get(r, 'listing') && row.listing !== ex.listing) { patch.listing = row.listing; changed = true; }
       if (col.type >= 0 && t && row.type !== ex.type) { patch.type = row.type; changed = true; }
       if (col.status >= 0 && st && row.status !== ex.status) { patch.status = row.status; changed = true; }
       if (changed) updates.push(patch);
@@ -1896,9 +2151,9 @@ async function importAccounts(file) {
   }
   $('ac-imsg').textContent = `Importing ${inserts.length} new, ${updates.length} updates...`;
   let err = null;
-  if (inserts.length) { const r = await sb.from('marketing_accounts').insert(inserts); err = r.error; }
+  for (let i = 0; i < inserts.length && !err; i += 200) { const r = await sb.from('marketing_accounts').insert(inserts.slice(i, i + 200)); err = r.error; $('ac-imsg').textContent = `Importing... ${Math.min(i + 200, inserts.length)} of ${inserts.length} new`; }
   for (const u of updates) { if (err) break; const { id, ...patch } = u; patch.updated_at = new Date().toISOString(); const r = await sb.from('marketing_accounts').update(patch).eq('id', id); err = r.error; }
-  $('ac-imsg').textContent = err ? 'Import failed: ' + err.message : `Done: ${inserts.length} added, ${updates.length} updated${skipped ? ', ' + skipped + ' rows skipped (empty or duplicate handle)' : ''}.`;
+  $('ac-imsg').textContent = err ? 'Import failed: ' + err.message : `Done: ${inserts.length} added, ${updates.length} updated${skipped ? ', ' + skipped + ' rows skipped (empty or duplicate)' : ''}.`;
   loadAccounts();
 }
 
