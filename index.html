@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Families App marketing dashboard v2.8 (13 Nov 2026): Accounts tab rebuilt as the partner CRM (category, area, how hot, partner group, what we did, what they did, content status, app pages, top tags, next step; category overview cards, click a coloured cell to change it, bulk change, sort on every column, loads past 1000 rows, import with the new columns; needs marketing-schema-v7.sql). Nothing outside the Accounts tab changed. v2.7 (25 Oct 2026): restored after the 22 Sep overwrite, Growth at a glance row (followers, downloads iOS/Android, reach to download, paid members, partners live), funnel focus line, 12 week downloads chart with table view, Monday reminder, target progress bars, Accounts pipeline summary, search and sort, sticky tabs, Clean and Calm palette, tab row shared with Campaigns and Home CMS pages (29 Oct); fixes: settings and Add account form always visible, phone overflow on Dashboard and Library. v2.6 (16 Sep 2026): Library tab (knowledge, app screens, design kit), Make a visual (Claude writes the artboard, rendered here to PNG). v2.5 (14 Sep 2026): settings dropdowns prefilled, retry link. v2.4 (11 Sep 2026): coloured panels, plan moved to Concepts, chat on the dashboard, drafts shelf, account lists and export. v2.3: model settings panel. v2.2 (10 Sep 2026): paid layer (quiz funnel, ad spend), kick-off plan campaigns and panel, ad concepts AD1 to AD5. v1 = funnel, advice, weeks, CSV, formats table, plan. v2 adds tabs: Concepts (grid + chat), Accounts, Formats, Campaigns, plus newsletter ideas and 12 week trends. -->
+<!-- Families App marketing dashboard v2.8 (13 Nov 2026): Accounts tab rebuilt as the partner CRM (category, area, how hot, partner group, what we did, what they did, content status, app pages, top tags, next step; category overview cards, click a coloured cell to change it, bulk change, sort on every column, drag a column header to reorder columns, loads past 1000 rows, import with the new columns; needs marketing-schema-v7.sql). Nothing outside the Accounts tab changed. v2.7 (25 Oct 2026): restored after the 22 Sep overwrite, Growth at a glance row (followers, downloads iOS/Android, reach to download, paid members, partners live), funnel focus line, 12 week downloads chart with table view, Monday reminder, target progress bars, Accounts pipeline summary, search and sort, sticky tabs, Clean and Calm palette, tab row shared with Campaigns and Home CMS pages (29 Oct); fixes: settings and Add account form always visible, phone overflow on Dashboard and Library. v2.6 (16 Sep 2026): Library tab (knowledge, app screens, design kit), Make a visual (Claude writes the artboard, rendered here to PNG). v2.5 (14 Sep 2026): settings dropdowns prefilled, retry link. v2.4 (11 Sep 2026): coloured panels, plan moved to Concepts, chat on the dashboard, drafts shelf, account lists and export. v2.3: model settings panel. v2.2 (10 Sep 2026): paid layer (quiz funnel, ad spend), kick-off plan campaigns and panel, ad concepts AD1 to AD5. v1 = funnel, advice, weeks, CSV, formats table, plan. v2 adds tabs: Concepts (grid + chat), Accounts, Formats, Campaigns, plus newsletter ideas and 12 week trends. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -223,6 +223,7 @@
   #accounts tr.grp td{background:var(--g,#eeeaf2);font-weight:800;font-size:13px;letter-spacing:.3px;cursor:pointer;padding:9px 12px;color:#2f2a38;border-bottom:none;}
   #accounts tr.grp td span{font-weight:700;color:#6f6680;margin-left:6px;} #accounts tr.grp td i{font-style:normal;display:inline-block;width:14px;}
   #accounts tr.more td{text-align:center;padding:12px;}
+  #accounts th[draggable]{cursor:grab;} #accounts th.dragging{opacity:.4;} #accounts th.dropl{box-shadow:inset 3px 0 0 #2f2a38;} #accounts th.dropr{box-shadow:inset -3px 0 0 #2f2a38;}
   .pill{display:block;text-align:center;font-size:11.5px;font-weight:800;padding:6px 8px;border-radius:8px;white-space:nowrap;letter-spacing:.2px;background:var(--b,#eeeaf2);color:var(--t,#4a4356);}
   .pill.none{background:none;color:#c9c0d4;font-weight:700;} td.ed:hover .pill.none{color:#8a7f97;}
   .chipz{display:flex;gap:3px;flex-wrap:wrap;} .chipz .pill{display:inline-block;padding:4px 7px;font-size:11px;border-radius:7px;}
@@ -551,7 +552,7 @@
   <div class="catboard" id="ac-cats"></div>
   <div class="frow" id="ac-areas"></div>
   <div class="frow" id="ac-heats"></div>
-  <div class="actools"><input type="search" id="ac-search" placeholder="search name, handle, email, notes, next step" aria-label="search accounts"><span class="msg" id="ac-count"></span><button class="btn ghost" id="ac-clear" style="padding:7px 12px;font-size:13px">Clear filters</button></div>
+  <div class="actools"><input type="search" id="ac-search" placeholder="search name, handle, email, notes, next step" aria-label="search accounts"><span class="msg" id="ac-count"></span><button class="btn ghost" id="ac-clear" style="padding:7px 12px;font-size:13px">Clear filters</button><button class="btn ghost hidden" id="ac-colreset" style="padding:7px 12px;font-size:13px">Reset column order</button></div>
   <div class="fsel" id="ac-fsel"></div>
   <div class="filters" id="ac-lists"></div>
   <div class="selbar"><span class="msg" id="ac-selcount"></span><span class="bulk"><select id="ac-bulkfield" aria-label="field to change"></select><select id="ac-bulkval" aria-label="new value"></select><button class="btn ghost" id="ac-bulkgo">Apply to selected</button></span><input type="text" id="ac-listname" placeholder="list name"><button class="btn ghost" id="ac-addlist">Add to list</button><button class="btn ghost" id="ac-removelist">Remove from list</button><button class="btn ghost" id="ac-export">Export CSV</button></div>
@@ -1855,15 +1856,20 @@ function visibleAccounts() {
   return rows.sort((a, b) => (cmp(key(a), key(b)) * acSortDir) || ((b.followers || 0) - (a.followers || 0)) || cmp(nm(a), nm(b)));
 }
 const AC_COLS = [['name', 'Account'], ['category', 'Category'], ['area', 'Area'], ['heat', 'How hot'], ['followers', 'Followers'], ['status', 'Pipeline'], ['outreach', 'We did'], ['response', 'They did'], ['content_status', 'Content'], ['app_pages', 'In the app on'], ['top_tags', 'Top tags'], ['next_step', 'Next step'], ['contact', 'Contact'], ['notes', 'Notes']];
+/* column order: drag a header left or right, kept per browser. Account stays first. */
+let acOrder = []; try { acOrder = JSON.parse(localStorage.getItem('fm-accols') || '[]'); } catch (e) { acOrder = []; }
+const acCols = () => { const keys = AC_COLS.map(c => c[0]).filter(k => k !== 'name'), o = acOrder.filter(k => keys.includes(k)); return [AC_COLS[0], ...[...o, ...keys.filter(k => !o.includes(k))].map(k => AC_COLS.find(c => c[0] === k))]; };
+let acDragKey = null;
 function renderAccounts() {
   renderCrm(); renderAcFilters();
+  const cols = acCols(); $('ac-colreset').classList.toggle('hidden', !acOrder.length);
   const allLists = [...new Set(accounts.flatMap(a => arr(a.lists)))].sort();
   $('ac-lists').innerHTML = allLists.length ? '<span class="msg">lists:</span>' + allLists.map(l => `<button data-l="${esc(l)}" class="${acList === l ? 'on' : ''}">${esc(l)} <span class="muted">${accounts.filter(a => arr(a.lists).includes(l)).length}</span></button>`).join('') : '';
   $('ac-lists').querySelectorAll('button').forEach(b => b.onclick = () => { acList = acList === b.dataset.l ? '' : b.dataset.l; acShown = 150; renderAccounts(); });
   const rows = visibleAccounts();
   const chk = accounts.map(a => a.last_checked).filter(Boolean).sort().pop();
   $('ac-count').textContent = `${rows.length} of ${accounts.length} shown` + (chk ? ', followers checked ' + fmtDate(chk) : '');
-  let html = `<tr><th class="nos"><input type="checkbox" id="ac-all" ${rows.length && rows.every(a => acSel.has(a.id)) ? 'checked' : ''} aria-label="select all shown"></th>` + AC_COLS.map(([k, l]) => `<th data-k="${k}" class="${k === 'name' ? 'c-acc ' : ''}${acSortKey === k ? 'sorted' : ''}">${l}${acSortKey === k ? `<i>${acSortDir > 0 ? '&#9650;' : '&#9660;'}</i>` : ''}</th>`).join('') + '</tr>';
+  let html = `<tr><th class="nos"><input type="checkbox" id="ac-all" ${rows.length && rows.every(a => acSel.has(a.id)) ? 'checked' : ''} aria-label="select all shown"></th>` + cols.map(([k, l]) => `<th data-k="${k}" ${k === 'name' ? '' : 'draggable="true" title="Click to sort, drag to move this column"'} class="${k === 'name' ? 'c-acc ' : ''}${acSortKey === k ? 'sorted' : ''}">${l}${acSortKey === k ? `<i>${acSortDir > 0 ? '&#9650;' : '&#9660;'}</i>` : ''}</th>`).join('') + '</tr>';
   if (!rows.length) html += `<tr><td colspan="${AC_COLS.length + 1}" class="muted">${accounts.length ? 'Nothing matches these filters. Press Clear filters.' : 'No accounts here yet. Press Add account or Import CSV.'}</td></tr>`;
   let shown = 0;
   for (const g of Object.keys(AC_OPT.listing)) {
@@ -1876,20 +1882,35 @@ function renderAccounts() {
       const one = (f, v, label) => `<td class="ed" data-f="${f}">${v ? pill(f, v, label) : '<span class="pill none">+</span>'}</td>`;
       const many = (f, v) => `<td class="ed" data-f="${f}">${arr(v).length ? '<div class="chipz">' + arr(v).map(x => pill(f, x)).join('') + '</div>' : '<span class="pill none">+</span>'}</td>`;
       const contact = [a.contact_name ? `<b>${esc(a.contact_name)}</b>` : '', a.email ? `<a href="mailto:${esc(a.email)}" class="linkish">${esc(a.email)}</a>` : '', a.phone ? esc(a.phone) : '', a.web ? `<a href="${esc(a.web)}" target="_blank" rel="noopener" class="linkish">web</a>` : ''].filter(Boolean).join('<br>');
-      html += `<tr class="clickable" data-id="${a.id}"><td><input type="checkbox" class="ac-chk" data-id="${a.id}" ${acSel.has(a.id) ? 'checked' : ''}></td>
-        <td class="c-acc"><b title="${esc(a.name || hd)}">${esc(a.name || hd)}</b>${hd ? `<a href="https://instagram.com/${esc(hd)}" target="_blank" rel="noopener" class="linkish">@${esc(hd)}</a>` : `<span class="muted" style="font-size:12px">${esc(a.type || '')}, no Instagram</span>`}</td>
-        ${one('category', a.category)}${one('area', a.area)}${one('heat', h)}
-        <td>${a.followers != null ? '<b>' + acN(a.followers) + '</b>' : '<span class="muted">–</span>'}${d != null && d !== 0 ? `<span class="delta ${d > 0 ? 'up' : 'down'}" style="background:none;padding:0">${d > 0 ? '+' : ''}${d}</span>` : ''}</td>
-        ${one('status', a.status)}${many('outreach', a.outreach)}${many('response', a.response)}${one('content_status', a.content_status)}${many('app_pages', a.app_pages)}
-        <td class="c-tags">${arr(a.top_tags).length ? '<div class="chipz">' + arr(a.top_tags).map(x => `<span class="pill" style="--b:#F3EAF6;--t:#6F4E7C">${esc(x)}</span>`).join('') + '</div>' : ''}</td>
-        <td class="txt"><div>${esc(a.next_step || '')}</div>${a.last_contact ? `<span class="muted" style="font-size:11.5px">last contact ${fmtDate(a.last_contact)}</span>` : ''}</td>
-        <td style="font-size:12.5px;line-height:1.45;white-space:nowrap">${contact || '<span class="muted">–</span>'}</td><td class="txt"><div title="${esc(a.notes || '')}">${esc(a.notes || '')}</div></td></tr>`;
+      const cell = {
+        name: `<td class="c-acc"><b title="${esc(a.name || hd)}">${esc(a.name || hd)}</b>${hd ? `<a href="https://instagram.com/${esc(hd)}" target="_blank" rel="noopener" class="linkish">@${esc(hd)}</a>` : `<span class="muted" style="font-size:12px">${esc(a.type || '')}, no Instagram</span>`}</td>`,
+        category: one('category', a.category), area: one('area', a.area), heat: one('heat', h),
+        followers: `<td>${a.followers != null ? '<b>' + acN(a.followers) + '</b>' : '<span class="muted">–</span>'}${d != null && d !== 0 ? `<span class="delta ${d > 0 ? 'up' : 'down'}" style="background:none;padding:0">${d > 0 ? '+' : ''}${d}</span>` : ''}</td>`,
+        status: one('status', a.status), outreach: many('outreach', a.outreach), response: many('response', a.response), content_status: one('content_status', a.content_status), app_pages: many('app_pages', a.app_pages),
+        top_tags: `<td class="c-tags">${arr(a.top_tags).length ? '<div class="chipz">' + arr(a.top_tags).map(x => `<span class="pill" style="--b:#F3EAF6;--t:#6F4E7C">${esc(x)}</span>`).join('') + '</div>' : ''}</td>`,
+        next_step: `<td class="txt"><div>${esc(a.next_step || '')}</div>${a.last_contact ? `<span class="muted" style="font-size:11.5px">last contact ${fmtDate(a.last_contact)}</span>` : ''}</td>`,
+        contact: `<td style="font-size:12.5px;line-height:1.45;white-space:nowrap">${contact || '<span class="muted">–</span>'}</td>`,
+        notes: `<td class="txt"><div title="${esc(a.notes || '')}">${esc(a.notes || '')}</div></td>`,
+      };
+      html += `<tr class="clickable" data-id="${a.id}"><td><input type="checkbox" class="ac-chk" data-id="${a.id}" ${acSel.has(a.id) ? 'checked' : ''}></td>${cols.map(([k]) => cell[k]).join('')}</tr>`;
     }
   }
   const openTotal = rows.filter(a => !acClosed[listingOf(a)]).length;
   if (openTotal > shown) html += `<tr class="more"><td colspan="${AC_COLS.length + 1}"><button class="btn ghost" id="ac-more">Show ${Math.min(150, openTotal - shown)} more (${openTotal - shown} hidden)</button></td></tr>`;
   const T = $('accounts'); T.innerHTML = html;
   T.querySelectorAll('th[data-k]').forEach(th => th.onclick = () => { const k = th.dataset.k; if (acSortKey === k) acSortDir = -acSortDir; else { acSortKey = k; acSortDir = ['name', 'category', 'area', 'next_step', 'notes'].includes(k) ? 1 : -1; } acSaveState(); renderAccounts(); });
+  T.querySelectorAll('th[draggable]').forEach(th => {
+    th.ondragstart = e => { acDragKey = th.dataset.k; e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', acDragKey); } catch (x) {} th.classList.add('dragging'); };
+    th.ondragend = () => { acDragKey = null; T.querySelectorAll('th').forEach(x => x.classList.remove('dragging', 'dropl', 'dropr')); };
+    th.ondragover = e => { if (!acDragKey || acDragKey === th.dataset.k) return; e.preventDefault(); const r = th.getBoundingClientRect(), right = e.clientX > r.left + r.width / 2; th.classList.toggle('dropr', right); th.classList.toggle('dropl', !right); };
+    th.ondragleave = () => th.classList.remove('dropl', 'dropr');
+    th.ondrop = e => {
+      e.preventDefault(); if (!acDragKey || acDragKey === th.dataset.k) return;
+      const r = th.getBoundingClientRect(), right = e.clientX > r.left + r.width / 2, keys = acCols().map(c => c[0]).filter(k => k !== 'name' && k !== acDragKey);
+      keys.splice(keys.indexOf(th.dataset.k) + (right ? 1 : 0), 0, acDragKey);
+      acOrder = keys; localStorage.setItem('fm-accols', JSON.stringify(acOrder)); acDragKey = null; renderAccounts();
+    };
+  });
   T.querySelectorAll('tr.grp').forEach(tr => tr.onclick = () => { acClosed[tr.dataset.g] = !acClosed[tr.dataset.g]; acSaveState(); renderAccounts(); });
   T.querySelectorAll('tr.clickable').forEach(tr => tr.onclick = e => {
     if (e.target.closest('a') || e.target.closest('input')) return;
@@ -1949,6 +1970,7 @@ function renderAcFilters() {
   $('ac-fsel').querySelectorAll('select').forEach(s => s.onchange = () => setF(s.dataset.f, s.value));
 }
 $('ac-search').oninput = e => { acQuery = e.target.value.trim(); acShown = 150; renderAccounts(); };
+$('ac-colreset').onclick = () => { acOrder = []; localStorage.removeItem('fm-accols'); renderAccounts(); };
 $('ac-clear').onclick = () => { acF = Object.assign({}, AC_F0); acQuery = ''; acList = ''; $('ac-search').value = ''; acShown = 150; acSaveState(); renderAccounts(); };
 
 /* one field change, with the pipeline following along */
