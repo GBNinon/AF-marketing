@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Home CMS v2 (29 Oct 2026): the preview is the real app home (app-preview/, synced from the latest test build by sync-app-preview.py) in an iPhone 15/16 frame (393x852). Draft shows unsaved edits, Live shows what phones get now. The button list is read from that build, so it always matches the app. Saves to cbldl app_config (ams_home_slides, ams_home_tiles, ams_home_badges) through the qcz cms-save function. Shares the tab row with the dashboard. -->
+<!-- Home CMS v3 (20 Nov 2026): phone in the launch grid shape (#16131A bezel), as big as the first screen allows, Upload button next to every photo link (bucket marketing/amsterdam/home-cms/), new tab row. v2 (29 Oct 2026): the preview is the real app home (app-preview/, synced from the latest test build by sync-app-preview.py) in an iPhone 15/16 frame (393x852). Draft shows unsaved edits, Live shows what phones get now. The button list is read from that build, so it always matches the app. Saves to cbldl app_config (ams_home_slides, ams_home_tiles, ams_home_badges) through the qcz cms-save function. Shares the tab row with the dashboard. -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -40,7 +40,7 @@
   .tabs a{font-size:14.5px;font-weight:800;color:var(--mute);padding:10px 14px;border-bottom:3px solid transparent;margin-bottom:-1px;text-decoration:none;white-space:nowrap;}
   .tabs a:hover{color:var(--ink);}
   .tabs a.on{color:var(--ink);border-bottom-color:var(--lilac);}
-  .ptitle{font-size:22px;font-weight:800;margin:4px 0 14px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;}
+  .ptitle{font-size:22px;font-weight:800;margin:4px 0 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
   .ptitle small{font-size:13px;font-weight:600;color:var(--soft);}
 
   .layout{display:grid;grid-template-columns:auto 1fr;gap:28px;align-items:start;}
@@ -53,11 +53,11 @@
   .seg button.on{background:var(--ink);color:#fff;}
   .iconbtn{border:1px solid var(--line);background:#fff;border-radius:10px;width:32px;height:32px;cursor:pointer;color:#6f6680;font-size:15px;}
   .phonebox{position:relative;}
-  .iphone{position:absolute;top:0;left:0;width:417px;height:876px;transform-origin:top left;background:#1d1b22;border-radius:66px;padding:12px;box-shadow:0 0 0 2px #3a3642 inset,0 24px 50px rgba(47,42,56,.22);}
-  .iphone .screen{position:relative;width:393px;height:852px;border-radius:55px;overflow:hidden;background:#F8F6FA;}
+  .iphone{position:absolute;top:0;left:0;width:417px;height:876px;transform-origin:top left;background:#16131A;border-radius:56px;padding:12px;box-shadow:0 30px 70px -30px rgba(76,58,98,.6);}
+  .iphone .screen{position:relative;width:393px;height:852px;border-radius:44px;overflow:hidden;background:#F8F6FA;}
   .iphone .status{position:absolute;top:0;left:0;right:0;height:54px;display:flex;align-items:center;justify-content:space-between;padding:6px 34px 0 46px;font:600 16px -apple-system,'SF Pro Text',sans-serif;color:#000;z-index:2;background:#fff;}
   .iphone .status i{font-style:normal;letter-spacing:1px;font-size:13px;}
-  .iphone .island{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:124px;height:36px;border-radius:20px;background:#000;z-index:3;}
+  .iphone .island{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:118px;height:32px;border-radius:20px;background:#0f0f10;z-index:3;}
   .iphone iframe{position:absolute;top:54px;left:0;width:393px;height:798px;border:0;background:#F8F6FA;}
   .iphone .homebar{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:#111;opacity:.85;z-index:3;}
   .pvmeta{font-size:12px;color:var(--soft);text-align:center;max-width:417px;line-height:1.45;}
@@ -84,6 +84,9 @@
   .fld input,.fld select{width:100%;border:1.5px solid #e6dfee;border-radius:10px;padding:8px 10px;font-family:inherit;font-size:13.5px;background:#fff;color:var(--ink);outline:none;}
   .fld input:focus{border-color:var(--lilac);}
   .fld input::placeholder{color:#c3b9d0;}
+  .upbtn{border:1.5px solid #e0d8ea;background:#fff;color:#6f6680;border-radius:10px;padding:0 11px;height:36px;font-size:12.5px;font-weight:800;cursor:pointer;align-self:flex-end;white-space:nowrap;}
+  .upbtn:hover{border-color:var(--lilac);color:var(--ink);}
+  .upbtn:disabled{opacity:.6;cursor:default;}
   .imgprev{width:54px;height:54px;border-radius:12px;background-size:cover;background-position:center;background-color:#eeeaf2;flex-shrink:0;align-self:flex-end;border:1px solid var(--line);}
   .swatches{display:flex;gap:6px;align-items:center;}
   .sw{width:24px;height:24px;border-radius:50%;border:2.5px solid transparent;cursor:pointer;}
@@ -124,18 +127,19 @@
     <div class="links"><button class="out" id="logout">log out</button></div>
   </header>
   <nav class="tabs">
-    <a href="index.html#dashboard">Dashboard</a><a href="index.html#concepts">Concepts</a><a href="index.html#accounts">Accounts</a><a href="index.html#formats">Formats</a><a href="campaigns.html">Campaigns</a><a href="index.html#library">Library</a><a href="home-cms.html" class="on" aria-current="page">Home CMS</a>
+    <a href="index.html#dashboard">Dashboard</a><a href="index.html#accounts">Accounts</a><a href="instagram-cms.html">Instagram CMS</a><a href="home-cms.html" class="on" aria-current="page">Home CMS</a><a href="campaigns.html">Campaigns</a><a href="index.html#formats">Formats</a><a href="index.html#media">Media</a>
   </nav>
-  <h2 class="ptitle" style="text-transform:none;letter-spacing:0;color:var(--ink)">Home screen <small>what every Amsterdam phone shows when it opens the app</small></h2>
-
-  <div class="layout">
-    <!-- ================= PREVIEW ================= -->
-    <div class="pv" id="pvcol">
-      <div class="pvbar">
+  <h2 class="ptitle" style="text-transform:none;letter-spacing:0;color:var(--ink)">Home screen <small>what every Amsterdam phone shows when it opens the app</small>
+      <div class="pvbar" style="margin-left:auto">
         <div class="seg" id="pvmode"><button data-m="draft" class="on">Draft</button><button data-m="live">Live</button></div>
         <div class="seg" id="pvlang"><button data-l="en" class="on">EN</button><button data-l="nl">NL</button></div>
         <button class="iconbtn" id="pvreload" title="Reload the preview" aria-label="Reload the preview">&#8635;</button>
       </div>
+  </h2>
+
+  <div class="layout">
+    <!-- ================= PREVIEW ================= -->
+    <div class="pv" id="pvcol">
       <div class="phonebox" id="phonebox">
         <div class="iphone" id="iphone">
           <div class="screen">
@@ -379,6 +383,7 @@ function renderEditors() {
   host.querySelectorAll('[data-showpage]').forEach(bn => bn.onclick = () => highlight(`a[href="${bn.dataset.showpage}.html"]`));
   host.querySelectorAll('.card[data-page]').forEach(c => c.addEventListener('focusin', () => highlight(`a[href="${c.dataset.page}.html"]`, true)));
   renderSlidesEd();
+  addUploadButtons(host);
 }
 const SFIELDS = [['eyebrow', 'Eyebrow'], ['title', 'Title'], ['line', 'Line'], ['btn', 'Button']];
 function renderSlidesEd() {
@@ -400,6 +405,37 @@ function renderSlidesEd() {
   });
   host.querySelectorAll('[data-del]').forEach(b => b.onclick = () => { draft.slides.slides.splice(+b.dataset.del, 1); renderSlidesEd(); changed(); });
   host.querySelectorAll('.card[data-slide]').forEach(c => c.addEventListener('focusin', () => highlight('#heroCarousel', true)));
+  addUploadButtons(host);
+}
+/* Upload next to every photo link: the file goes to the bucket 'marketing' (amsterdam/home-cms/...) and its link fills the field */
+const upPick = Object.assign(document.createElement('input'), { type: 'file', accept: 'image/*', hidden: true });
+document.body.appendChild(upPick);
+function addUploadButtons(host) {
+  host.querySelectorAll('input[data-field="img"], input[data-f="img"]').forEach(inp => {
+    const fld = inp.closest('.fld'); if (!fld || fld.nextElementSibling && fld.nextElementSibling.classList.contains('upbtn')) return;
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'upbtn'; b.textContent = 'Upload';
+    b.onclick = () => {
+      upPick.value = '';
+      upPick.onchange = async () => {
+        const f = upPick.files[0]; if (!f) return;
+        if (f.size > 50 * 1024 * 1024) { setMsg('That photo is over 50 MB.', true); return; }
+        b.disabled = true; b.textContent = 'Uploading...';
+        try {
+          const ext = (f.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+          const base = f.name.replace(/\.[^.]+$/, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'photo';
+          const path = `amsterdam/home-cms/${Date.now()}-${Math.random().toString(36).slice(2, 6)}-${base}.${ext}`;
+          const { error } = await sb.storage.from('marketing').upload(path, f, { contentType: f.type || undefined, upsert: false });
+          if (error) throw new Error(error.message);
+          inp.value = sb.storage.from('marketing').getPublicUrl(path).data.publicUrl;
+          inp.dispatchEvent(new Event('input', { bubbles: true }));
+          setMsg('Photo uploaded. Save everything to put it live.');
+        } catch (e) { setMsg('Upload failed: ' + e.message, true); }
+        b.disabled = false; b.textContent = 'Upload';
+      };
+      upPick.click();
+    };
+    fld.after(b);
+  });
 }
 function slideState(s) {
   const today = new Date().toISOString().slice(0, 10);
@@ -448,11 +484,13 @@ function highlight(sel, soft) {
   clearTimeout(el._hl); el._hl = setTimeout(() => { el.style.boxShadow = ''; }, 1600);
 }
 function fitPhone() {
-  const W = 417, H = 876;
+  // as big as the first screen allows: from the top of the phone to the bottom of the window
+  const W = 417, H = 876, box = $('phonebox');
   const narrow = window.innerWidth <= 1000;
-  const k = Math.max(0.5, Math.min(1, narrow ? (Math.min(window.innerWidth - 40, W) / W) : (window.innerHeight - 140) / H));
+  const top = box.getBoundingClientRect().top + window.scrollY;
+  const k = narrow ? Math.max(0.5, Math.min(1, (window.innerWidth - 40) / W)) : Math.max(0.5, Math.min(1.35, (window.innerHeight - top - 18) / H, (window.innerWidth * 0.4) / W));
   $('iphone').style.transform = `scale(${k})`;
-  $('phonebox').style.width = (W * k) + 'px'; $('phonebox').style.height = (H * k) + 'px';
+  box.style.width = (W * k) + 'px'; box.style.height = (H * k) + 'px';
 }
 window.addEventListener('resize', fitPhone);
 setInterval(() => { const d = new Date(); $('clock').textContent = d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0'); }, 15000);

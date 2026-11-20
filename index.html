@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Families App marketing dashboard v2.8 (13 Nov 2026): Accounts tab rebuilt as the partner CRM (category, area, how hot, partner group, what we did, what they did, content status, app pages, top tags, next step; category overview cards, click a coloured cell to change it, bulk change, sort on every column, drag a column header to reorder columns, loads past 1000 rows, import with the new columns; needs marketing-schema-v7.sql). Nothing outside the Accounts tab changed. v2.7 (25 Oct 2026): restored after the 22 Sep overwrite, Growth at a glance row (followers, downloads iOS/Android, reach to download, paid members, partners live), funnel focus line, 12 week downloads chart with table view, Monday reminder, target progress bars, Accounts pipeline summary, search and sort, sticky tabs, Clean and Calm palette, tab row shared with Campaigns and Home CMS pages (29 Oct); fixes: settings and Add account form always visible, phone overflow on Dashboard and Library. v2.6 (16 Sep 2026): Library tab (knowledge, app screens, design kit), Make a visual (Claude writes the artboard, rendered here to PNG). v2.5 (14 Sep 2026): settings dropdowns prefilled, retry link. v2.4 (11 Sep 2026): coloured panels, plan moved to Concepts, chat on the dashboard, drafts shelf, account lists and export. v2.3: model settings panel. v2.2 (10 Sep 2026): paid layer (quiz funnel, ad spend), kick-off plan campaigns and panel, ad concepts AD1 to AD5. v1 = funnel, advice, weeks, CSV, formats table, plan. v2 adds tabs: Concepts (grid + chat), Accounts, Formats, Campaigns, plus newsletter ideas and 12 week trends. -->
+<!-- Families App marketing dashboard v2.9 (20 Nov 2026): tabs now Dashboard, Accounts, Instagram CMS, Home CMS, Campaigns, Formats, Media. Library became Media, with a Files panel on top (any file, kept in the bucket marketing/<city>/media/<folder>/) and the three Claude panels below; #library still opens it. Concepts has no tab button any more, #concepts still opens it. v2.8 (13 Nov 2026): Accounts tab rebuilt as the partner CRM (category, area, how hot, partner group, what we did, what they did, content status, app pages, top tags, next step; category overview cards, click a coloured cell to change it, bulk change, sort on every column, drag a column header to reorder columns, loads past 1000 rows, import with the new columns; needs marketing-schema-v7.sql). Nothing outside the Accounts tab changed. v2.7 (25 Oct 2026): restored after the 22 Sep overwrite, Growth at a glance row (followers, downloads iOS/Android, reach to download, paid members, partners live), funnel focus line, 12 week downloads chart with table view, Monday reminder, target progress bars, Accounts pipeline summary, search and sort, sticky tabs, Clean and Calm palette, tab row shared with Campaigns and Home CMS pages (29 Oct); fixes: settings and Add account form always visible, phone overflow on Dashboard and Library. v2.6 (16 Sep 2026): Library tab (knowledge, app screens, design kit), Make a visual (Claude writes the artboard, rendered here to PNG). v2.5 (14 Sep 2026): settings dropdowns prefilled, retry link. v2.4 (11 Sep 2026): coloured panels, plan moved to Concepts, chat on the dashboard, drafts shelf, account lists and export. v2.3: model settings panel. v2.2 (10 Sep 2026): paid layer (quiz funnel, ad spend), kick-off plan campaigns and panel, ad concepts AD1 to AD5. v1 = funnel, advice, weeks, CSV, formats table, plan. v2 adds tabs: Concepts (grid + chat), Accounts, Formats, Campaigns, plus newsletter ideas and 12 week trends. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -116,6 +116,27 @@
   .lib .li:hover .x{display:block;}
   .lib .up{border:1.5px dashed #c9b6d6;border-radius:12px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:13px;color:#8a7f97;cursor:pointer;min-height:120px;padding:10px;}
   .lib .up.dragover{background:#f3eaf6;}
+  /* Media: files in the bucket */
+  .mdbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+  .mdfolders{display:flex;gap:6px;flex-wrap:wrap;margin-right:auto;}
+  .mdfolders button{border:1.5px solid #e0d8ea;background:#fff;border-radius:10px;padding:7px 12px;font-family:inherit;font-weight:800;font-size:13px;color:#6f6680;cursor:pointer;}
+  .mdfolders button.on{background:#2f2a38;border-color:#2f2a38;color:#fff;}
+  .mdfolders button small{font-weight:700;opacity:.7;margin-left:4px;}
+  .mdnew{display:flex;gap:6px;}
+  .mdnew input{border:1.5px solid #e0d8ea;border-radius:10px;padding:8px 10px;font-family:inherit;font-size:13.5px;width:140px;}
+  .mddrop{margin-top:12px;border:2px dashed #d5c6e0;border-radius:14px;padding:14px;text-align:center;color:#8a7f97;font-size:13.5px;cursor:pointer;}
+  .mddrop.hover{background:#f3eaf6;border-color:#B597C1;}
+  .mdlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-top:12px;}
+  .mdi{background:#fff;border:1px solid #e9e2ef;border-radius:14px;overflow:hidden;display:flex;flex-direction:column;}
+  .mdi .pv{text-decoration:none;aspect-ratio:4/3;background:#f1ecf5;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+  .mdi .pv img,.mdi .pv video{width:100%;height:100%;object-fit:cover;display:block;}
+  .mdi .pv .ext{font-size:20px;font-weight:800;color:#8a7f97;letter-spacing:.5px;text-transform:uppercase;background:#fff;border:1.5px solid #e0d8ea;border-radius:10px;padding:10px 12px;}
+  .mdi .nm{font-size:13px;font-weight:800;padding:8px 10px 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .mdi .mt{font-size:11.5px;color:#a79dbb;padding:2px 10px 0;}
+  .mdi .ac{display:flex;gap:4px;padding:8px 10px 10px;margin-top:auto;}
+  .mdi .ac a,.mdi .ac button{flex:1;text-align:center;border:1px solid #e9e2ef;background:#fbf9fc;border-radius:8px;padding:5px 0;font-family:inherit;font-size:12px;font-weight:800;color:#6f6680;cursor:pointer;text-decoration:none;white-space:nowrap;}
+  .mdi .ac button.del{color:#9a3b2e;}
+  .mdi .ac button.sure{background:#9a3b2e;color:#fff;border-color:#9a3b2e;}
   .vis{display:grid;grid-template-columns:1fr 340px;gap:16px;align-items:start;}
   .vis textarea{width:100%;border:1.5px solid #e0d8ea;border-radius:10px;padding:8px 10px;font-family:inherit;font-size:14px;color:#2f2a38;min-height:70px;resize:vertical;background:#fff;}
   .vis .out{background:#fff;border:1px solid #e9e2ef;border-radius:14px;padding:8px;min-height:120px;}
@@ -358,12 +379,12 @@
 
   <nav class="tabs" id="tabs">
     <button data-t="dashboard" class="on">Dashboard</button>
-    <button data-t="concepts">Concepts</button>
     <button data-t="accounts">Accounts</button>
-    <button data-t="formats">Formats</button>
-    <a href="campaigns.html">Campaigns</a>
-    <button data-t="library">Library</button>
+    <a href="instagram-cms.html">Instagram CMS</a>
     <a href="home-cms.html">Home CMS</a>
+    <a href="campaigns.html">Campaigns</a>
+    <button data-t="formats">Formats</button>
+    <button data-t="media">Media</button>
   </nav>
 
 <section class="tab on" id="tab-dashboard">
@@ -565,7 +586,19 @@
   <input type="file" id="fx-file" accept="image/*" hidden>
 </section>
 
-<section class="tab" id="tab-library">
+<section class="tab" id="tab-media">
+  <div class="panel p-files">
+    <h2>Files <small>important files for this city, kept in your Supabase bucket. Up to 50 MB each</small><span class="right"><span class="msg" id="md-msg"></span></span></h2>
+    <div class="mdbar">
+      <div class="mdfolders" id="md-folders"></div>
+      <div class="mdnew"><input type="text" id="md-newname" placeholder="new folder"><button class="btn ghost" id="md-newbtn" style="padding:8px 12px;font-size:13px">Add</button></div>
+      <button class="btn" id="md-up" style="padding:9px 14px">Upload files</button>
+    </div>
+    <input type="file" id="md-file" multiple hidden>
+    <div class="mddrop" id="md-drop">Drop files here, any kind: photos, videos, PDFs, contracts, logos</div>
+    <div class="mdlist" id="md-list"></div>
+  </div>
+
   <div class="panel p-know">
     <h2>What Claude knows <small>rules, facts and examples it gets with every question, advice and visual. Yours to edit</small><span class="right"><span class="msg" id="kn-msg"></span></span></h2>
     <div class="know" id="kn-list"></div>
@@ -1138,9 +1171,9 @@ $('ed-clear').onclick = async () => {
 /* =====================================================================
    v2: tabs, newsletter ideas, concept grid, chat, accounts, formats, campaigns
    ===================================================================== */
-const TABS = ['dashboard', 'concepts', 'accounts', 'formats', 'library'];
-let tab = (location.hash || '').slice(1);
-if (!TABS.includes(tab)) tab = localStorage.getItem('fm-tab');
+const TABS = ['dashboard', 'concepts', 'accounts', 'formats', 'media'];   // concepts has no tab button any more, but #concepts still opens it
+let tab = (location.hash || '').slice(1); if (tab === 'library') tab = 'media';
+if (!TABS.includes(tab)) { tab = localStorage.getItem('fm-tab'); if (tab === 'library') tab = 'media'; }
 if (!TABS.includes(tab)) tab = 'dashboard';
 const loaded = {};   // per tab per city, so switching tabs does not refetch
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -1166,7 +1199,7 @@ function loadTab(t, force) {
   if (t === 'concepts' || t === 'dashboard') loadChat();
   if (t === 'accounts') loadAccounts();
   if (t === 'formats') loadFormatsPage();
-  if (t === 'library') loadLibrary();
+  if (t === 'media') { loadLibrary(); loadMedia(); }
 }
 
 /* ---------- settings: model choice ---------- */
@@ -1194,6 +1227,67 @@ $('s-save').onclick = async () => {
   const rows = [{ key: 'model_text', value: $('s-model-text').value, updated_at: new Date().toISOString() }, { key: 'model_chat', value: $('s-model-chat').value, updated_at: new Date().toISOString() }];
   const { error } = await sb.from('marketing_settings').upsert(rows, { onConflict: 'key' });
   $('s-msg').textContent = error ? 'Save failed: ' + error.message : 'Saved. Next advice, newsletter and chat use these.';
+};
+
+/* ---------- Media: files in the bucket (marketing/<city>/media/<folder>/...) ---------- */
+let mdFolder = 'general', mdExtra = [];
+const mdRoot = () => `${city}/media`;
+function mdSize(b) { return b == null ? '' : b > 1048576 ? (b / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB'; }
+function mdKind(name, mime) { mime = mime || ''; if (mime.startsWith('image') || /\.(png|jpe?g|gif|webp|avif|svg)$/i.test(name)) return 'image'; if (mime.startsWith('video') || /\.(mp4|mov|webm|m4v)$/i.test(name)) return 'video'; return 'file'; }
+async function loadMedia() {
+  $('md-msg').textContent = 'Loading...';
+  const { data: root, error: e1 } = await sb.storage.from('marketing').list(mdRoot(), { limit: 1000 });
+  if (e1) { $('md-msg').textContent = 'Could not read the bucket: ' + e1.message; return; }
+  const folders = [...new Set(['general'].concat((root || []).filter(x => !x.id).map(x => x.name), mdExtra))].sort((a, b) => a === 'general' ? -1 : b === 'general' ? 1 : a.localeCompare(b));
+  if (!folders.includes(mdFolder)) mdFolder = 'general';
+  $('md-folders').innerHTML = folders.map(f => `<button type="button" data-f="${esc(f)}" class="${f === mdFolder ? 'on' : ''}">${esc(f)}</button>`).join('');
+  $('md-folders').querySelectorAll('button').forEach(b => b.onclick = () => { mdFolder = b.dataset.f; loadMedia(); });
+  const { data, error } = await sb.storage.from('marketing').list(`${mdRoot()}/${mdFolder}`, { limit: 1000, sortBy: { column: 'created_at', order: 'desc' } });
+  if (error) { $('md-msg').textContent = 'Could not read the folder: ' + error.message; return; }
+  const files = (data || []).filter(x => x.id && x.name !== '.emptyFolderPlaceholder');
+  $('md-msg').textContent = files.length + ' file' + (files.length === 1 ? '' : 's') + ' in ' + mdFolder;
+  $('md-list').innerHTML = files.length ? files.map(x => {
+    const path = `${mdRoot()}/${mdFolder}/${x.name}`, url = sb.storage.from('marketing').getPublicUrl(path).data.publicUrl;
+    const mime = x.metadata && x.metadata.mimetype, k = mdKind(x.name, mime);
+    const shown = x.name.replace(/^\d{13}-[a-z0-9]{4}-/, '');
+    const pv = k === 'image' ? `<img src="${esc(url)}" alt="" loading="lazy">` : k === 'video' ? `<video src="${esc(url)}#t=0.5" muted preload="metadata"></video>` : `<span class="ext">${esc((x.name.split('.').pop() || 'file').slice(0, 5))}</span>`;
+    return `<div class="mdi"><a class="pv" href="${esc(url)}" target="_blank" rel="noopener">${pv}</a><div class="nm" title="${esc(shown)}">${esc(shown)}</div>
+      <div class="mt">${mdSize(x.metadata && x.metadata.size)}${x.created_at ? ', ' + fmtDate(x.created_at) : ''}</div>
+      <div class="ac"><button type="button" data-copy="${esc(url)}">Copy link</button><a href="${esc(url)}" download="${esc(shown)}" target="_blank" rel="noopener">Open</a><button type="button" class="del" data-del="${esc(path)}">Delete</button></div></div>`;
+  }).join('') : '<p class="legend" style="grid-column:1/-1">Nothing in this folder yet.</p>';
+  $('md-list').querySelectorAll('[data-copy]').forEach(b => b.onclick = () => navigator.clipboard.writeText(b.dataset.copy).then(() => { b.textContent = 'Copied'; setTimeout(() => b.textContent = 'Copy link', 1400); }));
+  $('md-list').querySelectorAll('[data-del]').forEach(b => b.onclick = async () => {
+    if (!b.classList.contains('sure')) { b.classList.add('sure'); b.textContent = 'Sure?'; setTimeout(() => { if (b.isConnected) { b.classList.remove('sure'); b.textContent = 'Delete'; } }, 3000); return; }
+    const { error } = await sb.storage.from('marketing').remove([b.dataset.del]);
+    if (error) { $('md-msg').textContent = 'Delete failed: ' + error.message; return; }
+    loadMedia();
+  });
+}
+async function mdUpload(files) {
+  const list = [...files]; let n = 0;
+  for (const f of list) {
+    n++;
+    if (f.size > 50 * 1024 * 1024) { $('md-msg').textContent = f.name + ' is over 50 MB, skipped.'; continue; }
+    $('md-msg').textContent = `Uploading ${n} of ${list.length}...`;
+    const base = f.name.replace(/\.[^.]+$/, '').replace(/[^A-Za-z0-9._ -]+/g, '').replace(/\s+/g, '-').slice(0, 60) || 'file';
+    const ext = (f.name.includes('.') ? f.name.split('.').pop() : 'bin').toLowerCase().replace(/[^a-z0-9]/g, '') || 'bin';
+    const path = `${mdRoot()}/${mdFolder}/${Date.now()}-${Math.random().toString(36).slice(2, 6)}-${base}.${ext}`;
+    const { error } = await sb.storage.from('marketing').upload(path, f, { contentType: f.type || undefined, upsert: false });
+    if (error) { $('md-msg').textContent = 'Upload failed: ' + error.message; return; }
+  }
+  mdExtra = mdExtra.filter(x => x !== mdFolder);
+  loadMedia();
+}
+$('md-up').onclick = () => { $('md-file').value = ''; $('md-file').click(); };
+$('md-drop').onclick = () => $('md-up').click();
+$('md-file').onchange = e => { if (e.target.files.length) mdUpload(e.target.files); };
+$('md-drop').addEventListener('dragover', e => { e.preventDefault(); $('md-drop').classList.add('hover'); });
+$('md-drop').addEventListener('dragleave', () => $('md-drop').classList.remove('hover'));
+$('md-drop').addEventListener('drop', e => { e.preventDefault(); $('md-drop').classList.remove('hover'); if (e.dataTransfer.files.length) mdUpload(e.dataTransfer.files); });
+$('md-newbtn').onclick = () => {
+  const n = $('md-newname').value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 30); if (!n) return;
+  if (!mdExtra.includes(n)) mdExtra.push(n); mdFolder = n; $('md-newname').value = ''; loadMedia();
+  $('md-msg').textContent = 'Folder ' + n + ' is ready. It stays once you upload a file into it.';
 };
 
 /* ---------- storage upload ---------- */

@@ -1,0 +1,243 @@
+{
+ "version": 1,
+ "profile": {
+  "handle": "amsterdamfamilies",
+  "name": "Amsterdam Families",
+  "bio": "Everything for family life in Amsterdam, in one app.\nHandpicked by parents. No ads, nobody paid to be on a list.",
+  "link": "amsterdamfamilies.com",
+  "avatar": "instagram/logo-ams-white.png",
+  "avatar_bg": "#4C3A62"
+ },
+ "posts": [
+  {
+   "kind": "reel",
+   "media": [
+    {
+     "url": "instagram/launch-amsterdam/01_reel_promo-story_NL.mp4",
+     "type": "video"
+    }
+   ],
+   "cover": "instagram/launch-amsterdam/01_cover_reel_promo-story.jpg",
+   "id": "seed01",
+   "title": "Promo story video (Dutch)",
+   "caption_en": "Seven apps, three group chats and a screenshot of a flyer. Or: one app.\nPlans, food spots, sitters, birthdays and dinner, all in one place. Handpicked by parents, for parents. No ads, and nobody paid to be on any list.\nComment APP and we'll send you the link.",
+   "caption_nl": "Zeven apps, drie groepsapps en een screenshot van een flyer. Of gewoon: één app.\nUitjes, eten met kinderen, oppas, verjaardagen en wat we vanavond eten, op één plek. Verzameld door ouders, voor ouders. Geen reclame, en niemand betaalde om erin te staan.\nReageer APP en we sturen je de link.",
+   "note": "The very first post. The file has no sound: add a sound in Instagram. The cover is a frame from the end of the video.",
+   "status": "ready",
+   "date": "",
+   "pinned": false
+  },
+  {
+   "kind": "reel",
+   "media": [
+    {
+     "url": "instagram/launch-amsterdam/02_reel_ugc_food-spots_NL.mp4",
+     "type": "video"
+    }
+   ],
+   "cover": "instagram/launch-amsterdam/02_cover_reel_ugc_food-spots.jpg",
+   "id": "seed02",
+   "title": "UGC: Esra, Food Spots (Dutch)",
+   "caption_en": "Catching up with a friend and a seven-year-old: seven minutes, on a good day.\nNow she checks Food Spots first: places where the kids play and you can actually order a second round.\n'Mum, we're not going yet, are we?' Not even close.",
+   "caption_nl": "Bijkletsen met een vriendin en een kind van zeven: zeven minuten, als het meezat.\nNu kijkt ze eerst in Food Spots: plekken waar de kinderen spelen en jullie eindelijk een tweede rondje bestellen.\n'Mam, we gaan nog niet, hè?' Nog lang niet.",
+   "note": "Switch on the AI label before sharing. Caption is a new draft (not in captions v1). Tag the restaurant if it is a real Food Spot.",
+   "status": "ready",
+   "date": "",
+   "pinned": false
+  },
+  {
+   "kind": "carousel",
+   "media": [
+    {
+     "url": "instagram/launch-amsterdam/03_slide01_cover_after-school.jpg",
+     "type": "image"
+    },
+    {
+     "url": "instagram/launch-amsterdam/03_slide02.jpg",
+     "type": "image"
+    },
+    {
+     "url": "instagram/launch-amsterdam/03_slide03.jpg",
+     "type": "image"
+    },
+    {
+     "url": "instagram/launch-amsterdam/03_slide04.jpg",
+     "type": "image"
+    },
+    {
+     "url": "instagram/launch-amsterdam/03_slide05.jpg",
+     "type": "image"
+    },
+    {
+     "url": "instagram/launch-amsterdam/03_slide06.jpg",
+     "type": "image"
+    }
+   ],
+   "cover": "",
+   "id": "seed03",
+   "title": "Five after-school clubs",
+   "caption_en": "Five after-school clubs that aren't hockey. (Nothing against hockey. We own the thermos.)\nGraffiti at Kidskunstlab, cooking in a greenhouse at Kinderkooklab Sterk in eten, safety glasses on at The Science Lab, circus at Circus Kristal and bread on a stick over the campfire at Avonturenclub Woeste Westen.\nHundreds more clubs and lessons in the app. Save this for when the sign-up emails start.",
+   "caption_nl": "Vijf naschoolse clubjes die eens geen hockey zijn. (Niks tegen hockey. De thermoskan staat hier ook.)\nGraffiti bij Kidskunstlab, koken in een kas bij Kinderkooklab Sterk in eten, een veiligheidsbril op bij The Science Lab, circus bij Circus Kristal en stokbrood boven het kampvuur bij Avonturenclub Woeste Westen.\nHonderden clubjes en lessen in de app. Bewaar deze voor als de inschrijfmails weer beginnen.",
+   "note": "Tag all five places. The slides are the plain photos, without text.",
+   "status": "ready",
+   "date": "",
+   "pinned": false
+  },
+  {
+   "kind": "carousel",
+   "media": [
+    {
+     "url": "instagram/launch-amsterdam/04_slide01_cover_rainy-days.jpg",
+     "type": "image"
+    },
+    {
+     "url": "instagram/launch-amsterdam/04_slide02.jpg",
+     "type": "image"
+    },
+    {
+     "url": "instagram/launch-amsterdam/04_slide03.jpg",
+     "type": "image"
+    },
+    {
+     "url": "instagram/launch-amsterdam/04_slide04.jpg",
+     "type": "image"
+    },
+    {
+     "url": "instagram/launch-amsterdam/04_slide05.jpg",
+     "type": "image"
+    },
+    {
+     "url": "instagram/launch-amsterdam/04_slide06.jpg",
+     "type": "image"
+    }
+   ],
+   "cover": "",
+   "id": "seed04",
+   "title": "Five rainy day plans",
+   "caption_en": "Buienradar's gone purple. Five plans with a roof.\nButterflies in the Hortus greenhouse, climbing at De Klimmuur, dinosaurs at Fabrique des Lumières, glow-in-the-dark mini golf at Aloha and a whole play supermarket at Playhood.\nAll five are in the app, with plenty more for the next wet Saturday. Which is probably this one.",
+   "caption_nl": "Buienradar kleurt paars. Vijf plannen onder dak.\nVlinders in de kas van de Hortus, klimmen bij De Klimmuur, dinosaurussen bij Fabrique des Lumières, glow-in-the-dark midgetgolf bij Aloha en een complete speelsupermarkt bij Playhood.\nAlle vijf staan in de app, met nog veel meer voor de volgende natte zaterdag. Waarschijnlijk deze.",
+   "note": "Tag all five places. Check the dinosaur show at Fabrique des Lumières is still on.",
+   "status": "ready",
+   "date": "",
+   "pinned": false
+  },
+  {
+   "kind": "reel",
+   "media": [
+    {
+     "url": "instagram/launch-amsterdam/05_reel_app_city-shaker_NL.mp4",
+     "type": "video"
+    }
+   ],
+   "cover": "instagram/launch-amsterdam/05_cover_reel_app_city-shaker.jpg",
+   "id": "seed05",
+   "title": "App reel: City Shaker",
+   "caption_en": "'What shall we do today?' Shake your phone. Ten plans fall out.\nCity Shaker picks plans that suit your family, for toddlers and teenagers, sun or rain.\nComment SHAKE and we'll send you the link.",
+   "caption_nl": "'Wat gaan we vandaag doen?' Schud je telefoon. Er vallen tien plannen uit.\nCity Shaker kiest plannen die bij jullie passen, voor peuters en pubers, zon of regen.\nReageer SHAKE en we sturen je de link.",
+   "note": "Put the shake clip (city-shaker-shake_NL.mp4) after the City Shaker frame of the promo story in your editor.",
+   "status": "ready",
+   "date": "",
+   "pinned": false
+  },
+  {
+   "kind": "reel",
+   "media": [
+    {
+     "url": "instagram/launch-amsterdam/06_reel_ugc_birthdays_NL.mp4",
+     "type": "video"
+    }
+   ],
+   "cover": "instagram/launch-amsterdam/06_cover_reel_ugc_birthdays.jpg",
+   "id": "seed06",
+   "title": "UGC: Lorraine, Birthdays (Dutch)",
+   "caption_en": "Turning fifteen. Wants to do 'nothing'. 'Nothing' turned out to be VR gaming with eight friends.\nBirthdays in the app has venues, party crews and ideas for every age, teenagers included. Your role on the day may vary. Ours: the bank card.",
+   "caption_nl": "Wordt vijftien. Wil 'niks'. 'Niks' bleek VR-gamen met acht vrienden.\nBij Birthdays in de app vind je locaties, feestteams en ideeën voor elke leeftijd, ook voor pubers. Jouw rol op de dag kan verschillen. Die van ons: de bankpas.",
+   "note": "Switch on the AI label before sharing. Caption from captions v1 (the spare), with 'pinautomaat' changed to 'bankpas' as she says in the video.",
+   "status": "ready",
+   "date": "",
+   "pinned": false
+  },
+  {
+   "kind": "reel",
+   "media": [
+    {
+     "url": "instagram/launch-amsterdam/07_reel_ugc_playdates_EN.mp4",
+     "type": "video"
+    }
+   ],
+   "cover": "instagram/launch-amsterdam/07_cover_reel_ugc_playdates.jpg",
+   "id": "seed07",
+   "title": "UGC: Lisa, Playdates part 2 (English)",
+   "caption_en": "'Okay, this is embarrassing.'\nHer daughter makes new best friends everywhere. She never dares to talk to the parents. Her husband agrees, a little too quickly.\nIn Playdates, families share their plans, so you can actually meet up again. Join a plan, or make your own.",
+   "caption_nl": "'Oké, dit is gênant.'\nHaar dochter maakt overal nieuwe beste vriendinnen. Zelf durft ze de ouders nooit aan te spreken. Haar man is het daar iets te snel mee eens.\nIn Playdates delen gezinnen hun plannen, zodat je elkaar echt weer ziet. Doe mee met een plan, of maak er zelf een.",
+   "note": "Switch on the AI label before sharing. The video is 480p, a little softer than the others.",
+   "status": "ready",
+   "date": "",
+   "pinned": false
+  },
+  {
+   "kind": "carousel",
+   "media": [
+    {
+     "url": "instagram/launch-amsterdam/08_slide01_cover_im-bored.jpg",
+     "type": "image"
+    },
+    {
+     "url": "instagram/launch-amsterdam/08_slide02.jpg",
+     "type": "image"
+    },
+    {
+     "url": "instagram/launch-amsterdam/08_slide03.jpg",
+     "type": "image"
+    },
+    {
+     "url": "instagram/launch-amsterdam/08_slide04.jpg",
+     "type": "image"
+    },
+    {
+     "url": "instagram/launch-amsterdam/08_slide05.jpg",
+     "type": "image"
+    },
+    {
+     "url": "instagram/launch-amsterdam/08_slide06.jpg",
+     "type": "image"
+    },
+    {
+     "url": "instagram/launch-amsterdam/08_slide07.jpg",
+     "type": "image"
+    },
+    {
+     "url": "instagram/launch-amsterdam/08_slide08.jpg",
+     "type": "image"
+    }
+   ],
+   "cover": "",
+   "id": "seed08",
+   "title": "Seven 'I'm bored' ideas",
+   "caption_en": "'I'm bored.' Seven answers that aren't 'tidy your room'.\nStraight from the Boredom Jar in the app: a whole jar of ideas for the moment someone flops onto the sofa and sighs.\nSave this one for the next Wednesday afternoon.",
+   "caption_nl": "'Ik verveel me.' Zeven antwoorden die niet 'ruim je kamer op' zijn.\nRechtstreeks uit de Boredom Jar in de app: een hele pot ideeën voor het moment dat iemand zuchtend op de bank ploft.\nBewaar hem voor de volgende woensdagmiddag.",
+   "note": "The slides are the clay pictures from the Boredom Jar, without text.",
+   "status": "ready",
+   "date": "",
+   "pinned": false
+  },
+  {
+   "kind": "reel",
+   "media": [
+    {
+     "url": "instagram/launch-amsterdam/09_reel_superapp_EN.mp4",
+     "type": "video"
+    }
+   ],
+   "cover": "instagram/launch-amsterdam/09_cover_reel_superapp_EN.jpg",
+   "id": "seed09",
+   "title": "Super app tap reel (English)",
+   "caption_en": "The family super app for Amsterdam. Tap through it.\nTop 100 plans, the Event Agenda, City Shaker, Food Spots, Ask the Fridge with Mini Chef, the Babysitter Finder, Playdates and Birthdays.\nFree to download. Insider is €0.99 a week, cancel at any time, and there are never any ads.\nComment APP and we'll send you the link.",
+   "caption_nl": "De gezins-superapp van Amsterdam. Tik er maar doorheen.\nTop 100 plannen, de Event Agenda, City Shaker, Food Spots, Vraag het je koelkast met Mini Chef, de Babysitter Finder, Playdates en Birthdays.\nGratis te downloaden. Insider kost 0,99 euro per week, altijd opzegbaar en nooit reclame.\nReageer APP en we sturen je de link.",
+   "note": "Ends up top left. Pin only this post: pinning an older post moves it to the front and shifts the whole grid. Add the finger and a sound in your editor: the tap times are in tap-timings_EN.txt.",
+   "status": "ready",
+   "date": "",
+   "pinned": true
+  }
+ ]
+}
